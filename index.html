@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>DaZ – Satz-Bild-Zuordnung</title>
+<style>
+  :root{
+    --blue:#3b82f6; --blue-dark:#2563eb;
+    --green:#22c55e; --green-dark:#16a34a;
+    --red:#ef4444; --red-dark:#dc2626;
+    --yellow:#f59e0b;
+    --bg:#eef4ff; --card:#ffffff; --ink:#1e293b; --muted:#64748b;
+    --radius:20px;
+    --shadow:0 6px 18px rgba(30,41,59,.12);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:"Segoe UI",Verdana,Tahoma,Arial,sans-serif;
+    background:linear-gradient(160deg,#eef4ff 0%,#f6f0ff 100%);
+    color:var(--ink);
+    min-height:100vh;
+    display:flex; flex-direction:column;
+  }
+  .app{
+    flex:1; display:flex; flex-direction:column; align-items:center;
+    padding:16px; padding-bottom:40px;
+    width:100%;
+  }
+  .screen{ width:100%; max-width:900px; display:none; animation:fadein .35s ease; }
+  .screen.active{ display:block; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  h1{ font-size:clamp(1.4rem,4vw,2rem); margin:.2em 0; }
+  .top-row{
+    width:100%; max-width:900px; display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:8px;
+  }
+  .brand{ font-weight:800; color:var(--blue-dark); font-size:1.1rem; display:flex; gap:8px; align-items:center;}
+  .icon-btn{
+    background:#fff; border:none; border-radius:14px; padding:10px 14px;
+    box-shadow:var(--shadow); cursor:pointer; font-size:1rem; color:var(--muted);
+  }
+  .icon-btn:hover{ color:var(--blue-dark); }
+
+  /* Buttons */
+  .btn{
+    border:none; border-radius:16px; padding:14px 22px; font-size:1.05rem; font-weight:700;
+    cursor:pointer; box-shadow:var(--shadow); transition:transform .12s ease, filter .12s ease;
+    color:#fff; background:var(--blue);
+  }
+  .btn:hover{ filter:brightness(1.05); transform:translateY(-2px); }
+  .btn:active{ transform:translateY(0); }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; filter:none; }
+  .btn.green{ background:var(--green); }
+  .btn.red{ background:var(--red); }
+  .btn.gray{ background:#94a3b8; }
+  .btn.outline{ background:#fff; color:var(--blue-dark); border:2px solid var(--blue); box-shadow:none; }
+  .btn.big{ font-size:1.3rem; padding:18px 30px; width:100%; }
+  .btn.small{ padding:8px 14px; font-size:.9rem; }
+
+  input[type=text], input[type=password], input[type=url], textarea{
+    width:100%; padding:12px 14px; border-radius:12px; border:2px solid #dbeafe;
+    font-size:1rem; font-family:inherit; background:#fff; color:var(--ink);
+  }
+  input:focus, textarea:focus{ outline:none; border-color:var(--blue); }
+
+  .card{
+    background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:24px; margin-bottom:16px;
+  }
+
+  /* ---------- LOGIN ---------- */
+  #screen-login .card{ text-align:center; }
+  #screen-login p{ color:var(--muted); }
+  .login-emoji{ font-size:4rem; }
+
+  /* ---------- GAME ---------- */
+  .progress-wrap{ margin-bottom:14px; }
+  .progress-label{ display:flex; justify-content:space-between; font-weight:700; color:var(--muted); margin-bottom:6px; font-size:.95rem; }
+  .progress-bar{ background:#dbeafe; border-radius:20px; height:14px; overflow:hidden; }
+  .progress-bar-fill{ background:linear-gradient(90deg,var(--blue),var(--green)); height:100%; border-radius:20px; transition:width .4s ease; }
+
+  .sentence-card{
+    background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:28px 24px; text-align:center; margin-bottom:20px;
+  }
+  .sentence-text{ font-size:clamp(1.3rem,4.2vw,2rem); font-weight:700; line-height:1.4; margin:0 0 16px 0; }
+  .speak-btn{ font-size:1.1rem; }
+
+  .options-grid{
+    display:grid; gap:18px;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  }
+  .option-card{
+    position:relative; background:var(--card); border-radius:var(--radius);
+    box-shadow:var(--shadow); border:5px solid transparent; cursor:pointer;
+    overflow:hidden; transition:transform .15s ease, border-color .15s ease;
+    aspect-ratio:1/1;
+  }
+  .option-card:hover{ transform:translateY(-4px); }
+  .option-card img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .option-card .mark{
+    position:absolute; top:8px; right:8px; width:44px; height:44px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:900; color:#fff;
+    opacity:0; transform:scale(.3); transition:all .25s ease;
+  }
+  .option-card.correct{ border-color:var(--green); }
+  .option-card.correct .mark{ background:var(--green); opacity:1; transform:scale(1); }
+  .option-card.wrong{ border-color:var(--red); filter:grayscale(.55); opacity:.7; cursor:not-allowed; }
+  .option-card.wrong .mark{ background:var(--red); opacity:1; transform:scale(1); }
+  .option-card.disabled{ pointer-events:none; }
+  .option-card.shake{ animation:shake .5s ease; }
+  @keyframes shake{
+    10%,90%{ transform:translateX(-6px); }
+    20%,80%{ transform:translateX(8px); }
+    30%,50%,70%{ transform:translateX(-10px); }
+    40%,60%{ transform:translateX(10px); }
+  }
+
+  .game-actions{ display:flex; gap:14px; justify-content:center; margin-top:22px; flex-wrap:wrap; }
+
+  #confetti-canvas{ position:fixed; inset:0; pointer-events:none; z-index:999; }
+
+  /* ---------- END ---------- */
+  #screen-end .card{ text-align:center; }
+  .stars{ font-size:3rem; letter-spacing:8px; margin:10px 0; }
+  .end-msg{ font-size:1.4rem; font-weight:700; margin:6px 0; }
+  .end-stats{ color:var(--muted); font-size:1.05rem; margin-bottom:20px; }
+
+  /* ---------- ADMIN LOGIN ---------- */
+  #screen-admin-login .card{ max-width:420px; margin:0 auto; text-align:center; }
+
+  /* ---------- ADMIN ---------- */
+  .admin-header{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+  .tabs{ display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .tab-btn{
+    background:#fff; border:2px solid #dbeafe; border-radius:14px; padding:10px 18px;
+    font-weight:700; cursor:pointer; color:var(--muted);
+  }
+  .tab-btn.active{ background:var(--blue); border-color:var(--blue); color:#fff; }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  table{ width:100%; border-collapse:collapse; background:#fff; border-radius:14px; overflow:hidden; }
+  th,td{ text-align:left; padding:10px 12px; border-bottom:1px solid #eef2f7; font-size:.95rem; }
+  th{ background:#f1f5f9; color:var(--muted); }
+  tr:last-child td{ border-bottom:none; }
+  .empty-hint{ color:var(--muted); text-align:center; padding:30px 10px; }
+
+  .task-card{ border:2px dashed #dbeafe; border-radius:16px; padding:16px; margin-bottom:18px; background:#fbfdff; }
+  .task-card-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px; }
+  .task-card-head span{ font-weight:800; color:var(--blue-dark); }
+  .opt-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:14px; margin-top:12px; }
+  .opt-edit{ background:#fff; border-radius:14px; padding:10px; box-shadow:var(--shadow); }
+  .opt-edit img{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:10px; margin-bottom:8px; background:#eef2f7; }
+  .opt-edit label{ display:flex; align-items:center; gap:6px; font-size:.85rem; margin:6px 0; color:var(--muted); }
+  .opt-edit input[type=url]{ font-size:.8rem; padding:6px 8px; margin-bottom:6px; }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .field-label{ font-size:.85rem; font-weight:700; color:var(--muted); margin:10px 0 4px; display:block; }
+  .danger-zone{ border:2px solid #fecaca; background:#fff5f5; border-radius:14px; padding:16px; margin-top:20px; }
+
+  footer.hint{ text-align:center; color:var(--muted); font-size:.8rem; margin-top:20px; }
+
+  @media (max-width:560px){
+    .card{ padding:18px; }
+    .stars{ font-size:2.2rem; letter-spacing:4px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<div class="app">
+  <div class="top-row">
+    <div class="brand">🇩🇪 DaZ Satz-Bild-Zuordnung</div>
+    <button class="icon-btn" id="btn-open-admin" title="Für Lehrpersonen">⚙️ Admin</button>
+  </div>
+
+  <!-- SCREEN: LOGIN -->
+  <section class="screen active" id="screen-login">
+    <div class="card">
+      <div class="login-emoji">👋📚</div>
+      <h1>Willkommen!</h1>
+      <p>Wie heisst du?</p>
+      <input type="text" id="input-name" placeholder="Dein Name" maxlength="40" autocomplete="off">
+      <br><br>
+      <button class="btn big" id="btn-start">Los geht's ➔</button>
+    </div>
+  </section>
+
+  <!-- SCREEN: GAME -->
+  <section class="screen" id="screen-game">
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="progress-text">Aufgabe 1 von 1</span>
+        <span id="progress-name"></span>
+      </div>
+      <div class="progress-bar"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="sentence-card">
+      <p class="sentence-text" id="sentence-text">Satz…</p>
+      <button class="btn outline speak-btn" id="btn-speak">🔊 Nochmals vorlesen</button>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+
+    <div class="game-actions">
+      <button class="btn green big" id="btn-next" disabled style="max-width:320px;">Nächste Aufgabe ➔</button>
+    </div>
+  </section>
+
+  <!-- SCREEN: END -->
+  <section class="screen" id="screen-end">
+    <div class="card">
+      <div class="stars" id="end-stars">⭐⭐⭐</div>
+      <div class="end-msg" id="end-msg">Super gemacht!</div>
+      <div class="end-stats" id="end-stats"></div>
+      <button class="btn big green" id="btn-replay">🔁 Erneut spielen</button>
+      <br><br>
+      <button class="btn outline" id="btn-new-student">Anderer Name</button>
+    </div>
+  </section>
+
+  <!-- SCREEN: ADMIN LOGIN -->
+  <section class="screen" id="screen-admin-login">
+    <div class="card">
+      <h1>🔒 Admin-Bereich</h1>
+      <p>Bitte PIN eingeben:</p>
+      <input type="password" id="input-pin" placeholder="PIN" inputmode="numeric" autocomplete="off">
+      <p id="pin-error" style="color:var(--red); font-weight:700; display:none;">Falsche PIN.</p>
+      <br>
+      <div class="row" style="justify-content:center;">
+        <button class="btn" id="btn-pin-submit">Anmelden</button>
+        <button class="btn outline" id="btn-pin-cancel">Zurück</button>
+      </div>
+      <p style="color:var(--muted); font-size:.8rem; margin-top:14px;">Standard-PIN: 1234 (kann im Admin-Bereich geändert werden)</p>
+    </div>
+  </section>
+
+  <!-- SCREEN: ADMIN -->
+  <section class="screen" id="screen-admin">
+    <div class="admin-header">
+      <h1>⚙️ Admin-Bereich</h1>
+      <button class="btn outline" id="btn-admin-exit">✖ Schliessen</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="auswertung">📊 Auswertung</button>
+      <button class="tab-btn" data-tab="aufgaben">✏️ Aufgaben verwalten</button>
+      <button class="tab-btn" data-tab="einstellungen">🔧 Einstellungen</button>
+    </div>
+
+    <!-- TAB: Auswertung -->
+    <div class="tab-panel active" id="tab-auswertung">
+      <div class="card">
+        <div class="row" style="justify-content:space-between; margin-bottom:10px;">
+          <h3 style="margin:0;">Ergebnisse der Schüler:innen</h3>
+          <div class="row">
+            <button class="btn small outline" id="btn-export-data">⬇ Exportieren</button>
+            <button class="btn small red" id="btn-clear-data">🗑 Alle Daten löschen</button>
+          </div>
+        </div>
+        <div id="results-table-wrap"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Aufgaben -->
+    <div class="tab-panel" id="tab-aufgaben">
+      <div class="card">
+        <div class="row" style="justify-content:space-between;">
+          <h3 style="margin:0;">Sätze &amp; Bilder verwalten</h3>
+          <div class="row">
+            <button class="btn small outline" id="btn-export-aufgaben">⬇ Exportieren</button>
+            <label class="btn small outline" style="cursor:pointer;">
+              ⬆ Importieren
+              <input type="file" id="input-import-aufgaben" accept="application/json" style="display:none;">
+            </label>
+          </div>
+        </div>
+        <p style="color:var(--muted); font-size:.9rem;">Änderungen werden erst nach Klick auf "💾 Speichern" wirksam.</p>
+        <div id="aufgaben-list"></div>
+        <div class="row" style="justify-content:center; margin-top:10px;">
+          <button class="btn outline" id="btn-add-aufgabe">➕ Neue Aufgabe</button>
+        </div>
+      </div>
+      <div class="row" style="justify-content:center;">
+        <button class="btn green big" id="btn-save-aufgaben" style="max-width:320px;">💾 Speichern</button>
+      </div>
+      <div class="danger-zone">
+        <strong>Zurücksetzen</strong>
+        <p style="color:var(--muted); font-size:.9rem;">Setzt alle Aufgaben auf die mitgelieferten Standard-Beispiele zurück.</p>
+        <button class="btn red" id="btn-reset-aufgaben">Auf Standard zurücksetzen</button>
+      </div>
+    </div>
+
+    <!-- TAB: Einstellungen -->
+    <div class="tab-panel" id="tab-einstellungen">
+      <div class="card">
+        <h3>Admin-PIN ändern</h3>
+        <div class="row">
+          <input type="password" id="input-new-pin" placeholder="Neue PIN" style="max-width:200px;" inputmode="numeric">
+          <button class="btn" id="btn-change-pin">Ändern</button>
+        </div>
+        <p id="pin-change-msg" style="color:var(--green-dark); font-weight:700; display:none;">PIN geändert ✔</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="hint">Hinweis: Daten werden lokal in diesem Browser gespeichert (localStorage).</footer>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   1) STANDARD-AUFGABEN — hier ganz einfach anpassbar!
+   img: Bild-URL ODER von der Lehrperson hochgeladenes Bild (Data-URL)
+   korrekt: true/false
+   ========================================================= */
+function svgImg(emoji, bg){
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'>
+    <rect width='400' height='400' fill='${bg}'/>
+    <text x='50%' y='54%' font-size='210' text-anchor='middle' dominant-baseline='middle'>${emoji}</text>
+  </svg>`;
+  return "data:image/svg+xml," + encodeURIComponent(svg);
+}
+
+const DEFAULT_AUFGABEN = [
+  {
+    satz: "Der Hund schläft unter dem Tisch.",
+    optionen: [
+      { img: svgImg("🐶","#FFF3E0"), korrekt: true },
+      { img: svgImg("🐱","#E3F2FD"), korrekt: false }
+    ]
+  },
+  {
+    satz: "Die Katze trinkt Milch.",
+    optionen: [
+      { img: svgImg("🐱","#E3F2FD"), korrekt: true },
+      { img: svgImg("🐦","#E8F5E9"), korrekt: false },
+      { img: svgImg("🐟","#E0F7FA"), korrekt: false }
+    ]
+  },
+  {
+    satz: "Das Mädchen isst einen roten Apfel.",
+    optionen: [
+      { img: svgImg("🍎","#FFEBEE"), korrekt: true },
+      { img: svgImg("🍌","#FFFDE7"), korrekt: false }
+    ]
+  },
+  {
+    satz: "Der Junge fährt mit dem Fahrrad zur Schule.",
+    optionen: [
+      { img: svgImg("🚲","#E8EAF6"), korrekt: true },
+      { img: svgImg("🚗","#FBE9E7"), korrekt: false },
+      { img: svgImg("🚌","#FFF8E1"), korrekt: false }
+    ]
+  },
+  {
+    satz: "Die Sonne scheint am blauen Himmel.",
+    optionen: [
+      { img: svgImg("☀️","#FFF9C4"), korrekt: true },
+      { img: svgImg("🌧️","#ECEFF1"), korrekt: false }
+    ]
+  },
+  {
+    satz: "Wir essen zusammen am Tisch zu Abend.",
+    optionen: [
+      { img: svgImg("🍽️","#F3E5F5"), korrekt: true },
+      { img: svgImg("🛏️","#E1F5FE"), korrekt: false },
+      { img: svgImg("📚","#EFEBE9"), korrekt: false }
+    ]
+  },
+  {
+    satz: "Der Vogel sitzt auf dem Baum.",
+    optionen: [
+      { img: svgImg("🐦","#E8F5E9"), korrekt: true },
+      { img: svgImg("🐘","#FFF3E0"), korrekt: false }
+    ]
+  },
+  {
+    satz: "Das Kind spielt mit dem roten Ball.",
+    optionen: [
+      { img: svgImg("⚽","#E8F5E9"), korrekt: true },
+      { img: svgImg("🧸","#FBE9E7"), korrekt: false },
+      { img: svgImg("🪁","#E3F2FD"), korrekt: false }
+    ]
+  }
+];
+
+/* =========================================================
+   2) STATE & STORAGE
+   ========================================================= */
+const LS_AUFGABEN = "daz_aufgaben_v1";
+const LS_STUDENTS = "daz_students_v1";
+const LS_PIN = "daz_admin_pin_v1";
+
+function loadAufgaben(){
+  try{
+    const raw = localStorage.getItem(LS_AUFGABEN);
+    if(raw) return JSON.parse(raw);
+  }catch(e){ console.warn("Aufgaben konnten nicht geladen werden", e); }
+  return JSON.parse(JSON.stringify(DEFAULT_AUFGABEN));
+}
+function saveAufgabenToStorage(arr){
+  localStorage.setItem(LS_AUFGABEN, JSON.stringify(arr));
+}
+function loadStudents(){
+  try{
+    const raw = localStorage.getItem(LS_STUDENTS);
+    if(raw) return JSON.parse(raw);
+  }catch(e){ console.warn(e); }
+  return {};
+}
+function saveStudents(obj){
+  localStorage.setItem(LS_STUDENTS, JSON.stringify(obj));
+}
+function getPin(){
+  return localStorage.getItem(LS_PIN) || "1234";
+}
+
+let aufgabenSource = loadAufgaben();  // "master" list (persisted/edited)
+let gameOrder = [];                   // shuffled task list for current round
+let currentIndex = 0;
+let currentStudent = "";
+let correctFirstTry = 0;
+let wrongAttemptsTotal = 0;
+let solvedCurrentWithoutError = true;
+let taskSolved = false;
+
+/* =========================================================
+   3) HELPERS: navigation
+   ========================================================= */
+const screens = ["screen-login","screen-game","screen-end","screen-admin-login","screen-admin"];
+function showScreen(id){
+  screens.forEach(s => document.getElementById(s).classList.toggle("active", s===id));
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+/* =========================================================
+   4) TEXT-TO-SPEECH
+   ========================================================= */
+let germanVoice = null;
+function pickGermanVoice(){
+  const voices = speechSynthesis.getVoices();
+  germanVoice = voices.find(v => v.lang === "de-DE") ||
+                voices.find(v => v.lang && v.lang.startsWith("de")) || null;
+}
+if("speechSynthesis" in window){
+  pickGermanVoice();
+  speechSynthesis.onvoiceschanged = pickGermanVoice;
+}
+function speak(text){
+  if(!("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "de-DE";
+  if(germanVoice) u.voice = germanVoice;
+  u.rate = 0.95;
+  speechSynthesis.speak(u);
+}
+
+/* =========================================================
+   5) SOUND EFFECTS (Web Audio API)
+   ========================================================= */
+let audioCtx = null;
+function getCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playTone(freq, start, duration, type="sine", gainVal=0.2){
+  const ctx = getCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, ctx.currentTime+start);
+  gain.gain.setValueAtTime(0, ctx.currentTime+start);
+  gain.gain.linearRampToValueAtTime(gainVal, ctx.currentTime+start+0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+start+duration);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(ctx.currentTime+start);
+  osc.stop(ctx.currentTime+start+duration+0.05);
+}
+function playSuccessSound(){
+  playTone(523.25, 0, 0.15);
+  playTone(659.25, 0.12, 0.15);
+  playTone(783.99, 0.24, 0.28);
+}
+function playErrorSound(){
+  playTone(220, 0, 0.18, "sawtooth", 0.15);
+  playTone(180, 0.14, 0.22, "sawtooth", 0.15);
+}
+
+/* =========================================================
+   6) CONFETTI
+   ========================================================= */
+const confettiCanvas = document.getElementById("confetti-canvas");
+const cctx = confettiCanvas.getContext("2d");
+function resizeCanvas(){
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+function burstConfetti(originX, originY){
+  const colors = ["#3b82f6","#22c55e","#f59e0b","#ef4444","#a855f7","#06b6d4"];
+  const particles = [];
+  const count = 70;
+  for(let i=0;i<count;i++){
+    particles.push({
+      x: originX, y: originY,
+      vx: (Math.random()-0.5)*10,
+      vy: (Math.random()-1.6)*10,
+      size: 5+Math.random()*6,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      rotation: Math.random()*360,
+      vr: (Math.random()-0.5)*20,
+      life: 0
+    });
+  }
+  const maxLife = 70;
+  function frame(){
+    cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+    let alive = false;
+    particles.forEach(p=>{
+      if(p.life>maxLife) return;
+      alive = true;
+      p.life++;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.35;
+      p.rotation += p.vr;
+      cctx.save();
+      cctx.globalAlpha = Math.max(0, 1 - p.life/maxLife);
+      cctx.translate(p.x, p.y);
+      cctx.rotate(p.rotation*Math.PI/180);
+      cctx.fillStyle = p.color;
+      cctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+      cctx.restore();
+    });
+    if(alive){
+      requestAnimationFrame(frame);
+    }else{
+      cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+    }
+  }
+  frame();
+}
+
+/* =========================================================
+   7) LOGIN
+   ========================================================= */
+document.getElementById("btn-start").addEventListener("click", startFromLogin);
+document.getElementById("input-name").addEventListener("keydown", e=>{
+  if(e.key === "Enter") startFromLogin();
+});
+function startFromLogin(){
+  const name = document.getElementById("input-name").value.trim();
+  if(!name){
+    document.getElementById("input-name").focus();
+    document.getElementById("input-name").style.borderColor = "var(--red)";
+    return;
+  }
+  currentStudent = name;
+  startGame();
+}
+
+/* =========================================================
+   8) GAME LOGIC
+   ========================================================= */
+function startGame(){
+  aufgabenSource = loadAufgaben();
+  if(aufgabenSource.length === 0){
+    alert("Es sind noch keine Aufgaben vorhanden. Bitte die Lehrperson kontaktieren.");
+    return;
+  }
+  gameOrder = shuffle(aufgabenSource);
+  currentIndex = 0;
+  correctFirstTry = 0;
+  wrongAttemptsTotal = 0;
+  document.getElementById("progress-name").textContent = "👤 " + currentStudent;
+  showScreen("screen-game");
+  renderTask();
+}
+
+function renderTask(){
+  const total = gameOrder.length;
+  const task = gameOrder[currentIndex];
+  taskSolved = false;
+  solvedCurrentWithoutError = true;
+
+  document.getElementById("progress-text").textContent = `Aufgabe ${currentIndex+1} von ${total}`;
+  document.getElementById("progress-fill").style.width = `${(currentIndex/total)*100}%`;
+  document.getElementById("sentence-text").textContent = task.satz;
+  document.getElementById("btn-next").disabled = true;
+
+  const grid = document.getElementById("options-grid");
+  grid.innerHTML = "";
+  const optionOrder = shuffle(task.optionen.map((o,i)=>({...o, _idx:i})));
+  optionOrder.forEach(opt=>{
+    const card = document.createElement("div");
+    card.className = "option-card";
+    card.setAttribute("role","button");
+    card.setAttribute("tabindex","0");
+    card.setAttribute("aria-label", opt.korrekt ? "Bildoption" : "Bildoption");
+    const img = document.createElement("img");
+    img.src = opt.img;
+    img.alt = "Auswahlbild";
+    img.draggable = false;
+    const mark = document.createElement("div");
+    mark.className = "mark";
+    card.appendChild(img);
+    card.appendChild(mark);
+    grid.appendChild(card);
+
+    function activate(){
+      handleOptionClick(card, mark, opt);
+    }
+    card.addEventListener("click", activate);
+    card.addEventListener("keydown", e=>{
+      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); activate(); }
+    });
+  });
+
+  speak(task.satz);
+}
+
+function handleOptionClick(card, mark, opt){
+  if(taskSolved || card.classList.contains("wrong") || card.classList.contains("disabled")) return;
+
+  if(opt.korrekt){
+    card.classList.add("correct");
+    mark.textContent = "✓";
+    taskSolved = true;
+    playSuccessSound();
+    const rect = card.getBoundingClientRect();
+    burstConfetti(rect.left+rect.width/2, rect.top+rect.height/2);
+    // Disable all other cards
+    document.querySelectorAll(".option-card").forEach(c=>{
+      if(c!==card) c.classList.add("disabled");
+    });
+    if(solvedCurrentWithoutError) correctFirstTry++;
+    document.getElementById("btn-next").disabled = false;
+    document.getElementById("btn-next").focus();
+  }else{
+    card.classList.add("wrong","shake");
+    mark.textContent = "✗";
+    playErrorSound();
+    solvedCurrentWithoutError = false;
+    wrongAttemptsTotal++;
+    setTimeout(()=> card.classList.remove("shake"), 500);
+    setTimeout(()=> card.classList.add("disabled"), 500);
+  }
+}
+
+document.getElementById("btn-speak").addEventListener("click", ()=>{
+  const task = gameOrder[currentIndex];
+  if(task) speak(task.satz);
+});
+
+document.getElementById("btn-next").addEventListener("click", ()=>{
+  if(currentIndex < gameOrder.length-1){
+    currentIndex++;
+    renderTask();
+  }else{
+    finishGame();
+  }
+});
+
+function finishGame(){
+  document.getElementById("progress-fill").style.width = "100%";
+  const total = gameOrder.length;
+  const pct = Math.round((correctFirstTry/total)*100);
+
+  let stars = 1;
+  if(pct >= 90) stars = 3;
+  else if(pct >= 60) stars = 2;
+
+  document.getElementById("end-stars").textContent = "⭐".repeat(stars) + "☆".repeat(3-stars);
+  const msgs = {
+    3: "Fantastisch gemacht! 🎉",
+    2: "Gut gemacht! 👍",
+    1: "Weiter üben – du schaffst das! 💪"
+  };
+  document.getElementById("end-msg").textContent = msgs[stars];
+  document.getElementById("end-stats").textContent =
+    `${correctFirstTry} von ${total} auf Anhieb richtig (${pct}%) · ${wrongAttemptsTotal} Versuche insgesamt falsch`;
+
+  // Datensatz speichern
+  const students = loadStudents();
+  if(!students[currentStudent]) students[currentStudent] = [];
+  students[currentStudent].push({
+    datum: new Date().toISOString(),
+    total: total,
+    korrektAufAnhieb: correctFirstTry,
+    falscheVersuche: wrongAttemptsTotal,
+    prozent: pct
+  });
+  saveStudents(students);
+
+  showScreen("screen-end");
+  burstConfetti(window.innerWidth/2, window.innerHeight/3);
+}
+
+document.getElementById("btn-replay").addEventListener("click", startGame);
+document.getElementById("btn-new-student").addEventListener("click", ()=>{
+  document.getElementById("input-name").value = "";
+  showScreen("screen-login");
+  document.getElementById("input-name").focus();
+});
+
+/* =========================================================
+   9) ADMIN – LOGIN
+   ========================================================= */
+document.getElementById("btn-open-admin").addEventListener("click", ()=>{
+  document.getElementById("input-pin").value = "";
+  document.getElementById("pin-error").style.display = "none";
+  showScreen("screen-admin-login");
+  document.getElementById("input-pin").focus();
+});
+document.getElementById("btn-pin-cancel").addEventListener("click", ()=>{
+  showScreen(currentStudent ? "screen-game" : "screen-login");
+});
+document.getElementById("btn-pin-submit").addEventListener("click", checkPin);
+document.getElementById("input-pin").addEventListener("keydown", e=>{
+  if(e.key === "Enter") checkPin();
+});
+function checkPin(){
+  const val = document.getElementById("input-pin").value;
+  if(val === getPin()){
+    enterAdmin();
+  }else{
+    document.getElementById("pin-error").style.display = "block";
+  }
+}
+function enterAdmin(){
+  showScreen("screen-admin");
+  renderResultsTable();
+  renderAufgabenEditor();
+}
+document.getElementById("btn-admin-exit").addEventListener("click", ()=>{
+  showScreen(currentStudent ? "screen-login" : "screen-login");
+});
+
+/* Tabs */
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+/* =========================================================
+   10) ADMIN – AUSWERTUNG
+   ========================================================= */
+function renderResultsTable(){
+  const students = loadStudents();
+  const names = Object.keys(students).sort();
+  const wrap = document.getElementById("results-table-wrap");
+  if(names.length === 0){
+    wrap.innerHTML = `<p class="empty-hint">Noch keine Ergebnisse vorhanden.</p>`;
+    return;
+  }
+  let html = `<table><thead><tr>
+    <th>Name</th><th>Spiele</th><th>Letztes Spiel</th><th>Ø Richtig</th><th>Letztes Ergebnis</th>
+  </tr></thead><tbody>`;
+  names.forEach(name=>{
+    const sessions = students[name];
+    const last = sessions[sessions.length-1];
+    const avg = Math.round(sessions.reduce((s,x)=>s+x.prozent,0)/sessions.length);
+    const lastDate = new Date(last.datum).toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"});
+    html += `<tr>
+      <td>${escapeHtml(name)}</td>
+      <td>${sessions.length}</td>
+      <td>${lastDate}</td>
+      <td>${avg}%</td>
+      <td>${last.korrektAufAnhieb}/${last.total} (${last.prozent}%)</td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+}
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+document.getElementById("btn-export-data").addEventListener("click", ()=>{
+  downloadJson(loadStudents(), "daz-ergebnisse.json");
+});
+document.getElementById("btn-clear-data").addEventListener("click", ()=>{
+  if(confirm("Wirklich ALLE gespeicherten Schülerergebnisse löschen? Das kann nicht rückgängig gemacht werden.")){
+    localStorage.removeItem(LS_STUDENTS);
+    renderResultsTable();
+  }
+});
+function downloadJson(obj, filename){
+  const blob = new Blob([JSON.stringify(obj,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* =========================================================
+   11) ADMIN – AUFGABEN VERWALTEN
+   ========================================================= */
+let editingAufgaben = [];
+
+function renderAufgabenEditor(){
+  editingAufgaben = JSON.parse(JSON.stringify(loadAufgaben()));
+  drawAufgabenList();
+}
+
+function drawAufgabenList(){
+  const list = document.getElementById("aufgaben-list");
+  list.innerHTML = "";
+  editingAufgaben.forEach((task, ti)=>{
+    const card = document.createElement("div");
+    card.className = "task-card";
+    card.innerHTML = `
+      <div class="task-card-head">
+        <span>Aufgabe ${ti+1}</span>
+        <div class="row">
+          <button class="btn small outline" data-act="speak" data-ti="${ti}">🔊 Testen</button>
+          <button class="btn small red" data-act="del-task" data-ti="${ti}">🗑 Löschen</button>
+        </div>
+      </div>
+      <label class="field-label">Satz</label>
+      <textarea rows="2" data-field="satz" data-ti="${ti}">${escapeHtml(task.satz)}</textarea>
+      <label class="field-label">Bild-Optionen</label>
+      <div class="opt-list" data-ti="${ti}"></div>
+      <div class="row" style="margin-top:10px;">
+        <button class="btn small outline" data-act="add-opt" data-ti="${ti}">➕ Bild hinzufügen</button>
+      </div>
+    `;
+    list.appendChild(card);
+    const optList = card.querySelector(".opt-list");
+    task.optionen.forEach((opt, oi)=>{
+      const optDiv = document.createElement("div");
+      optDiv.className = "opt-edit";
+      optDiv.innerHTML = `
+        <img src="${opt.img}" alt="Vorschau">
+        <label>
+          <input type="checkbox" data-act="korrekt" data-ti="${ti}" data-oi="${oi}" ${opt.korrekt?"checked":""}>
+          Richtige Antwort
+        </label>
+        <input type="url" placeholder="Bild-URL" value="${opt.img.startsWith('data:')?'':escapeHtml(opt.img)}" data-act="url" data-ti="${ti}" data-oi="${oi}">
+        <label class="btn small outline" style="display:block; text-align:center; cursor:pointer;">
+          📁 Bild hochladen
+          <input type="file" accept="image/*" style="display:none;" data-act="upload" data-ti="${ti}" data-oi="${oi}">
+        </label>
+        <button class="btn small red" style="width:100%; margin-top:6px;" data-act="del-opt" data-ti="${ti}" data-oi="${oi}">Bild entfernen</button>
+      `;
+      optList.appendChild(optDiv);
+    });
+  });
+}
+
+document.getElementById("aufgaben-list").addEventListener("click", e=>{
+  const btn = e.target.closest("[data-act]");
+  if(!btn) return;
+  const act = btn.dataset.act;
+  const ti = btn.dataset.ti !== undefined ? parseInt(btn.dataset.ti) : null;
+  const oi = btn.dataset.oi !== undefined ? parseInt(btn.dataset.oi) : null;
+
+  if(act === "del-task"){
+    if(confirm("Diese Aufgabe wirklich löschen?")){
+      editingAufgaben.splice(ti,1);
+      drawAufgabenList();
+    }
+  }else if(act === "speak"){
+    speak(editingAufgaben[ti].satz);
+  }else if(act === "add-opt"){
+    editingAufgaben[ti].optionen.push({ img: svgImg("❓","#F1F5F9"), korrekt:false });
+    drawAufgabenList();
+  }else if(act === "del-opt"){
+    if(editingAufgaben[ti].optionen.length <= 2){
+      alert("Eine Aufgabe benötigt mindestens 2 Bilder.");
+      return;
+    }
+    editingAufgaben[ti].optionen.splice(oi,1);
+    drawAufgabenList();
+  }
+});
+
+document.getElementById("aufgaben-list").addEventListener("change", e=>{
+  const el = e.target;
+  const act = el.dataset.act;
+  if(!act) return;
+  const ti = el.dataset.ti !== undefined ? parseInt(el.dataset.ti) : null;
+  const oi = el.dataset.oi !== undefined ? parseInt(el.dataset.oi) : null;
+
+  if(act === "korrekt"){
+    editingAufgaben[ti].optionen[oi].korrekt = el.checked;
+  }else if(act === "url"){
+    if(el.value.trim()){
+      editingAufgaben[ti].optionen[oi].img = el.value.trim();
+      drawAufgabenList();
+    }
+  }else if(act === "upload"){
+    const file = el.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      editingAufgaben[ti].optionen[oi].img = reader.result;
+      drawAufgabenList();
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+document.getElementById("aufgaben-list").addEventListener("input", e=>{
+  const el = e.target;
+  if(el.dataset.field === "satz"){
+    const ti = parseInt(el.dataset.ti);
+    editingAufgaben[ti].satz = el.value;
+  }
+});
+
+document.getElementById("btn-add-aufgabe").addEventListener("click", ()=>{
+  editingAufgaben.push({
+    satz: "Neuer Satz…",
+    optionen: [
+      { img: svgImg("❓","#F1F5F9"), korrekt:true },
+      { img: svgImg("❓","#F1F5F9"), korrekt:false }
+    ]
+  });
+  drawAufgabenList();
+});
+
+document.getElementById("btn-save-aufgaben").addEventListener("click", ()=>{
+  for(const t of editingAufgaben){
+    if(!t.satz.trim()){ alert("Bitte alle Sätze ausfüllen."); return; }
+    if(t.optionen.length < 2){ alert("Jede Aufgabe braucht mindestens 2 Bilder."); return; }
+    if(!t.optionen.some(o=>o.korrekt)){ alert(`Bei "${t.satz}" fehlt eine richtige Antwort.`); return; }
+  }
+  if(editingAufgaben.length === 0){ alert("Es muss mindestens eine Aufgabe geben."); return; }
+  saveAufgabenToStorage(editingAufgaben);
+  alert("Gespeichert! ✔");
+});
+
+document.getElementById("btn-reset-aufgaben").addEventListener("click", ()=>{
+  if(confirm("Wirklich alle Aufgaben auf die Standard-Beispiele zurücksetzen?")){
+    localStorage.removeItem(LS_AUFGABEN);
+    renderAufgabenEditor();
+  }
+});
+
+document.getElementById("btn-export-aufgaben").addEventListener("click", ()=>{
+  downloadJson(editingAufgaben, "daz-aufgaben.json");
+});
+document.getElementById("input-import-aufgaben").addEventListener("change", e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      if(!Array.isArray(data)) throw new Error("Ungültiges Format");
+      editingAufgaben = data;
+      drawAufgabenList();
+      alert("Importiert. Bitte auf 'Speichern' klicken, um es zu übernehmen.");
+    }catch(err){
+      alert("Datei konnte nicht gelesen werden: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
+/* =========================================================
+   12) ADMIN – EINSTELLUNGEN (PIN ändern)
+   ========================================================= */
+document.getElementById("btn-change-pin").addEventListener("click", ()=>{
+  const val = document.getElementById("input-new-pin").value.trim();
+  if(val.length < 4){
+    alert("Die PIN sollte mindestens 4 Zeichen haben.");
+    return;
+  }
+  localStorage.setItem(LS_PIN, val);
+  document.getElementById("input-new-pin").value = "";
+  const msg = document.getElementById("pin-change-msg");
+  msg.style.display = "block";
+  setTimeout(()=> msg.style.display = "none", 2500);
+});
+
+</script>
+</body>
+</html>

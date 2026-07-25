@@ -4,12 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
 <title>DaZ – Satz-Bild-Zuordnung</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
   :root{
     --blue:#3b82f6; --blue-dark:#2563eb;
     --green:#22c55e; --green-dark:#16a34a;
     --red:#ef4444; --red-dark:#dc2626;
-    --yellow:#f59e0b;
+    --yellow:#f59e0b; --gold:#eab308;
     --bg:#eef4ff; --card:#ffffff; --ink:#1e293b; --muted:#64748b;
     --radius:20px;
     --shadow:0 6px 18px rgba(30,41,59,.12);
@@ -34,16 +35,22 @@
   @keyframes fadein{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
 
   h1{ font-size:clamp(1.4rem,4vw,2rem); margin:.2em 0; }
+  h3{ margin:0 0 10px; }
   .top-row{
     width:100%; max-width:900px; display:flex; justify-content:space-between; align-items:center;
-    margin-bottom:8px;
+    margin-bottom:8px; gap:10px; flex-wrap:wrap;
   }
   .brand{ font-weight:800; color:var(--blue-dark); font-size:1.1rem; display:flex; gap:8px; align-items:center;}
+  .top-actions{ display:flex; gap:8px; align-items:center; }
   .icon-btn{
     background:#fff; border:none; border-radius:14px; padding:10px 14px;
     box-shadow:var(--shadow); cursor:pointer; font-size:1rem; color:var(--muted);
   }
   .icon-btn:hover{ color:var(--blue-dark); }
+  .coin-badge{
+    background:#fff7e0; border:2px solid var(--gold); border-radius:20px; padding:8px 16px;
+    font-weight:800; color:#92660a; display:flex; align-items:center; gap:6px; font-size:1rem;
+  }
 
   /* Buttons */
   .btn{
@@ -57,25 +64,40 @@
   .btn.green{ background:var(--green); }
   .btn.red{ background:var(--red); }
   .btn.gray{ background:#94a3b8; }
+  .btn.gold{ background:linear-gradient(135deg,#f59e0b,#eab308); }
   .btn.outline{ background:#fff; color:var(--blue-dark); border:2px solid var(--blue); box-shadow:none; }
   .btn.big{ font-size:1.3rem; padding:18px 30px; width:100%; }
   .btn.small{ padding:8px 14px; font-size:.9rem; }
 
-  input[type=text], input[type=password], input[type=url], textarea{
+  input[type=text], input[type=password], input[type=url], input[type=email], input[type=number], textarea, select{
     width:100%; padding:12px 14px; border-radius:12px; border:2px solid #dbeafe;
     font-size:1rem; font-family:inherit; background:#fff; color:var(--ink);
   }
-  input:focus, textarea:focus{ outline:none; border-color:var(--blue); }
+  input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--blue); }
 
   .card{
     background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
     padding:24px; margin-bottom:16px;
   }
 
-  /* ---------- LOGIN ---------- */
-  #screen-login .card{ text-align:center; }
-  #screen-login p{ color:var(--muted); }
-  .login-emoji{ font-size:4rem; }
+  /* ---------- STUDENT PICKER ---------- */
+  #screen-student-picker .card{ text-align:center; }
+  .student-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; margin-top:16px; }
+  .student-chip{
+    background:#f1f5f9; border:2px solid transparent; border-radius:16px; padding:16px 10px;
+    cursor:pointer; font-weight:700; text-align:center; transition:all .15s ease;
+  }
+  .student-chip:hover{ border-color:var(--blue); transform:translateY(-3px); background:#e8f0fe; }
+  .student-avatar{ font-size:2rem; }
+
+  /* ---------- SET PICKER ---------- */
+  .set-picker-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+  .set-card{
+    background:#fff; border-radius:18px; box-shadow:var(--shadow); padding:20px; cursor:pointer;
+    text-align:center; border:3px solid transparent; transition:all .15s ease;
+  }
+  .set-card:hover{ transform:translateY(-4px); border-color:var(--blue); }
+  .set-card .tag{ display:inline-block; background:#e8f0fe; color:var(--blue-dark); border-radius:10px; padding:2px 10px; font-size:.8rem; font-weight:700; margin:4px; }
 
   /* ---------- GAME ---------- */
   .progress-wrap{ margin-bottom:14px; }
@@ -88,7 +110,6 @@
     padding:28px 24px; text-align:center; margin-bottom:20px;
   }
   .sentence-text{ font-size:clamp(1.3rem,4.2vw,2rem); font-weight:700; line-height:1.4; margin:0 0 16px 0; }
-  .speak-btn{ font-size:1.1rem; }
 
   .options-grid{
     display:grid; gap:18px;
@@ -119,6 +140,15 @@
     30%,50%,70%{ transform:translateX(-10px); }
     40%,60%{ transform:translateX(10px); }
   }
+  .coin-pop{
+    position:fixed; font-size:1.8rem; font-weight:900; color:#eab308; pointer-events:none; z-index:1000;
+    animation:coinpop 1s ease forwards;
+  }
+  @keyframes coinpop{
+    0%{ transform:translateY(0) scale(0.6); opacity:0; }
+    20%{ transform:translateY(-10px) scale(1.2); opacity:1; }
+    100%{ transform:translateY(-70px) scale(1); opacity:0; }
+  }
 
   .game-actions{ display:flex; gap:14px; justify-content:center; margin-top:22px; flex-wrap:wrap; }
 
@@ -128,10 +158,29 @@
   #screen-end .card{ text-align:center; }
   .stars{ font-size:3rem; letter-spacing:8px; margin:10px 0; }
   .end-msg{ font-size:1.4rem; font-weight:700; margin:6px 0; }
-  .end-stats{ color:var(--muted); font-size:1.05rem; margin-bottom:20px; }
+  .end-stats{ color:var(--muted); font-size:1.05rem; margin-bottom:10px; }
+  .end-coins{ font-size:1.3rem; font-weight:800; color:#92660a; margin-bottom:20px; }
 
-  /* ---------- ADMIN LOGIN ---------- */
+  /* ---------- BONUS HUB ---------- */
+  .bonus-hero{ text-align:center; margin-bottom:18px; }
+  .bonus-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; }
+  .game-card{
+    background:#fff; border-radius:18px; box-shadow:var(--shadow); padding:20px; text-align:center;
+  }
+  .game-card .emoji{ font-size:3rem; }
+  .shop-box{ background:#fff7e0; border:2px dashed var(--gold); border-radius:16px; padding:18px; text-align:center; margin-bottom:18px; }
+
+  /* ---------- MINI GAMES ---------- */
+  .game-canvas-wrap{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  canvas.minigame{ width:100%; max-width:380px; aspect-ratio:9/14; background:#dff1ff; border-radius:20px; box-shadow:var(--shadow); touch-action:none; }
+  canvas.minigame.runner{ aspect-ratio:16/9; background:#fff4d6; }
+  .minigame-hud{ display:flex; gap:16px; font-weight:800; font-size:1.1rem; }
+
+  /* ---------- LOGIN / ADMIN LOGIN ---------- */
   #screen-admin-login .card{ max-width:420px; margin:0 auto; text-align:center; }
+  .auth-tabs{ display:flex; gap:8px; justify-content:center; margin-bottom:14px; }
+  .auth-tab{ background:#f1f5f9; border:none; border-radius:12px; padding:8px 16px; font-weight:700; color:var(--muted); cursor:pointer; }
+  .auth-tab.active{ background:var(--blue); color:#fff; }
 
   /* ---------- ADMIN ---------- */
   .admin-header{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
@@ -162,7 +211,23 @@
   .field-label{ font-size:.85rem; font-weight:700; color:var(--muted); margin:10px 0 4px; display:block; }
   .danger-zone{ border:2px solid #fecaca; background:#fff5f5; border-radius:14px; padding:16px; margin-top:20px; }
 
+  .set-list-item{ border:2px solid #eef2f7; border-radius:14px; padding:14px; margin-bottom:12px; }
+  .set-list-item.editing{ border-color:var(--blue); }
+
+  .student-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:12px; border-bottom:1px solid #eef2f7; }
+  .student-row:last-child{ border-bottom:none; }
+  .student-meta{ font-size:.85rem; color:var(--muted); }
+  .assign-tags{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .assign-tag{ background:#e8f0fe; color:var(--blue-dark); border-radius:8px; padding:2px 8px; font-size:.75rem; font-weight:700; }
+
+  .modal-overlay{ position:fixed; inset:0; background:rgba(15,23,42,.55); display:none; align-items:center; justify-content:center; z-index:1200; padding:16px; }
+  .modal-overlay.active{ display:flex; }
+  .modal-box{ background:#fff; border-radius:20px; padding:24px; max-width:340px; width:100%; text-align:center; }
+  .modal-box canvas{ margin:12px auto; }
+
   footer.hint{ text-align:center; color:var(--muted); font-size:.8rem; margin-top:20px; }
+  .setup-warning{ background:#fff5f5; border:2px solid var(--red); border-radius:16px; padding:20px; color:var(--red-dark); }
+  .checkbox-row{ display:flex; align-items:center; gap:8px; font-weight:600; }
 
   @media (max-width:560px){
     .card{ padding:18px; }
@@ -176,19 +241,42 @@
 
 <div class="app">
   <div class="top-row">
-    <div class="brand">🇩🇪 DaZ Satz-Bild-Zuordnung</div>
-    <button class="icon-btn" id="btn-open-admin" title="Für Lehrpersonen">⚙️ Admin</button>
+    <div class="brand">🇩🇪 DaZ Satz-Bild-zuordnung</div>
+    <div class="top-actions">
+      <div class="coin-badge" id="coin-badge" style="display:none;">🪙 <span id="coin-count">0</span></div>
+      <button class="icon-btn" id="btn-open-admin" title="Für Lehrpersonen">⚙️ Admin</button>
+    </div>
   </div>
 
-  <!-- SCREEN: LOGIN -->
-  <section class="screen active" id="screen-login">
+  <!-- SCREEN: SETUP WARNING (Firebase nicht konfiguriert) -->
+  <section class="screen" id="screen-setup-warning">
+    <div class="setup-warning">
+      <h1>⚠️ Einrichtung fehlt</h1>
+      <p>Diese App ist noch nicht mit einer Firebase-Datenbank verbunden. Die Lehrperson muss zuerst die <code>firebaseConfig</code> oben im Code eintragen.</p>
+    </div>
+  </section>
+
+  <!-- SCREEN: STUDENT PICKER -->
+  <section class="screen active" id="screen-student-picker">
     <div class="card">
-      <div class="login-emoji">👋📚</div>
-      <h1>Willkommen!</h1>
-      <p>Wie heisst du?</p>
-      <input type="text" id="input-name" placeholder="Dein Name" maxlength="40" autocomplete="off">
-      <br><br>
-      <button class="btn big" id="btn-start">Los geht's ➔</button>
+      <div style="font-size:3.5rem;">👋📚</div>
+      <h1>Wer bist du?</h1>
+      <p id="student-picker-hint" style="color:var(--muted);">Tippe auf deinen Namen.</p>
+      <div class="student-list" id="student-list"></div>
+      <p class="empty-hint" id="student-list-empty" style="display:none;">Noch keine Zugänge vorhanden. Bitte die Lehrperson fragen.</p>
+    </div>
+  </section>
+
+  <!-- SCREEN: SET PICKER -->
+  <section class="screen" id="screen-set-picker">
+    <div class="card" style="text-align:center;">
+      <h1 id="set-picker-greeting">Hallo!</h1>
+      <p style="color:var(--muted);">Welche Aufgabe möchtest du üben?</p>
+    </div>
+    <div class="set-picker-grid" id="set-picker-grid"></div>
+    <div class="row" style="justify-content:center; margin-top:16px;">
+      <button class="btn outline" id="btn-set-picker-back">← Zurück</button>
+      <button class="btn gold" id="btn-set-picker-bonus">🎮 Bonusspiele</button>
     </div>
   </section>
 
@@ -220,9 +308,73 @@
       <div class="stars" id="end-stars">⭐⭐⭐</div>
       <div class="end-msg" id="end-msg">Super gemacht!</div>
       <div class="end-stats" id="end-stats"></div>
+      <div class="end-coins" id="end-coins"></div>
       <button class="btn big green" id="btn-replay">🔁 Erneut spielen</button>
       <br><br>
-      <button class="btn outline" id="btn-new-student">Anderer Name</button>
+      <button class="btn outline" id="btn-end-to-sets">Andere Aufgabe wählen</button>
+    </div>
+  </section>
+
+  <!-- SCREEN: BONUS HUB -->
+  <section class="screen" id="screen-bonus-hub">
+    <div class="bonus-hero">
+      <h1>🎮 Bonusspiele</h1>
+      <div class="coin-badge" style="display:inline-flex;">🪙 <span id="bonus-coin-count">0</span> Münzen</div>
+      <p style="color:var(--muted); margin-top:10px;">Verbleibende Bonusspiele: <strong id="bonus-plays-count">0</strong></p>
+    </div>
+
+    <div class="shop-box" id="shop-box">
+      <p><strong>15 Münzen → 2 Bonusspiele</strong></p>
+      <button class="btn gold" id="btn-buy-plays" disabled>🪙 Eintauschen</button>
+    </div>
+
+    <div class="bonus-grid">
+      <div class="game-card">
+        <div class="emoji">☁️🐸</div>
+        <h3>Wolken-Hüpfer</h3>
+        <p style="color:var(--muted); font-size:.9rem;">Spring von Wolke zu Wolke, so hoch du kannst!</p>
+        <button class="btn green" id="btn-play-doodle" disabled>Spielen</button>
+      </div>
+      <div class="game-card">
+        <div class="emoji">🏃🦘</div>
+        <h3>Hindernis-Sprint</h3>
+        <p style="color:var(--muted); font-size:.9rem;">Spring über die Hindernisse, so lange du kannst!</p>
+        <button class="btn green" id="btn-play-runner" disabled>Spielen</button>
+      </div>
+    </div>
+
+    <div class="row" style="justify-content:center; margin-top:20px;">
+      <button class="btn outline" id="btn-bonus-back">← Zurück</button>
+    </div>
+  </section>
+
+  <!-- SCREEN: MINIGAME DOODLE -->
+  <section class="screen" id="screen-game-doodle">
+    <div class="game-canvas-wrap">
+      <div class="minigame-hud">
+        <span>Höhe: <span id="doodle-score">0</span> m</span>
+      </div>
+      <canvas class="minigame" id="doodle-canvas" width="360" height="560"></canvas>
+      <div class="row">
+        <button class="btn" id="btn-doodle-start">▶ Start</button>
+        <button class="btn outline" id="btn-doodle-back">← Zurück</button>
+      </div>
+      <p style="color:var(--muted); font-size:.85rem;">Steuerung: Finger ziehen / Pfeiltasten ← →</p>
+    </div>
+  </section>
+
+  <!-- SCREEN: MINIGAME RUNNER -->
+  <section class="screen" id="screen-game-runner">
+    <div class="game-canvas-wrap">
+      <div class="minigame-hud">
+        <span>Punkte: <span id="runner-score">0</span></span>
+      </div>
+      <canvas class="minigame runner" id="runner-canvas" width="480" height="270"></canvas>
+      <div class="row">
+        <button class="btn" id="btn-runner-start">▶ Start</button>
+        <button class="btn outline" id="btn-runner-back">← Zurück</button>
+      </div>
+      <p style="color:var(--muted); font-size:.85rem;">Steuerung: Leertaste / Antippen zum Springen</p>
     </div>
   </section>
 
@@ -230,15 +382,19 @@
   <section class="screen" id="screen-admin-login">
     <div class="card">
       <h1>🔒 Admin-Bereich</h1>
-      <p>Bitte PIN eingeben:</p>
-      <input type="password" id="input-pin" placeholder="PIN" inputmode="numeric" autocomplete="off">
-      <p id="pin-error" style="color:var(--red); font-weight:700; display:none;">Falsche PIN.</p>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-mode="login">Anmelden</button>
+        <button class="auth-tab" id="auth-tab-signup" data-mode="signup">Konto erstellen</button>
+      </div>
+      <input type="email" id="input-admin-email" placeholder="E-Mail" autocomplete="username">
+      <br><br>
+      <input type="password" id="input-admin-pw" placeholder="Passwort" autocomplete="current-password">
+      <p id="admin-auth-error" style="color:var(--red); font-weight:700; display:none;"></p>
       <br>
       <div class="row" style="justify-content:center;">
-        <button class="btn" id="btn-pin-submit">Anmelden</button>
-        <button class="btn outline" id="btn-pin-cancel">Zurück</button>
+        <button class="btn" id="btn-admin-auth-submit">Anmelden</button>
+        <button class="btn outline" id="btn-admin-login-cancel">Zurück</button>
       </div>
-      <p style="color:var(--muted); font-size:.8rem; margin-top:14px;">Standard-PIN: 1234 (kann im Admin-Bereich geändert werden)</p>
     </div>
   </section>
 
@@ -246,26 +402,33 @@
   <section class="screen" id="screen-admin">
     <div class="admin-header">
       <h1>⚙️ Admin-Bereich</h1>
-      <button class="btn outline" id="btn-admin-exit">✖ Schliessen</button>
+      <div class="row">
+        <button class="btn outline" id="btn-admin-logout">🚪 Abmelden</button>
+        <button class="btn outline" id="btn-admin-exit">✖ Schliessen</button>
+      </div>
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" data-tab="auswertung">📊 Auswertung</button>
-      <button class="tab-btn" data-tab="aufgaben">✏️ Aufgaben verwalten</button>
-      <button class="tab-btn" data-tab="einstellungen">🔧 Einstellungen</button>
+      <button class="tab-btn active" data-tab="schueler">👥 SuS verwalten</button>
+      <button class="tab-btn" data-tab="aufgaben">📚 Aufgaben verwalten</button>
+      <button class="tab-btn" data-tab="auswertung">📊 Auswertung</button>
     </div>
 
-    <!-- TAB: Auswertung -->
-    <div class="tab-panel active" id="tab-auswertung">
+    <!-- TAB: Schüler -->
+    <div class="tab-panel active" id="tab-schueler">
       <div class="card">
-        <div class="row" style="justify-content:space-between; margin-bottom:10px;">
-          <h3 style="margin:0;">Ergebnisse der Schüler:innen</h3>
-          <div class="row">
-            <button class="btn small outline" id="btn-export-data">⬇ Exportieren</button>
-            <button class="btn small red" id="btn-clear-data">🗑 Alle Daten löschen</button>
-          </div>
+        <h3>Neue Schülerin / neuen Schüler hinzufügen</h3>
+        <div class="row">
+          <input type="text" id="input-new-student-name" placeholder="Name" style="max-width:260px;">
+          <button class="btn" id="btn-add-student">➕ Hinzufügen</button>
         </div>
-        <div id="results-table-wrap"></div>
+        <label class="field-label">Zugewiesene Aufgaben (kann später geändert werden)</label>
+        <div id="new-student-set-checks" class="row"></div>
+      </div>
+      <div class="card">
+        <h3>Alle SuS</h3>
+        <div id="student-admin-list"></div>
+        <p class="empty-hint" id="student-admin-empty" style="display:none;">Noch keine SuS angelegt.</p>
       </div>
     </div>
 
@@ -273,54 +436,77 @@
     <div class="tab-panel" id="tab-aufgaben">
       <div class="card">
         <div class="row" style="justify-content:space-between;">
-          <h3 style="margin:0;">Sätze &amp; Bilder verwalten</h3>
-          <div class="row">
-            <button class="btn small outline" id="btn-export-aufgaben">⬇ Exportieren</button>
-            <label class="btn small outline" style="cursor:pointer;">
-              ⬆ Importieren
-              <input type="file" id="input-import-aufgaben" accept="application/json" style="display:none;">
-            </label>
-          </div>
+          <h3 style="margin:0;">Aufgaben-Sets (Fach / Niveau)</h3>
+          <button class="btn small outline" id="btn-seed-demo">✨ Demo-Set laden</button>
         </div>
-        <p style="color:var(--muted); font-size:.9rem;">Änderungen werden erst nach Klick auf "💾 Speichern" wirksam.</p>
-        <div id="aufgaben-list"></div>
-        <div class="row" style="justify-content:center; margin-top:10px;">
-          <button class="btn outline" id="btn-add-aufgabe">➕ Neue Aufgabe</button>
+        <div id="sets-admin-list"></div>
+        <div class="row" style="justify-content:center; margin-top:14px;">
+          <button class="btn outline" id="btn-add-set">➕ Neues Set erstellen</button>
         </div>
-      </div>
-      <div class="row" style="justify-content:center;">
-        <button class="btn green big" id="btn-save-aufgaben" style="max-width:320px;">💾 Speichern</button>
-      </div>
-      <div class="danger-zone">
-        <strong>Zurücksetzen</strong>
-        <p style="color:var(--muted); font-size:.9rem;">Setzt alle Aufgaben auf die mitgelieferten Standard-Beispiele zurück.</p>
-        <button class="btn red" id="btn-reset-aufgaben">Auf Standard zurücksetzen</button>
       </div>
     </div>
 
-    <!-- TAB: Einstellungen -->
-    <div class="tab-panel" id="tab-einstellungen">
+    <!-- TAB: Auswertung -->
+    <div class="tab-panel" id="tab-auswertung">
       <div class="card">
-        <h3>Admin-PIN ändern</h3>
-        <div class="row">
-          <input type="password" id="input-new-pin" placeholder="Neue PIN" style="max-width:200px;" inputmode="numeric">
-          <button class="btn" id="btn-change-pin">Ändern</button>
+        <div class="row" style="justify-content:space-between; margin-bottom:10px;">
+          <h3 style="margin:0;">Ergebnisse der Schüler:innen</h3>
+          <button class="btn small outline" id="btn-export-results">⬇ Exportieren</button>
         </div>
-        <p id="pin-change-msg" style="color:var(--green-dark); font-weight:700; display:none;">PIN geändert ✔</p>
+        <div id="results-table-wrap"></div>
       </div>
     </div>
   </section>
 
-  <footer class="hint">Hinweis: Daten werden lokal in diesem Browser gespeichert (localStorage).</footer>
+  <footer class="hint">Hinweis: Daten werden zentral in Firebase gespeichert. Bitte nur Vornamen verwenden – die Konfiguration ist technisch öffentlich einsehbar.</footer>
 </div>
 
-<script>
-"use strict";
+<!-- QR MODAL -->
+<div class="modal-overlay" id="qr-modal">
+  <div class="modal-box">
+    <h3 id="qr-modal-title">Zugangslink</h3>
+    <canvas id="qr-canvas"></canvas>
+    <input type="text" id="qr-link-text" readonly style="text-align:center; font-size:.75rem;">
+    <div class="row" style="justify-content:center; margin-top:12px;">
+      <button class="btn small" id="btn-qr-copy">📋 Link kopieren</button>
+      <button class="btn small outline" id="btn-qr-close">Schliessen</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+/* =========================================================
+   0) FIREBASE-KONFIGURATION
+   Ersetze dies mit deiner eigenen Konfiguration aus der
+   Firebase-Konsole (Projekteinstellungen → Meine Apps → Web-App).
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "DEIN_API_KEY",
+  authDomain: "DEIN_PROJEKT.firebaseapp.com",
+  projectId: "DEIN_PROJEKT",
+  storageBucket: "DEIN_PROJEKT.appspot.com",
+  messagingSenderId: "DEINE_SENDER_ID",
+  appId: "DEINE_APP_ID"
+};
+
+const FIREBASE_READY = !Object.values(firebaseConfig).some(v => String(v).startsWith("DEIN"));
+
+let db, auth;
+let fb = {};
+if(FIREBASE_READY){
+  const [{ initializeApp }, firestoreMod, authMod] = await Promise.all([
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"),
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js")
+  ]);
+  fb = { ...firestoreMod, ...authMod };
+  const app = initializeApp(firebaseConfig);
+  db = fb.getFirestore(app);
+  auth = fb.getAuth(app);
+}
 
 /* =========================================================
-   1) STANDARD-AUFGABEN — hier ganz einfach anpassbar!
-   img: Bild-URL ODER von der Lehrperson hochgeladenes Bild (Data-URL)
-   korrekt: true/false
+   1) DEMO-DATEN (für "Demo-Set laden" im Admin-Bereich)
    ========================================================= */
 function svgImg(emoji, bg){
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'>
@@ -329,431 +515,647 @@ function svgImg(emoji, bg){
   </svg>`;
   return "data:image/svg+xml," + encodeURIComponent(svg);
 }
-
-const DEFAULT_AUFGABEN = [
-  {
-    satz: "Der Hund schläft unter dem Tisch.",
-    optionen: [
-      { img: svgImg("🐶","#FFF3E0"), korrekt: true },
-      { img: svgImg("🐱","#E3F2FD"), korrekt: false }
-    ]
-  },
-  {
-    satz: "Die Katze trinkt Milch.",
-    optionen: [
-      { img: svgImg("🐱","#E3F2FD"), korrekt: true },
-      { img: svgImg("🐦","#E8F5E9"), korrekt: false },
-      { img: svgImg("🐟","#E0F7FA"), korrekt: false }
-    ]
-  },
-  {
-    satz: "Das Mädchen isst einen roten Apfel.",
-    optionen: [
-      { img: svgImg("🍎","#FFEBEE"), korrekt: true },
-      { img: svgImg("🍌","#FFFDE7"), korrekt: false }
-    ]
-  },
-  {
-    satz: "Der Junge fährt mit dem Fahrrad zur Schule.",
-    optionen: [
-      { img: svgImg("🚲","#E8EAF6"), korrekt: true },
-      { img: svgImg("🚗","#FBE9E7"), korrekt: false },
-      { img: svgImg("🚌","#FFF8E1"), korrekt: false }
-    ]
-  },
-  {
-    satz: "Die Sonne scheint am blauen Himmel.",
-    optionen: [
-      { img: svgImg("☀️","#FFF9C4"), korrekt: true },
-      { img: svgImg("🌧️","#ECEFF1"), korrekt: false }
-    ]
-  },
-  {
-    satz: "Wir essen zusammen am Tisch zu Abend.",
-    optionen: [
-      { img: svgImg("🍽️","#F3E5F5"), korrekt: true },
-      { img: svgImg("🛏️","#E1F5FE"), korrekt: false },
-      { img: svgImg("📚","#EFEBE9"), korrekt: false }
-    ]
-  },
-  {
-    satz: "Der Vogel sitzt auf dem Baum.",
-    optionen: [
-      { img: svgImg("🐦","#E8F5E9"), korrekt: true },
-      { img: svgImg("🐘","#FFF3E0"), korrekt: false }
-    ]
-  },
-  {
-    satz: "Das Kind spielt mit dem roten Ball.",
-    optionen: [
-      { img: svgImg("⚽","#E8F5E9"), korrekt: true },
-      { img: svgImg("🧸","#FBE9E7"), korrekt: false },
-      { img: svgImg("🪁","#E3F2FD"), korrekt: false }
-    ]
-  }
-];
+const DEMO_SET = {
+  titel: "Demo: Tiere & Alltag",
+  fach: "Deutsch",
+  niveau: "leicht",
+  aufgaben: [
+    { satz:"Der Hund schläft unter dem Tisch.", optionen:[ {img:svgImg("🐶","#FFF3E0"),korrekt:true}, {img:svgImg("🐱","#E3F2FD"),korrekt:false} ] },
+    { satz:"Die Katze trinkt Milch.", optionen:[ {img:svgImg("🐱","#E3F2FD"),korrekt:true}, {img:svgImg("🐦","#E8F5E9"),korrekt:false}, {img:svgImg("🐟","#E0F7FA"),korrekt:false} ] },
+    { satz:"Das Mädchen isst einen roten Apfel.", optionen:[ {img:svgImg("🍎","#FFEBEE"),korrekt:true}, {img:svgImg("🍌","#FFFDE7"),korrekt:false} ] },
+    { satz:"Der Junge fährt mit dem Fahrrad zur Schule.", optionen:[ {img:svgImg("🚲","#E8EAF6"),korrekt:true}, {img:svgImg("🚗","#FBE9E7"),korrekt:false}, {img:svgImg("🚌","#FFF8E1"),korrekt:false} ] },
+    { satz:"Die Sonne scheint am blauen Himmel.", optionen:[ {img:svgImg("☀️","#FFF9C4"),korrekt:true}, {img:svgImg("🌧️","#ECEFF1"),korrekt:false} ] }
+  ]
+};
+const DEMO_SET_MATH = {
+  titel: "Demo: Zahlen & Formen",
+  fach: "Mathematik",
+  niveau: "leicht",
+  aufgaben: [
+    { satz:"Ich sehe drei Äpfel.", optionen:[ {img:svgImg("3️⃣","#E3F2FD"),korrekt:true}, {img:svgImg("5️⃣","#FBE9E7"),korrekt:false} ] },
+    { satz:"Das ist ein Kreis.", optionen:[ {img:svgImg("⚪","#F1F5F9"),korrekt:true}, {img:svgImg("⬛","#F1F5F9"),korrekt:false}, {img:svgImg("🔺","#F1F5F9"),korrekt:false} ] }
+  ]
+};
 
 /* =========================================================
-   2) STATE & STORAGE
+   2) STATE & SCREEN-NAVIGATION
    ========================================================= */
-const LS_AUFGABEN = "daz_aufgaben_v1";
-const LS_STUDENTS = "daz_students_v1";
-const LS_PIN = "daz_admin_pin_v1";
-
-function loadAufgaben(){
-  try{
-    const raw = localStorage.getItem(LS_AUFGABEN);
-    if(raw) return JSON.parse(raw);
-  }catch(e){ console.warn("Aufgaben konnten nicht geladen werden", e); }
-  return JSON.parse(JSON.stringify(DEFAULT_AUFGABEN));
-}
-function saveAufgabenToStorage(arr){
-  localStorage.setItem(LS_AUFGABEN, JSON.stringify(arr));
-}
-function loadStudents(){
-  try{
-    const raw = localStorage.getItem(LS_STUDENTS);
-    if(raw) return JSON.parse(raw);
-  }catch(e){ console.warn(e); }
-  return {};
-}
-function saveStudents(obj){
-  localStorage.setItem(LS_STUDENTS, JSON.stringify(obj));
-}
-function getPin(){
-  return localStorage.getItem(LS_PIN) || "1234";
-}
-
-let aufgabenSource = loadAufgaben();  // "master" list (persisted/edited)
-let gameOrder = [];                   // shuffled task list for current round
-let currentIndex = 0;
-let currentStudent = "";
-let correctFirstTry = 0;
-let wrongAttemptsTotal = 0;
-let solvedCurrentWithoutError = true;
-let taskSolved = false;
-
-/* =========================================================
-   3) HELPERS: navigation
-   ========================================================= */
-const screens = ["screen-login","screen-game","screen-end","screen-admin-login","screen-admin"];
+const screens = ["screen-setup-warning","screen-student-picker","screen-set-picker","screen-game","screen-end",
+  "screen-bonus-hub","screen-game-doodle","screen-game-runner","screen-admin-login","screen-admin"];
 function showScreen(id){
   screens.forEach(s => document.getElementById(s).classList.toggle("active", s===id));
   window.scrollTo({top:0, behavior:"smooth"});
 }
 function shuffle(arr){
   const a = arr.slice();
-  for(let i=a.length-1;i>0;i--){
-    const j = Math.floor(Math.random()*(i+1));
-    [a[i],a[j]] = [a[j],a[i]];
-  }
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
   return a;
 }
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function slugId(){ return Math.random().toString(36).slice(2,8); }
+
+const state = {
+  studentId: null, student: null, sets: [], currentSet: null,
+  gameOrder: [], currentIndex: 0, correctFirstTry: 0, wrongAttemptsTotal: 0,
+  solvedCurrentWithoutError: true, taskSolved: false, coinsEarnedThisRound: 0,
+  isAdmin: false
+};
 
 /* =========================================================
-   4) TEXT-TO-SPEECH
+   3) TEXT-TO-SPEECH
    ========================================================= */
 let germanVoice = null;
 function pickGermanVoice(){
   const voices = speechSynthesis.getVoices();
-  germanVoice = voices.find(v => v.lang === "de-DE") ||
-                voices.find(v => v.lang && v.lang.startsWith("de")) || null;
+  germanVoice = voices.find(v => v.lang === "de-DE") || voices.find(v => v.lang && v.lang.startsWith("de")) || null;
 }
-if("speechSynthesis" in window){
-  pickGermanVoice();
-  speechSynthesis.onvoiceschanged = pickGermanVoice;
-}
+if("speechSynthesis" in window){ pickGermanVoice(); speechSynthesis.onvoiceschanged = pickGermanVoice; }
 function speak(text){
   if(!("speechSynthesis" in window)) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = "de-DE";
-  if(germanVoice) u.voice = germanVoice;
-  u.rate = 0.95;
+  u.lang = "de-DE"; if(germanVoice) u.voice = germanVoice; u.rate = 0.95;
   speechSynthesis.speak(u);
 }
 
 /* =========================================================
-   5) SOUND EFFECTS (Web Audio API)
+   4) SOUND EFFECTS
    ========================================================= */
 let audioCtx = null;
-function getCtx(){
-  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return audioCtx;
-}
-function playTone(freq, start, duration, type="sine", gainVal=0.2){
+function getCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function playTone(freq,start,duration,type="sine",gainVal=0.2){
   const ctx = getCtx();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
+  const osc = ctx.createOscillator(); const gain = ctx.createGain();
   osc.type = type;
   osc.frequency.setValueAtTime(freq, ctx.currentTime+start);
   gain.gain.setValueAtTime(0, ctx.currentTime+start);
   gain.gain.linearRampToValueAtTime(gainVal, ctx.currentTime+start+0.02);
   gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+start+duration);
   osc.connect(gain).connect(ctx.destination);
-  osc.start(ctx.currentTime+start);
-  osc.stop(ctx.currentTime+start+duration+0.05);
+  osc.start(ctx.currentTime+start); osc.stop(ctx.currentTime+start+duration+0.05);
 }
-function playSuccessSound(){
-  playTone(523.25, 0, 0.15);
-  playTone(659.25, 0.12, 0.15);
-  playTone(783.99, 0.24, 0.28);
-}
-function playErrorSound(){
-  playTone(220, 0, 0.18, "sawtooth", 0.15);
-  playTone(180, 0.14, 0.22, "sawtooth", 0.15);
-}
+function playSuccessSound(){ playTone(523.25,0,0.15); playTone(659.25,0.12,0.15); playTone(783.99,0.24,0.28); }
+function playErrorSound(){ playTone(220,0,0.18,"sawtooth",0.15); playTone(180,0.14,0.22,"sawtooth",0.15); }
+function playCoinSound(){ playTone(988,0,0.08,"square",0.12); playTone(1319,0.06,0.14,"square",0.12); }
 
 /* =========================================================
-   6) CONFETTI
+   5) CONFETTI
    ========================================================= */
 const confettiCanvas = document.getElementById("confetti-canvas");
 const cctx = confettiCanvas.getContext("2d");
-function resizeCanvas(){
-  confettiCanvas.width = window.innerWidth;
-  confettiCanvas.height = window.innerHeight;
-}
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
-
+function resizeCanvas(){ confettiCanvas.width = window.innerWidth; confettiCanvas.height = window.innerHeight; }
+window.addEventListener("resize", resizeCanvas); resizeCanvas();
 function burstConfetti(originX, originY){
   const colors = ["#3b82f6","#22c55e","#f59e0b","#ef4444","#a855f7","#06b6d4"];
   const particles = [];
-  const count = 70;
-  for(let i=0;i<count;i++){
-    particles.push({
-      x: originX, y: originY,
-      vx: (Math.random()-0.5)*10,
-      vy: (Math.random()-1.6)*10,
-      size: 5+Math.random()*6,
-      color: colors[Math.floor(Math.random()*colors.length)],
-      rotation: Math.random()*360,
-      vr: (Math.random()-0.5)*20,
-      life: 0
-    });
+  for(let i=0;i<70;i++){
+    particles.push({ x:originX, y:originY, vx:(Math.random()-0.5)*10, vy:(Math.random()-1.6)*10,
+      size:5+Math.random()*6, color:colors[Math.floor(Math.random()*colors.length)],
+      rotation:Math.random()*360, vr:(Math.random()-0.5)*20, life:0 });
   }
   const maxLife = 70;
   function frame(){
     cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
     let alive = false;
     particles.forEach(p=>{
-      if(p.life>maxLife) return;
-      alive = true;
-      p.life++;
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.35;
-      p.rotation += p.vr;
-      cctx.save();
-      cctx.globalAlpha = Math.max(0, 1 - p.life/maxLife);
-      cctx.translate(p.x, p.y);
-      cctx.rotate(p.rotation*Math.PI/180);
-      cctx.fillStyle = p.color;
-      cctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+      if(p.life>maxLife) return; alive = true; p.life++;
+      p.x += p.vx; p.y += p.vy; p.vy += 0.35; p.rotation += p.vr;
+      cctx.save(); cctx.globalAlpha = Math.max(0,1-p.life/maxLife);
+      cctx.translate(p.x,p.y); cctx.rotate(p.rotation*Math.PI/180);
+      cctx.fillStyle = p.color; cctx.fillRect(-p.size/2,-p.size/2,p.size,p.size);
       cctx.restore();
     });
-    if(alive){
-      requestAnimationFrame(frame);
-    }else{
-      cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
-    }
+    if(alive) requestAnimationFrame(frame); else cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
   }
   frame();
 }
+function popCoin(x,y){
+  const el = document.createElement("div");
+  el.className = "coin-pop"; el.textContent = "🪙 +1";
+  el.style.left = (x-20)+"px"; el.style.top = (y-20)+"px";
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 1000);
+}
 
 /* =========================================================
-   7) LOGIN
+   6) FIRESTORE HELFER
    ========================================================= */
-document.getElementById("btn-start").addEventListener("click", startFromLogin);
-document.getElementById("input-name").addEventListener("keydown", e=>{
-  if(e.key === "Enter") startFromLogin();
-});
-function startFromLogin(){
-  const name = document.getElementById("input-name").value.trim();
-  if(!name){
-    document.getElementById("input-name").focus();
-    document.getElementById("input-name").style.borderColor = "var(--red)";
+async function fbGetStudent(id){
+  const snap = await fb.getDoc(fb.doc(db,"students",id));
+  return snap.exists() ? { id, ...snap.data() } : null;
+}
+async function fbGetAllSets(){
+  const snap = await fb.getDocs(fb.collection(db,"sets"));
+  return snap.docs.map(d => ({ id:d.id, ...d.data() }));
+}
+async function fbCreateStudent(name, assignedSetIds){
+  const id = slugId();
+  await fb.setDoc(fb.doc(db,"students",id), {
+    name, zugewieseneSets: assignedSetIds, coins:0, bonusSpieleUebrig:0, erstelltAm: fb.serverTimestamp()
+  });
+  return id;
+}
+async function fbUpdateStudentAssignment(id, assignedSetIds){
+  await fb.updateDoc(fb.doc(db,"students",id), { zugewieseneSets: assignedSetIds });
+}
+async function fbAdjustCoins(id, delta){
+  await fb.updateDoc(fb.doc(db,"students",id), { coins: fb.increment(delta) });
+}
+async function fbAdjustPlays(id, delta){
+  await fb.updateDoc(fb.doc(db,"students",id), { bonusSpieleUebrig: fb.increment(delta) });
+}
+async function fbDeleteStudent(id){
+  await fb.deleteDoc(fb.doc(db,"students",id));
+}
+async function fbAwardCoin(id){
+  await fb.updateDoc(fb.doc(db,"students",id), { coins: fb.increment(1) });
+}
+async function fbLogSession(studentId, data){
+  await fb.addDoc(fb.collection(db,"students",studentId,"sessions"), { ...data, datum: fb.serverTimestamp() });
+}
+async function fbListSessions(studentId){
+  const snap = await fb.getDocs(fb.query(fb.collection(db,"students",studentId,"sessions"), fb.orderBy("datum","desc")));
+  return snap.docs.map(d => ({ id:d.id, ...d.data() }));
+}
+async function fbCreateSet(data){
+  const ref = await fb.addDoc(fb.collection(db,"sets"), { ...data, erstelltAm: fb.serverTimestamp() });
+  return ref.id;
+}
+async function fbUpdateSet(id, data){
+  await fb.updateDoc(fb.doc(db,"sets",id), data);
+}
+async function fbDeleteSet(id){
+  await fb.deleteDoc(fb.doc(db,"sets",id));
+}
+async function fbBuyBonusPlays(studentId){
+  await fb.runTransaction(db, async(tx)=>{
+    const ref = fb.doc(db,"students",studentId);
+    const snap = await tx.get(ref);
+    const coins = snap.data().coins || 0;
+    if(coins < 15) throw new Error("Nicht genug Münzen");
+    tx.update(ref, { coins: coins-15, bonusSpieleUebrig: fb.increment(2) });
+  });
+}
+
+/* =========================================================
+   7) BOOT
+   ========================================================= */
+async function boot(){
+  if(!FIREBASE_READY){ showScreen("screen-setup-warning"); return; }
+
+  const params = new URLSearchParams(location.search);
+  const studentParam = params.get("s");
+
+  if(studentParam){
+    const student = await fbGetStudent(studentParam);
+    if(student){
+      await loginAsStudent(student);
+      return;
+    }
+  }
+  renderStudentPicker();
+}
+boot();
+
+async function renderStudentPicker(){
+  showScreen("screen-student-picker");
+  try{
+    const snap = await fb.getDocs(fb.query(fb.collection(db,"students"), fb.orderBy("name")));
+    const list = document.getElementById("student-list");
+    const empty = document.getElementById("student-list-empty");
+    list.innerHTML = "";
+    if(snap.empty){ empty.style.display = "block"; return; }
+    empty.style.display = "none";
+    const avatars = ["🦊","🐼","🐨","🐯","🦁","🐸","🐵","🐰","🐻","🦄","🐷","🐧"];
+    snap.docs.forEach((d,i)=>{
+      const s = { id:d.id, ...d.data() };
+      const chip = document.createElement("div");
+      chip.className = "student-chip";
+      chip.innerHTML = `<div class="student-avatar">${avatars[i%avatars.length]}</div><div>${escapeHtml(s.name)}</div>`;
+      chip.addEventListener("click", ()=> loginAsStudent(s));
+      list.appendChild(chip);
+    });
+  }catch(err){
+    console.error(err);
+  }
+}
+
+async function loginAsStudent(student){
+  state.studentId = student.id;
+  state.student = student;
+  updateCoinBadge();
+  const setIds = student.zugewieseneSets || [];
+  if(setIds.length === 0){
+    alert("Dir wurden noch keine Aufgaben zugewiesen. Bitte die Lehrperson fragen.");
+    renderStudentPicker();
     return;
   }
-  currentStudent = name;
-  startGame();
+  const allSets = await Promise.all(setIds.map(async id=>{
+    const snap = await fb.getDoc(fb.doc(db,"sets",id));
+    return snap.exists() ? { id, ...snap.data() } : null;
+  }));
+  state.sets = allSets.filter(Boolean);
+  if(state.sets.length === 0){
+    alert("Die zugewiesenen Aufgaben wurden nicht gefunden. Bitte die Lehrperson fragen.");
+    renderStudentPicker();
+    return;
+  }
+  if(state.sets.length === 1){
+    startGame(state.sets[0]);
+  }else{
+    renderSetPicker();
+  }
 }
+
+function updateCoinBadge(){
+  const badge = document.getElementById("coin-badge");
+  if(state.studentId){
+    badge.style.display = "flex";
+    document.getElementById("coin-count").textContent = state.student?.coins || 0;
+  }else{
+    badge.style.display = "none";
+  }
+}
+
+function renderSetPicker(){
+  document.getElementById("set-picker-greeting").textContent = `Hallo, ${state.student.name}!`;
+  const grid = document.getElementById("set-picker-grid");
+  grid.innerHTML = "";
+  state.sets.forEach(s=>{
+    const card = document.createElement("div");
+    card.className = "set-card";
+    card.innerHTML = `<h3>${escapeHtml(s.titel)}</h3><span class="tag">${escapeHtml(s.fach)}</span><span class="tag">${escapeHtml(s.niveau)}</span><p style="color:var(--muted); font-size:.85rem;">${s.aufgaben.length} Aufgaben</p>`;
+    card.addEventListener("click", ()=> startGame(s));
+    grid.appendChild(card);
+  });
+  showScreen("screen-set-picker");
+}
+document.getElementById("btn-set-picker-back").addEventListener("click", ()=>{
+  state.studentId = null; state.student = null; updateCoinBadge(); renderStudentPicker();
+});
+document.getElementById("btn-set-picker-bonus").addEventListener("click", openBonusHub);
+document.getElementById("btn-end-to-sets").addEventListener("click", ()=>{
+  state.sets.length > 1 ? renderSetPicker() : loginAsStudent(state.student);
+});
 
 /* =========================================================
    8) GAME LOGIC
    ========================================================= */
-function startGame(){
-  aufgabenSource = loadAufgaben();
-  if(aufgabenSource.length === 0){
-    alert("Es sind noch keine Aufgaben vorhanden. Bitte die Lehrperson kontaktieren.");
-    return;
-  }
-  gameOrder = shuffle(aufgabenSource);
-  currentIndex = 0;
-  correctFirstTry = 0;
-  wrongAttemptsTotal = 0;
-  document.getElementById("progress-name").textContent = "👤 " + currentStudent;
+function startGame(set){
+  state.currentSet = set;
+  state.gameOrder = shuffle(set.aufgaben);
+  state.currentIndex = 0;
+  state.correctFirstTry = 0;
+  state.wrongAttemptsTotal = 0;
+  state.coinsEarnedThisRound = 0;
+  document.getElementById("progress-name").textContent = "👤 " + state.student.name;
   showScreen("screen-game");
   renderTask();
 }
 
 function renderTask(){
-  const total = gameOrder.length;
-  const task = gameOrder[currentIndex];
-  taskSolved = false;
-  solvedCurrentWithoutError = true;
+  const total = state.gameOrder.length;
+  const task = state.gameOrder[state.currentIndex];
+  state.taskSolved = false;
+  state.solvedCurrentWithoutError = true;
 
-  document.getElementById("progress-text").textContent = `Aufgabe ${currentIndex+1} von ${total}`;
-  document.getElementById("progress-fill").style.width = `${(currentIndex/total)*100}%`;
+  document.getElementById("progress-text").textContent = `Aufgabe ${state.currentIndex+1} von ${total}`;
+  document.getElementById("progress-fill").style.width = `${(state.currentIndex/total)*100}%`;
   document.getElementById("sentence-text").textContent = task.satz;
   document.getElementById("btn-next").disabled = true;
 
   const grid = document.getElementById("options-grid");
   grid.innerHTML = "";
-  const optionOrder = shuffle(task.optionen.map((o,i)=>({...o, _idx:i})));
+  const optionOrder = shuffle(task.optionen);
   optionOrder.forEach(opt=>{
     const card = document.createElement("div");
-    card.className = "option-card";
-    card.setAttribute("role","button");
-    card.setAttribute("tabindex","0");
-    card.setAttribute("aria-label", opt.korrekt ? "Bildoption" : "Bildoption");
-    const img = document.createElement("img");
-    img.src = opt.img;
-    img.alt = "Auswahlbild";
-    img.draggable = false;
-    const mark = document.createElement("div");
-    mark.className = "mark";
-    card.appendChild(img);
-    card.appendChild(mark);
-    grid.appendChild(card);
-
-    function activate(){
-      handleOptionClick(card, mark, opt);
-    }
+    card.className = "option-card"; card.tabIndex = 0; card.setAttribute("role","button");
+    const img = document.createElement("img"); img.src = opt.img; img.alt = "Auswahlbild"; img.draggable = false;
+    const mark = document.createElement("div"); mark.className = "mark";
+    card.appendChild(img); card.appendChild(mark); grid.appendChild(card);
+    function activate(){ handleOptionClick(card, mark, opt); }
     card.addEventListener("click", activate);
-    card.addEventListener("keydown", e=>{
-      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); activate(); }
-    });
+    card.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); activate(); } });
   });
-
   speak(task.satz);
 }
 
 function handleOptionClick(card, mark, opt){
-  if(taskSolved || card.classList.contains("wrong") || card.classList.contains("disabled")) return;
+  if(state.taskSolved || card.classList.contains("wrong") || card.classList.contains("disabled")) return;
 
   if(opt.korrekt){
-    card.classList.add("correct");
-    mark.textContent = "✓";
-    taskSolved = true;
+    card.classList.add("correct"); mark.textContent = "✓"; state.taskSolved = true;
     playSuccessSound();
     const rect = card.getBoundingClientRect();
     burstConfetti(rect.left+rect.width/2, rect.top+rect.height/2);
-    // Disable all other cards
-    document.querySelectorAll(".option-card").forEach(c=>{
-      if(c!==card) c.classList.add("disabled");
-    });
-    if(solvedCurrentWithoutError) correctFirstTry++;
+    document.querySelectorAll(".option-card").forEach(c=>{ if(c!==card) c.classList.add("disabled"); });
+    if(state.solvedCurrentWithoutError) state.correctFirstTry++;
     document.getElementById("btn-next").disabled = false;
     document.getElementById("btn-next").focus();
+    awardCoin(rect.left+rect.width/2, rect.top);
   }else{
-    card.classList.add("wrong","shake");
-    mark.textContent = "✗";
-    playErrorSound();
-    solvedCurrentWithoutError = false;
-    wrongAttemptsTotal++;
+    card.classList.add("wrong","shake"); mark.textContent = "✗";
+    playErrorSound(); state.solvedCurrentWithoutError = false; state.wrongAttemptsTotal++;
     setTimeout(()=> card.classList.remove("shake"), 500);
     setTimeout(()=> card.classList.add("disabled"), 500);
   }
 }
 
+async function awardCoin(x,y){
+  state.coinsEarnedThisRound++;
+  state.student.coins = (state.student.coins||0)+1;
+  updateCoinBadge();
+  popCoin(x,y); playCoinSound();
+  try{ await fbAwardCoin(state.studentId); }catch(e){ console.error(e); }
+}
+
 document.getElementById("btn-speak").addEventListener("click", ()=>{
-  const task = gameOrder[currentIndex];
-  if(task) speak(task.satz);
+  const task = state.gameOrder[state.currentIndex]; if(task) speak(task.satz);
 });
-
 document.getElementById("btn-next").addEventListener("click", ()=>{
-  if(currentIndex < gameOrder.length-1){
-    currentIndex++;
-    renderTask();
-  }else{
-    finishGame();
-  }
+  if(state.currentIndex < state.gameOrder.length-1){ state.currentIndex++; renderTask(); }
+  else finishGame();
 });
 
-function finishGame(){
+async function finishGame(){
   document.getElementById("progress-fill").style.width = "100%";
-  const total = gameOrder.length;
-  const pct = Math.round((correctFirstTry/total)*100);
-
-  let stars = 1;
-  if(pct >= 90) stars = 3;
-  else if(pct >= 60) stars = 2;
+  const total = state.gameOrder.length;
+  const pct = Math.round((state.correctFirstTry/total)*100);
+  let stars = 1; if(pct>=90) stars=3; else if(pct>=60) stars=2;
 
   document.getElementById("end-stars").textContent = "⭐".repeat(stars) + "☆".repeat(3-stars);
-  const msgs = {
-    3: "Fantastisch gemacht! 🎉",
-    2: "Gut gemacht! 👍",
-    1: "Weiter üben – du schaffst das! 💪"
-  };
+  const msgs = { 3:"Fantastisch gemacht! 🎉", 2:"Gut gemacht! 👍", 1:"Weiter üben – du schaffst das! 💪" };
   document.getElementById("end-msg").textContent = msgs[stars];
   document.getElementById("end-stats").textContent =
-    `${correctFirstTry} von ${total} auf Anhieb richtig (${pct}%) · ${wrongAttemptsTotal} Versuche insgesamt falsch`;
+    `${state.correctFirstTry} von ${total} auf Anhieb richtig (${pct}%) · ${state.wrongAttemptsTotal} Versuche insgesamt falsch`;
+  document.getElementById("end-coins").textContent = `🪙 Du hast ${state.coinsEarnedThisRound} Münzen verdient!`;
 
-  // Datensatz speichern
-  const students = loadStudents();
-  if(!students[currentStudent]) students[currentStudent] = [];
-  students[currentStudent].push({
-    datum: new Date().toISOString(),
-    total: total,
-    korrektAufAnhieb: correctFirstTry,
-    falscheVersuche: wrongAttemptsTotal,
-    prozent: pct
-  });
-  saveStudents(students);
+  try{
+    await fbLogSession(state.studentId, {
+      setId: state.currentSet.id, setTitel: state.currentSet.titel,
+      total, korrektAufAnhieb: state.correctFirstTry, falscheVersuche: state.wrongAttemptsTotal,
+      prozent: pct, verdienteMuenzen: state.coinsEarnedThisRound
+    });
+  }catch(e){ console.error(e); }
 
   showScreen("screen-end");
   burstConfetti(window.innerWidth/2, window.innerHeight/3);
 }
+document.getElementById("btn-replay").addEventListener("click", ()=> startGame(state.currentSet));
 
-document.getElementById("btn-replay").addEventListener("click", startGame);
-document.getElementById("btn-new-student").addEventListener("click", ()=>{
-  document.getElementById("input-name").value = "";
-  showScreen("screen-login");
-  document.getElementById("input-name").focus();
+/* =========================================================
+   9) BONUS HUB
+   ========================================================= */
+async function openBonusHub(){
+  const fresh = await fbGetStudent(state.studentId);
+  if(fresh){ state.student = fresh; updateCoinBadge(); }
+  const coins = state.student.coins || 0;
+  const plays = state.student.bonusSpieleUebrig || 0;
+  document.getElementById("bonus-coin-count").textContent = coins;
+  document.getElementById("bonus-plays-count").textContent = plays;
+  document.getElementById("btn-buy-plays").disabled = coins < 15;
+  document.getElementById("btn-play-doodle").disabled = plays < 1;
+  document.getElementById("btn-play-runner").disabled = plays < 1;
+  showScreen("screen-bonus-hub");
+}
+document.getElementById("btn-bonus-back").addEventListener("click", ()=>{
+  if(state.sets.length > 1) renderSetPicker();
+  else loginAsStudent(state.student);
+});
+document.getElementById("btn-buy-plays").addEventListener("click", async ()=>{
+  try{
+    await fbBuyBonusPlays(state.studentId);
+    await openBonusHub();
+  }catch(e){ alert("Nicht genug Münzen."); }
+});
+async function consumePlay(){
+  const fresh = await fbGetStudent(state.studentId);
+  if(!fresh || (fresh.bonusSpieleUebrig||0) < 1){ alert("Keine Bonusspiele mehr übrig. Sammle mehr Münzen!"); return false; }
+  await fbAdjustPlays(state.studentId, -1);
+  state.student.bonusSpieleUebrig = (fresh.bonusSpieleUebrig||0) - 1;
+  return true;
+}
+document.getElementById("btn-play-doodle").addEventListener("click", async ()=>{
+  if(await consumePlay()){ showScreen("screen-game-doodle"); resetDoodle(); }
+});
+document.getElementById("btn-play-runner").addEventListener("click", async ()=>{
+  if(await consumePlay()){ showScreen("screen-game-runner"); resetRunner(); }
+});
+document.getElementById("btn-doodle-back").addEventListener("click", ()=>{ stopDoodle(); openBonusHub(); });
+document.getElementById("btn-runner-back").addEventListener("click", ()=>{ stopRunner(); openBonusHub(); });
+
+/* =========================================================
+   10) MINIGAME: WOLKEN-HÜPFER (Doodle Jump-artig)
+   ========================================================= */
+const doodleCanvas = document.getElementById("doodle-canvas");
+const dctx = doodleCanvas.getContext("2d");
+let doodle = null, doodleRunning = false, doodleRAF = null, doodlePointerX = null;
+
+function resetDoodle(){
+  doodle = {
+    x: doodleCanvas.width/2, y: doodleCanvas.height-80, vy:0, vx:0, r:18,
+    platforms: [], score:0, started:false
+  };
+  for(let i=0;i<7;i++){
+    doodle.platforms.push({ x: 20+Math.random()*(doodleCanvas.width-100), y: doodleCanvas.height - i*80, w:80 });
+  }
+  document.getElementById("doodle-score").textContent = "0";
+  drawDoodle();
+}
+function drawDoodle(){
+  dctx.clearRect(0,0,doodleCanvas.width,doodleCanvas.height);
+  dctx.fillStyle = "#dff1ff"; dctx.fillRect(0,0,doodleCanvas.width,doodleCanvas.height);
+  dctx.font = "34px sans-serif"; dctx.textAlign = "center";
+  doodle.platforms.forEach(p=>{
+    dctx.fillStyle = "#22c55e";
+    dctx.fillRect(p.x, p.y, p.w, 12);
+  });
+  dctx.save(); dctx.translate(doodle.x, doodle.y); dctx.font = "40px sans-serif";
+  dctx.fillText("🐸", 0, 12); dctx.restore();
+}
+function doodleLoop(){
+  if(!doodleRunning) return;
+  const GRAVITY = 0.35, JUMP = -11;
+  doodle.vy += GRAVITY;
+  doodle.y += doodle.vy;
+  if(doodlePointerX !== null){
+    doodle.x += (doodlePointerX - doodle.x) * 0.18;
+  }
+  if(doodle.x < -20) doodle.x = doodleCanvas.width+20;
+  if(doodle.x > doodleCanvas.width+20) doodle.x = -20;
+
+  if(doodle.vy > 0){
+    for(const p of doodle.platforms){
+      if(doodle.x > p.x-10 && doodle.x < p.x+p.w+10 && doodle.y+doodle.r > p.y && doodle.y+doodle.r < p.y+18){
+        doodle.vy = JUMP;
+      }
+    }
+  }
+  if(doodle.y < doodleCanvas.height/2){
+    const dy = doodleCanvas.height/2 - doodle.y;
+    doodle.y = doodleCanvas.height/2;
+    doodle.platforms.forEach(p=> p.y += dy);
+    doodle.score += Math.round(dy/8);
+    document.getElementById("doodle-score").textContent = doodle.score;
+    doodle.platforms = doodle.platforms.filter(p=> p.y < doodleCanvas.height);
+    while(doodle.platforms.length < 7){
+      const minY = Math.min(...doodle.platforms.map(p=>p.y), 0);
+      doodle.platforms.push({ x: 20+Math.random()*(doodleCanvas.width-100), y: minY-80, w:80 });
+    }
+  }
+  if(doodle.y > doodleCanvas.height + 40){
+    doodleGameOver(); return;
+  }
+  drawDoodle();
+  doodleRAF = requestAnimationFrame(doodleLoop);
+}
+function doodleGameOver(){
+  doodleRunning = false;
+  dctx.fillStyle = "rgba(15,23,42,.6)"; dctx.fillRect(0,0,doodleCanvas.width,doodleCanvas.height);
+  dctx.fillStyle = "#fff"; dctx.font = "bold 26px sans-serif"; dctx.textAlign="center";
+  dctx.fillText("Spiel vorbei!", doodleCanvas.width/2, doodleCanvas.height/2-10);
+  dctx.font = "20px sans-serif";
+  dctx.fillText("Höhe: "+doodle.score+" m", doodleCanvas.width/2, doodleCanvas.height/2+24);
+}
+document.getElementById("btn-doodle-start").addEventListener("click", ()=>{
+  resetDoodle(); doodleRunning = true; doodle.vy = -8; doodleLoop();
+});
+function stopDoodle(){ doodleRunning = false; if(doodleRAF) cancelAnimationFrame(doodleRAF); }
+doodleCanvas.addEventListener("touchmove", e=>{
+  const rect = doodleCanvas.getBoundingClientRect();
+  const scaleX = doodleCanvas.width/rect.width;
+  doodlePointerX = (e.touches[0].clientX - rect.left) * scaleX;
+  e.preventDefault();
+}, { passive:false });
+doodleCanvas.addEventListener("mousemove", e=>{
+  const rect = doodleCanvas.getBoundingClientRect();
+  const scaleX = doodleCanvas.width/rect.width;
+  doodlePointerX = (e.clientX - rect.left) * scaleX;
+});
+window.addEventListener("keydown", e=>{
+  if(!doodleRunning) return;
+  if(e.key === "ArrowLeft") doodlePointerX = Math.max(0, doodle.x - 60);
+  if(e.key === "ArrowRight") doodlePointerX = Math.min(doodleCanvas.width, doodle.x + 60);
 });
 
 /* =========================================================
-   9) ADMIN – LOGIN
+   11) MINIGAME: HINDERNIS-SPRINT (Endless Runner)
+   ========================================================= */
+const runnerCanvas = document.getElementById("runner-canvas");
+const rctx = runnerCanvas.getContext("2d");
+let runner = null, runnerRunning = false, runnerRAF = null;
+
+function resetRunner(){
+  runner = {
+    groundY: runnerCanvas.height - 40, y:0, vy:0, jumping:false,
+    obstacles: [], speed: 5, timer: 0, score: 0
+  };
+  document.getElementById("runner-score").textContent = "0";
+  drawRunner();
+}
+function drawRunner(){
+  rctx.clearRect(0,0,runnerCanvas.width,runnerCanvas.height);
+  rctx.fillStyle = "#fff4d6"; rctx.fillRect(0,0,runnerCanvas.width,runnerCanvas.height);
+  rctx.fillStyle = "#8d6e63"; rctx.fillRect(0, runner.groundY+30, runnerCanvas.width, 6);
+  rctx.font = "40px sans-serif"; rctx.textAlign = "center";
+  rctx.fillText("🦘", 60, runner.groundY - runner.y + 28);
+  rctx.font = "34px sans-serif";
+  runner.obstacles.forEach(o=> rctx.fillText("🌵", o.x, runner.groundY+26));
+}
+function runnerLoop(){
+  if(!runnerRunning) return;
+  const GRAVITY = 0.9, JUMP = -14;
+  runner.vy += GRAVITY; runner.y -= runner.vy;
+  if(runner.y < 0){ runner.y = 0; runner.vy = 0; runner.jumping = false; }
+
+  runner.timer++;
+  runner.speed = 5 + Math.min(6, runner.timer/300);
+  if(runner.timer % Math.max(40, 70-Math.floor(runner.speed*4)) === 0){
+    runner.obstacles.push({ x: runnerCanvas.width+20 });
+  }
+  runner.obstacles.forEach(o=> o.x -= runner.speed);
+  runner.obstacles = runner.obstacles.filter(o=> o.x > -30);
+
+  const charX = 60, charY = runner.groundY - runner.y;
+  for(const o of runner.obstacles){
+    if(Math.abs(o.x - charX) < 26 && runner.y < 30){
+      runnerGameOver(); return;
+    }
+  }
+  runner.score = Math.floor(runner.timer/10);
+  document.getElementById("runner-score").textContent = runner.score;
+
+  drawRunner();
+  runnerRAF = requestAnimationFrame(runnerLoop);
+}
+function runnerGameOver(){
+  runnerRunning = false;
+  rctx.fillStyle = "rgba(15,23,42,.6)"; rctx.fillRect(0,0,runnerCanvas.width,runnerCanvas.height);
+  rctx.fillStyle = "#fff"; rctx.font = "bold 26px sans-serif"; rctx.textAlign="center";
+  rctx.fillText("Spiel vorbei!", runnerCanvas.width/2, runnerCanvas.height/2-10);
+  rctx.font = "20px sans-serif";
+  rctx.fillText("Punkte: "+runner.score, runnerCanvas.width/2, runnerCanvas.height/2+24);
+}
+function runnerJump(){
+  if(runner && !runner.jumping && runnerRunning){ runner.vy = 14; runner.jumping = true; }
+}
+document.getElementById("btn-runner-start").addEventListener("click", ()=>{
+  resetRunner(); runnerRunning = true; runnerLoop();
+});
+function stopRunner(){ runnerRunning = false; if(runnerRAF) cancelAnimationFrame(runnerRAF); }
+runnerCanvas.addEventListener("touchstart", e=>{ runnerJump(); e.preventDefault(); }, { passive:false });
+runnerCanvas.addEventListener("mousedown", runnerJump);
+window.addEventListener("keydown", e=>{ if(e.key === " " || e.key === "ArrowUp"){ if(runnerRunning) e.preventDefault(); runnerJump(); } });
+
+/* =========================================================
+   12) ADMIN – AUTH
    ========================================================= */
 document.getElementById("btn-open-admin").addEventListener("click", ()=>{
-  document.getElementById("input-pin").value = "";
-  document.getElementById("pin-error").style.display = "none";
+  if(!FIREBASE_READY) return;
+  document.getElementById("admin-auth-error").style.display = "none";
   showScreen("screen-admin-login");
-  document.getElementById("input-pin").focus();
 });
-document.getElementById("btn-pin-cancel").addEventListener("click", ()=>{
-  showScreen(currentStudent ? "screen-game" : "screen-login");
+document.getElementById("btn-admin-login-cancel").addEventListener("click", ()=>{
+  state.studentId ? (state.sets.length>1 ? renderSetPicker() : loginAsStudent(state.student)) : renderStudentPicker();
 });
-document.getElementById("btn-pin-submit").addEventListener("click", checkPin);
-document.getElementById("input-pin").addEventListener("keydown", e=>{
-  if(e.key === "Enter") checkPin();
+document.querySelectorAll(".auth-tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll(".auth-tab").forEach(t=>t.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("btn-admin-auth-submit").textContent = tab.dataset.mode === "signup" ? "Konto erstellen" : "Anmelden";
+    document.getElementById("btn-admin-auth-submit").dataset.mode = tab.dataset.mode;
+  });
 });
-function checkPin(){
-  const val = document.getElementById("input-pin").value;
-  if(val === getPin()){
-    enterAdmin();
-  }else{
-    document.getElementById("pin-error").style.display = "block";
+document.getElementById("btn-admin-auth-submit").dataset.mode = "login";
+document.getElementById("btn-admin-auth-submit").addEventListener("click", async ()=>{
+  const email = document.getElementById("input-admin-email").value.trim();
+  const pw = document.getElementById("input-admin-pw").value;
+  const mode = document.getElementById("btn-admin-auth-submit").dataset.mode;
+  const errEl = document.getElementById("admin-auth-error");
+  errEl.style.display = "none";
+  try{
+    if(mode === "signup"){
+      await fb.createUserWithEmailAndPassword(auth, email, pw);
+    }else{
+      await fb.signInWithEmailAndPassword(auth, email, pw);
+    }
+  }catch(e){
+    errEl.textContent = "Fehler: " + (e.message || "Anmeldung fehlgeschlagen.");
+    errEl.style.display = "block";
   }
-}
-function enterAdmin(){
-  showScreen("screen-admin");
-  renderResultsTable();
-  renderAufgabenEditor();
-}
+});
+fb.onAuthStateChanged && FIREBASE_READY && fb.onAuthStateChanged(auth, user=>{
+  state.isAdmin = !!user;
+  if(user){ enterAdmin(); }
+});
+document.getElementById("btn-admin-logout").addEventListener("click", async ()=>{
+  await fb.signOut(auth);
+  renderStudentPicker();
+});
 document.getElementById("btn-admin-exit").addEventListener("click", ()=>{
-  showScreen(currentStudent ? "screen-login" : "screen-login");
+  state.studentId ? (state.sets.length>1 ? renderSetPicker() : loginAsStudent(state.student)) : renderStudentPicker();
 });
 
 /* Tabs */
@@ -766,241 +1168,278 @@ document.querySelectorAll(".tab-btn").forEach(btn=>{
   });
 });
 
-/* =========================================================
-   10) ADMIN – AUSWERTUNG
-   ========================================================= */
-function renderResultsTable(){
-  const students = loadStudents();
-  const names = Object.keys(students).sort();
-  const wrap = document.getElementById("results-table-wrap");
-  if(names.length === 0){
-    wrap.innerHTML = `<p class="empty-hint">Noch keine Ergebnisse vorhanden.</p>`;
-    return;
-  }
-  let html = `<table><thead><tr>
-    <th>Name</th><th>Spiele</th><th>Letztes Spiel</th><th>Ø Richtig</th><th>Letztes Ergebnis</th>
-  </tr></thead><tbody>`;
-  names.forEach(name=>{
-    const sessions = students[name];
-    const last = sessions[sessions.length-1];
-    const avg = Math.round(sessions.reduce((s,x)=>s+x.prozent,0)/sessions.length);
-    const lastDate = new Date(last.datum).toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"});
-    html += `<tr>
-      <td>${escapeHtml(name)}</td>
-      <td>${sessions.length}</td>
-      <td>${lastDate}</td>
-      <td>${avg}%</td>
-      <td>${last.korrektAufAnhieb}/${last.total} (${last.prozent}%)</td>
-    </tr>`;
-  });
-  html += `</tbody></table>`;
-  wrap.innerHTML = html;
-}
-function escapeHtml(s){
-  return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
-
-document.getElementById("btn-export-data").addEventListener("click", ()=>{
-  downloadJson(loadStudents(), "daz-ergebnisse.json");
-});
-document.getElementById("btn-clear-data").addEventListener("click", ()=>{
-  if(confirm("Wirklich ALLE gespeicherten Schülerergebnisse löschen? Das kann nicht rückgängig gemacht werden.")){
-    localStorage.removeItem(LS_STUDENTS);
-    renderResultsTable();
-  }
-});
-function downloadJson(obj, filename){
-  const blob = new Blob([JSON.stringify(obj,null,2)], {type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
+async function enterAdmin(){
+  showScreen("screen-admin");
+  await Promise.all([renderStudentAdminList(), renderSetsAdminList(), renderResultsTable()]);
 }
 
 /* =========================================================
-   11) ADMIN – AUFGABEN VERWALTEN
+   13) ADMIN – SuS VERWALTEN
    ========================================================= */
-let editingAufgaben = [];
-
-function renderAufgabenEditor(){
-  editingAufgaben = JSON.parse(JSON.stringify(loadAufgaben()));
-  drawAufgabenList();
+async function renderNewStudentSetChecks(){
+  const sets = await fbGetAllSets();
+  const wrap = document.getElementById("new-student-set-checks");
+  wrap.innerHTML = sets.map(s => `
+    <label class="checkbox-row"><input type="checkbox" value="${s.id}" class="new-student-set-cb"> ${escapeHtml(s.titel)} (${escapeHtml(s.fach)})</label>
+  `).join("") || `<span class="empty-hint">Noch keine Aufgaben-Sets vorhanden – zuerst im Tab "Aufgaben verwalten" erstellen.</span>`;
+  return sets;
 }
+document.getElementById("btn-add-student").addEventListener("click", async ()=>{
+  const name = document.getElementById("input-new-student-name").value.trim();
+  if(!name){ return; }
+  const checked = Array.from(document.querySelectorAll(".new-student-set-cb:checked")).map(cb=>cb.value);
+  await fbCreateStudent(name, checked);
+  document.getElementById("input-new-student-name").value = "";
+  await renderStudentAdminList();
+});
 
-function drawAufgabenList(){
-  const list = document.getElementById("aufgaben-list");
-  list.innerHTML = "";
-  editingAufgaben.forEach((task, ti)=>{
-    const card = document.createElement("div");
-    card.className = "task-card";
-    card.innerHTML = `
-      <div class="task-card-head">
-        <span>Aufgabe ${ti+1}</span>
-        <div class="row">
-          <button class="btn small outline" data-act="speak" data-ti="${ti}">🔊 Testen</button>
-          <button class="btn small red" data-act="del-task" data-ti="${ti}">🗑 Löschen</button>
-        </div>
+async function renderStudentAdminList(){
+  const [studentsSnap, sets] = await Promise.all([
+    fb.getDocs(fb.query(fb.collection(db,"students"), fb.orderBy("name"))),
+    fbGetAllSets()
+  ]);
+  await renderNewStudentSetChecks();
+  const setsById = Object.fromEntries(sets.map(s=>[s.id,s]));
+  const wrap = document.getElementById("student-admin-list");
+  const empty = document.getElementById("student-admin-empty");
+  wrap.innerHTML = "";
+  if(studentsSnap.empty){ empty.style.display = "block"; return; }
+  empty.style.display = "none";
+
+  studentsSnap.docs.forEach(d=>{
+    const s = { id:d.id, ...d.data() };
+    const link = `${location.origin}${location.pathname}?s=${s.id}`;
+    const row = document.createElement("div");
+    row.className = "student-row";
+    row.innerHTML = `
+      <div>
+        <strong>${escapeHtml(s.name)}</strong>
+        <div class="student-meta">🪙 ${s.coins||0} Münzen · 🎮 ${s.bonusSpieleUebrig||0} Bonusspiele</div>
+        <div class="assign-tags">${(s.zugewieseneSets||[]).map(id=> setsById[id] ? `<span class="assign-tag">${escapeHtml(setsById[id].titel)}</span>` : "").join("")}</div>
       </div>
-      <label class="field-label">Satz</label>
-      <textarea rows="2" data-field="satz" data-ti="${ti}">${escapeHtml(task.satz)}</textarea>
-      <label class="field-label">Bild-Optionen</label>
-      <div class="opt-list" data-ti="${ti}"></div>
-      <div class="row" style="margin-top:10px;">
-        <button class="btn small outline" data-act="add-opt" data-ti="${ti}">➕ Bild hinzufügen</button>
+      <div class="row">
+        <button class="btn small outline" data-act="qr" data-id="${s.id}">🔗 Link/QR</button>
+        <button class="btn small outline" data-act="assign" data-id="${s.id}">✏️ Zuweisen</button>
+        <button class="btn small outline" data-act="coins" data-id="${s.id}">🪙 +5</button>
+        <button class="btn small outline" data-act="plays" data-id="${s.id}">🎮 +1 Spiel</button>
+        <button class="btn small red" data-act="del" data-id="${s.id}">🗑</button>
       </div>
     `;
-    list.appendChild(card);
-    const optList = card.querySelector(".opt-list");
-    task.optionen.forEach((opt, oi)=>{
-      const optDiv = document.createElement("div");
-      optDiv.className = "opt-edit";
-      optDiv.innerHTML = `
-        <img src="${opt.img}" alt="Vorschau">
-        <label>
-          <input type="checkbox" data-act="korrekt" data-ti="${ti}" data-oi="${oi}" ${opt.korrekt?"checked":""}>
-          Richtige Antwort
-        </label>
-        <input type="url" placeholder="Bild-URL" value="${opt.img.startsWith('data:')?'':escapeHtml(opt.img)}" data-act="url" data-ti="${ti}" data-oi="${oi}">
-        <label class="btn small outline" style="display:block; text-align:center; cursor:pointer;">
-          📁 Bild hochladen
-          <input type="file" accept="image/*" style="display:none;" data-act="upload" data-ti="${ti}" data-oi="${oi}">
-        </label>
-        <button class="btn small red" style="width:100%; margin-top:6px;" data-act="del-opt" data-ti="${ti}" data-oi="${oi}">Bild entfernen</button>
-      `;
-      optList.appendChild(optDiv);
+    wrap.appendChild(row);
+  });
+
+  wrap.querySelectorAll("[data-act]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const id = btn.dataset.id; const act = btn.dataset.act;
+      if(act === "qr") openQrModal(id, studentsSnap.docs.find(d=>d.id===id).data().name);
+      else if(act === "coins"){ await fbAdjustCoins(id, 5); renderStudentAdminList(); }
+      else if(act === "plays"){ await fbAdjustPlays(id, 1); renderStudentAdminList(); }
+      else if(act === "del"){ if(confirm("Diese/n Schüler:in wirklich löschen?")){ await fbDeleteStudent(id); renderStudentAdminList(); } }
+      else if(act === "assign"){
+        const current = studentsSnap.docs.find(d=>d.id===id).data().zugewieseneSets || [];
+        await openAssignPrompt(id, sets, current);
+      }
     });
   });
 }
+async function openAssignPrompt(studentId, sets, current){
+  const names = sets.map((s,i)=> `${i+1}) ${s.titel} [${current.includes(s.id)?"X":" "}]`).join("\n");
+  const input = prompt(`Nummern der zuzuweisenden Sets (kommagetrennt):\n${names}`, current.map(id=>sets.findIndex(s=>s.id===id)+1).filter(n=>n>0).join(","));
+  if(input === null) return;
+  const indices = input.split(",").map(s=>parseInt(s.trim())).filter(n=>!isNaN(n) && n>=1 && n<=sets.length);
+  const ids = indices.map(i => sets[i-1].id);
+  await fbUpdateStudentAssignment(studentId, ids);
+  renderStudentAdminList();
+}
 
-document.getElementById("aufgaben-list").addEventListener("click", e=>{
-  const btn = e.target.closest("[data-act]");
-  if(!btn) return;
-  const act = btn.dataset.act;
-  const ti = btn.dataset.ti !== undefined ? parseInt(btn.dataset.ti) : null;
-  const oi = btn.dataset.oi !== undefined ? parseInt(btn.dataset.oi) : null;
-
-  if(act === "del-task"){
-    if(confirm("Diese Aufgabe wirklich löschen?")){
-      editingAufgaben.splice(ti,1);
-      drawAufgabenList();
-    }
-  }else if(act === "speak"){
-    speak(editingAufgaben[ti].satz);
-  }else if(act === "add-opt"){
-    editingAufgaben[ti].optionen.push({ img: svgImg("❓","#F1F5F9"), korrekt:false });
-    drawAufgabenList();
-  }else if(act === "del-opt"){
-    if(editingAufgaben[ti].optionen.length <= 2){
-      alert("Eine Aufgabe benötigt mindestens 2 Bilder.");
-      return;
-    }
-    editingAufgaben[ti].optionen.splice(oi,1);
-    drawAufgabenList();
-  }
-});
-
-document.getElementById("aufgaben-list").addEventListener("change", e=>{
-  const el = e.target;
-  const act = el.dataset.act;
-  if(!act) return;
-  const ti = el.dataset.ti !== undefined ? parseInt(el.dataset.ti) : null;
-  const oi = el.dataset.oi !== undefined ? parseInt(el.dataset.oi) : null;
-
-  if(act === "korrekt"){
-    editingAufgaben[ti].optionen[oi].korrekt = el.checked;
-  }else if(act === "url"){
-    if(el.value.trim()){
-      editingAufgaben[ti].optionen[oi].img = el.value.trim();
-      drawAufgabenList();
-    }
-  }else if(act === "upload"){
-    const file = el.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = ()=>{
-      editingAufgaben[ti].optionen[oi].img = reader.result;
-      drawAufgabenList();
-    };
-    reader.readAsDataURL(file);
-  }
-});
-
-document.getElementById("aufgaben-list").addEventListener("input", e=>{
-  const el = e.target;
-  if(el.dataset.field === "satz"){
-    const ti = parseInt(el.dataset.ti);
-    editingAufgaben[ti].satz = el.value;
-  }
-});
-
-document.getElementById("btn-add-aufgabe").addEventListener("click", ()=>{
-  editingAufgaben.push({
-    satz: "Neuer Satz…",
-    optionen: [
-      { img: svgImg("❓","#F1F5F9"), korrekt:true },
-      { img: svgImg("❓","#F1F5F9"), korrekt:false }
-    ]
-  });
-  drawAufgabenList();
-});
-
-document.getElementById("btn-save-aufgaben").addEventListener("click", ()=>{
-  for(const t of editingAufgaben){
-    if(!t.satz.trim()){ alert("Bitte alle Sätze ausfüllen."); return; }
-    if(t.optionen.length < 2){ alert("Jede Aufgabe braucht mindestens 2 Bilder."); return; }
-    if(!t.optionen.some(o=>o.korrekt)){ alert(`Bei "${t.satz}" fehlt eine richtige Antwort.`); return; }
-  }
-  if(editingAufgaben.length === 0){ alert("Es muss mindestens eine Aufgabe geben."); return; }
-  saveAufgabenToStorage(editingAufgaben);
-  alert("Gespeichert! ✔");
-});
-
-document.getElementById("btn-reset-aufgaben").addEventListener("click", ()=>{
-  if(confirm("Wirklich alle Aufgaben auf die Standard-Beispiele zurücksetzen?")){
-    localStorage.removeItem(LS_AUFGABEN);
-    renderAufgabenEditor();
-  }
-});
-
-document.getElementById("btn-export-aufgaben").addEventListener("click", ()=>{
-  downloadJson(editingAufgaben, "daz-aufgaben.json");
-});
-document.getElementById("input-import-aufgaben").addEventListener("change", e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ()=>{
-    try{
-      const data = JSON.parse(reader.result);
-      if(!Array.isArray(data)) throw new Error("Ungültiges Format");
-      editingAufgaben = data;
-      drawAufgabenList();
-      alert("Importiert. Bitte auf 'Speichern' klicken, um es zu übernehmen.");
-    }catch(err){
-      alert("Datei konnte nicht gelesen werden: " + err.message);
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = "";
+function openQrModal(id, name){
+  const link = `${location.origin}${location.pathname}?s=${id}`;
+  document.getElementById("qr-modal-title").textContent = "Zugang für " + name;
+  document.getElementById("qr-link-text").value = link;
+  const canvas = document.getElementById("qr-canvas");
+  if(window.QRCode){ QRCode.toCanvas(canvas, link, { width:200 }, ()=>{}); }
+  document.getElementById("qr-modal").classList.add("active");
+}
+document.getElementById("btn-qr-close").addEventListener("click", ()=> document.getElementById("qr-modal").classList.remove("active"));
+document.getElementById("btn-qr-copy").addEventListener("click", ()=>{
+  const text = document.getElementById("qr-link-text");
+  text.select(); navigator.clipboard?.writeText(text.value);
 });
 
 /* =========================================================
-   12) ADMIN – EINSTELLUNGEN (PIN ändern)
+   14) ADMIN – AUFGABEN-SETS VERWALTEN
    ========================================================= */
-document.getElementById("btn-change-pin").addEventListener("click", ()=>{
-  const val = document.getElementById("input-new-pin").value.trim();
-  if(val.length < 4){
-    alert("Die PIN sollte mindestens 4 Zeichen haben.");
-    return;
-  }
-  localStorage.setItem(LS_PIN, val);
-  document.getElementById("input-new-pin").value = "";
-  const msg = document.getElementById("pin-change-msg");
-  msg.style.display = "block";
-  setTimeout(()=> msg.style.display = "none", 2500);
+document.getElementById("btn-seed-demo").addEventListener("click", async ()=>{
+  if(!confirm("Zwei Demo-Sets (Deutsch & Mathematik) anlegen?")) return;
+  await fbCreateSet(DEMO_SET);
+  await fbCreateSet(DEMO_SET_MATH);
+  await renderSetsAdminList();
+});
+document.getElementById("btn-add-set").addEventListener("click", async ()=>{
+  const titel = prompt("Titel des neuen Sets (z.B. 'Verben – schwer')");
+  if(!titel) return;
+  const fach = prompt("Fach (z.B. Deutsch / Mathematik)", "Deutsch") || "Deutsch";
+  const niveau = prompt("Niveau (z.B. leicht / mittel / schwer)", "leicht") || "leicht";
+  await fbCreateSet({ titel, fach, niveau, aufgaben: [] });
+  await renderSetsAdminList();
 });
 
+let setsCache = [];
+async function renderSetsAdminList(){
+  setsCache = await fbGetAllSets();
+  const wrap = document.getElementById("sets-admin-list");
+  wrap.innerHTML = "";
+  if(setsCache.length === 0){ wrap.innerHTML = `<p class="empty-hint">Noch keine Sets vorhanden.</p>`; return; }
+  setsCache.forEach(set=>{
+    const item = document.createElement("div");
+    item.className = "set-list-item";
+    item.innerHTML = `
+      <div class="row" style="justify-content:space-between;">
+        <div><strong>${escapeHtml(set.titel)}</strong> <span class="assign-tag">${escapeHtml(set.fach)}</span> <span class="assign-tag">${escapeHtml(set.niveau)}</span></div>
+        <div class="row">
+          <button class="btn small outline" data-act="edit" data-id="${set.id}">✏️ Bearbeiten</button>
+          <button class="btn small red" data-act="del" data-id="${set.id}">🗑 Löschen</button>
+        </div>
+      </div>
+      <div class="task-editor-mount" id="editor-${set.id}"></div>
+    `;
+    wrap.appendChild(item);
+  });
+  wrap.querySelectorAll('[data-act="del"]').forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      if(confirm("Dieses Set wirklich löschen? Zuweisungen bei SuS bleiben als ungültige Referenz bestehen.")){
+        await fbDeleteSet(btn.dataset.id);
+        renderSetsAdminList();
+      }
+    });
+  });
+  wrap.querySelectorAll('[data-act="edit"]').forEach(btn=>{
+    btn.addEventListener("click", ()=> openSetEditor(btn.dataset.id));
+  });
+}
+
+function openSetEditor(setId){
+  const set = setsCache.find(s=>s.id===setId);
+  const mount = document.getElementById("editor-"+setId);
+  if(mount.dataset.open === "1"){ mount.innerHTML = ""; mount.dataset.open = "0"; return; }
+  mount.dataset.open = "1";
+  let editing = JSON.parse(JSON.stringify(set.aufgaben || []));
+
+  function draw(){
+    mount.innerHTML = `<div class="task-card" style="border-style:solid;"></div>`;
+    const container = mount.querySelector(".task-card");
+    container.innerHTML = "";
+    editing.forEach((task, ti)=>{
+      const tc = document.createElement("div");
+      tc.className = "task-card";
+      tc.innerHTML = `
+        <div class="task-card-head">
+          <span>Aufgabe ${ti+1}</span>
+          <div class="row">
+            <button class="btn small outline" data-act="speak" data-ti="${ti}">🔊</button>
+            <button class="btn small red" data-act="del-task" data-ti="${ti}">🗑</button>
+          </div>
+        </div>
+        <textarea rows="2" data-field="satz" data-ti="${ti}">${escapeHtml(task.satz)}</textarea>
+        <div class="opt-list" data-ti="${ti}"></div>
+        <div class="row" style="margin-top:8px;"><button class="btn small outline" data-act="add-opt" data-ti="${ti}">➕ Bild</button></div>
+      `;
+      container.appendChild(tc);
+      const optList = tc.querySelector(".opt-list");
+      task.optionen.forEach((opt, oi)=>{
+        const od = document.createElement("div"); od.className = "opt-edit";
+        od.innerHTML = `
+          <img src="${opt.img}">
+          <label><input type="checkbox" data-act="korrekt" data-ti="${ti}" data-oi="${oi}" ${opt.korrekt?"checked":""}> Richtig</label>
+          <input type="url" placeholder="Bild-URL" value="${opt.img.startsWith('data:')?'':escapeHtml(opt.img)}" data-act="url" data-ti="${ti}" data-oi="${oi}">
+          <label class="btn small outline" style="display:block; text-align:center; cursor:pointer;">📁 Upload
+            <input type="file" accept="image/*" style="display:none;" data-act="upload" data-ti="${ti}" data-oi="${oi}">
+          </label>
+          <button class="btn small red" style="width:100%; margin-top:6px;" data-act="del-opt" data-ti="${ti}" data-oi="${oi}">Entfernen</button>
+        `;
+        optList.appendChild(od);
+      });
+    });
+    const bottomRow = document.createElement("div");
+    bottomRow.className = "row"; bottomRow.style.justifyContent = "center"; bottomRow.style.marginTop = "10px";
+    bottomRow.innerHTML = `
+      <button class="btn outline" id="add-task-${setId}">➕ Neue Aufgabe</button>
+      <button class="btn green" id="save-set-${setId}">💾 Speichern</button>
+    `;
+    container.appendChild(bottomRow);
+
+    container.querySelectorAll("[data-act]").forEach(el=>{
+      const handler = (ev)=>{
+        const act = el.dataset.act; const ti = el.dataset.ti!==undefined?parseInt(el.dataset.ti):null; const oi = el.dataset.oi!==undefined?parseInt(el.dataset.oi):null;
+        if(act === "del-task"){ editing.splice(ti,1); draw(); }
+        else if(act === "speak"){ speak(editing[ti].satz); }
+        else if(act === "add-opt"){ editing[ti].optionen.push({ img: svgImg("❓","#F1F5F9"), korrekt:false }); draw(); }
+        else if(act === "del-opt"){ if(editing[ti].optionen.length<=2){ alert("Mindestens 2 Bilder nötig."); return; } editing[ti].optionen.splice(oi,1); draw(); }
+        else if(act === "korrekt"){ editing[ti].optionen[oi].korrekt = el.checked; }
+        else if(act === "url"){ if(el.value.trim()){ editing[ti].optionen[oi].img = el.value.trim(); draw(); } }
+        else if(act === "upload"){
+          const file = el.files[0]; if(!file) return;
+          const reader = new FileReader();
+          reader.onload = ()=>{ editing[ti].optionen[oi].img = reader.result; draw(); };
+          reader.readAsDataURL(file);
+        }
+      };
+      if(el.tagName === "INPUT" && (el.type==="checkbox"||el.type==="file")) el.addEventListener("change", handler);
+      else if(el.tagName === "INPUT") el.addEventListener("change", handler);
+      else el.addEventListener("click", handler);
+    });
+    container.querySelectorAll('[data-field="satz"]').forEach(ta=>{
+      ta.addEventListener("input", ()=> editing[parseInt(ta.dataset.ti)].satz = ta.value);
+    });
+    document.getElementById("add-task-"+setId).addEventListener("click", ()=>{
+      editing.push({ satz:"Neuer Satz…", optionen:[ {img:svgImg("❓","#F1F5F9"),korrekt:true}, {img:svgImg("❓","#F1F5F9"),korrekt:false} ] });
+      draw();
+    });
+    document.getElementById("save-set-"+setId).addEventListener("click", async ()=>{
+      for(const t of editing){
+        if(!t.satz.trim()){ alert("Bitte alle Sätze ausfüllen."); return; }
+        if(!t.optionen.some(o=>o.korrekt)){ alert(`Bei "${t.satz}" fehlt eine richtige Antwort.`); return; }
+      }
+      await fbUpdateSet(setId, { aufgaben: editing });
+      alert("Gespeichert ✔");
+      renderSetsAdminList();
+    });
+  }
+  draw();
+}
+
+/* =========================================================
+   15) ADMIN – AUSWERTUNG
+   ========================================================= */
+async function renderResultsTable(){
+  const studentsSnap = await fb.getDocs(fb.query(fb.collection(db,"students"), fb.orderBy("name")));
+  const wrap = document.getElementById("results-table-wrap");
+  if(studentsSnap.empty){ wrap.innerHTML = `<p class="empty-hint">Noch keine SuS vorhanden.</p>`; return; }
+
+  let html = `<table><thead><tr><th>Name</th><th>Spiele</th><th>Letztes Spiel</th><th>Ø Richtig</th><th>🪙 Münzen</th></tr></thead><tbody>`;
+  const exportData = {};
+  for(const d of studentsSnap.docs){
+    const s = { id:d.id, ...d.data() };
+    const sessions = await fbListSessions(s.id);
+    exportData[s.name] = sessions;
+    if(sessions.length === 0){
+      html += `<tr><td>${escapeHtml(s.name)}</td><td>0</td><td>–</td><td>–</td><td>${s.coins||0}</td></tr>`;
+      continue;
+    }
+    const avg = Math.round(sessions.reduce((a,x)=>a+x.prozent,0)/sessions.length);
+    const last = sessions[0];
+    const lastDate = last.datum?.toDate ? last.datum.toDate().toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"}) : "–";
+    html += `<tr><td>${escapeHtml(s.name)}</td><td>${sessions.length}</td><td>${lastDate}</td><td>${avg}%</td><td>${s.coins||0}</td></tr>`;
+  }
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+  document.getElementById("btn-export-results").onclick = ()=>{
+    const blob = new Blob([JSON.stringify(exportData,null,2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "daz-ergebnisse.json";
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  };
+}
 </script>
 </body>
 </html>

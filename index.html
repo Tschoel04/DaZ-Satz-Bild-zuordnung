@@ -1066,8 +1066,8 @@ function drawRunner(){
 }
 function runnerLoop(){
   if(!runnerRunning) return;
-  const GRAVITY = 0.9, JUMP = -14;
-  runner.vy += GRAVITY; runner.y -= runner.vy;
+  const GRAVITY = 0.9;
+  runner.vy -= GRAVITY; runner.y += runner.vy;
   if(runner.y < 0){ runner.y = 0; runner.vy = 0; runner.jumping = false; }
 
   runner.timer++;

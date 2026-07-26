@@ -762,11 +762,7 @@ async function loginAsStudent(student){
     renderStudentPicker();
     return;
   }
-  if(state.sets.length === 1){
-    startGame(state.sets[0]);
-  }else{
-    renderSetPicker();
-  }
+  renderSetPicker();
 }
 
 function updateCoinBadge(){
@@ -796,9 +792,7 @@ document.getElementById("btn-set-picker-back").addEventListener("click", ()=>{
   state.studentId = null; state.student = null; updateCoinBadge(); renderStudentPicker();
 });
 document.getElementById("btn-set-picker-bonus").addEventListener("click", openBonusHub);
-document.getElementById("btn-end-to-sets").addEventListener("click", ()=>{
-  state.sets.length > 1 ? renderSetPicker() : loginAsStudent(state.student);
-});
+document.getElementById("btn-end-to-sets").addEventListener("click", renderSetPicker);
 
 /* =========================================================
    8) GAME LOGIC
@@ -920,10 +914,7 @@ async function openBonusHub(){
   document.getElementById("btn-play-runner").disabled = plays < 1;
   showScreen("screen-bonus-hub");
 }
-document.getElementById("btn-bonus-back").addEventListener("click", ()=>{
-  if(state.sets.length > 1) renderSetPicker();
-  else loginAsStudent(state.student);
-});
+document.getElementById("btn-bonus-back").addEventListener("click", renderSetPicker);
 document.getElementById("btn-buy-plays").addEventListener("click", async ()=>{
   try{
     await fbBuyBonusPlays(state.studentId);
@@ -1118,7 +1109,7 @@ document.getElementById("btn-open-admin").addEventListener("click", ()=>{
   showScreen("screen-admin-login");
 });
 document.getElementById("btn-admin-login-cancel").addEventListener("click", ()=>{
-  state.studentId ? (state.sets.length>1 ? renderSetPicker() : loginAsStudent(state.student)) : renderStudentPicker();
+  state.studentId ? renderSetPicker() : renderStudentPicker();
 });
 document.querySelectorAll(".auth-tab").forEach(tab=>{
   tab.addEventListener("click", ()=>{
@@ -1155,7 +1146,7 @@ document.getElementById("btn-admin-logout").addEventListener("click", async ()=>
   renderStudentPicker();
 });
 document.getElementById("btn-admin-exit").addEventListener("click", ()=>{
-  state.studentId ? (state.sets.length>1 ? renderSetPicker() : loginAsStudent(state.student)) : renderStudentPicker();
+  state.studentId ? renderSetPicker() : renderStudentPicker();
 });
 
 /* Tabs */

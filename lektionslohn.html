@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="de-CH"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lektionslohn St. Gallen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F3F5F2; --surface:#FFFFFF; --ink:#18231D; --muted:#5B6B62; --line:#D9E0DA;
+  --accent:#0B7A45; --accent-soft:#E1F0E7; --board:#1E3A2E; --board-ink:#EAF4EC; --board-muted:#9FC1AC;
+  --chalk:#F2D16B; --warn:#B45309;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F1512; --surface:#18201C; --ink:#E6EEE8; --muted:#95A69C; --line:#2A3630;
+    --accent:#4CC38A; --accent-soft:#1C3328; --board:#10291F; --board-ink:#EAF4EC; --board-muted:#8DB39C;
+    --chalk:#F2D16B; --warn:#F59E0B;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F1512; --surface:#18201C; --ink:#E6EEE8; --muted:#95A69C; --line:#2A3630;
+  --accent:#4CC38A; --accent-soft:#1C3328; --board:#10291F; --board-ink:#EAF4EC; --board-muted:#8DB39C;
+  --chalk:#F2D16B; --warn:#F59E0B;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:28px 48px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:24px}
+header{display:grid;gap:6px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,42px);line-height:1.1;margin:0;text-wrap:balance}
+.lead{color:var(--muted);margin:0;max-width:62ch}
+.grid{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Settings */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:18px}
+.field{display:grid;gap:6px}
+.field>label,.legend{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.seg{display:grid;gap:6px}
+.seg label{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:14px;line-height:1.35}
+.seg input{margin-top:3px;accent-color:var(--accent)}
+.seg label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.seg small{display:block;color:var(--muted);font-size:12px}
+.row{display:flex;gap:10px;align-items:center}
+input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+input[type=number],input[type=time],select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;min-width:0;font-variant-numeric:tabular-nums}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stufe-badge{font-family:var(--mono);font-size:14px;min-width:4.2em;text-align:right}
+.salary{font-family:var(--mono);font-size:22px;font-variant-numeric:tabular-nums}
+.hint{font-size:12px;color:var(--muted);margin:0}
+details{border-top:1px solid var(--line);padding-top:14px}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+details .inner{display:grid;gap:12px;margin-top:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Board */
+.board{background:var(--board);color:var(--board-ink);border-radius:14px;padding:clamp(20px,4vw,36px);display:grid;gap:22px;position:relative;overflow:hidden}
+.board::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 20% 0%,rgba(255,255,255,.06),transparent 60%)}
+.board-top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
+.status{font-family:var(--mono);font-size:13px;color:var(--board-muted);display:flex;gap:8px;align-items:center}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--board-muted)}
+.running .dot{background:var(--chalk);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.big{font-family:var(--mono);font-weight:500;font-size:clamp(44px,10vw,92px);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;overflow-x:auto}
+.big .cur{font-size:.38em;color:var(--board-muted);margin-right:.25em;letter-spacing:0}
+.big .tail{color:var(--chalk)}
+.sub{color:var(--board-muted);font-size:14px;margin:0}
+.bar{height:10px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--chalk);border-radius:99px}
+.bar-legend{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--board-muted);margin-top:6px}
+.controls{display:flex;gap:10px;flex-wrap:wrap}
+button{font:inherit;font-weight:600;border-radius:8px;padding:10px 16px;cursor:pointer;border:1px solid transparent}
+.btn-main{background:var(--chalk);color:#1E2A12}
+.btn-ghost{background:transparent;color:var(--board-ink);border-color:rgba(255,255,255,.25)}
+.btn-ghost:hover{border-color:rgba(255,255,255,.5)}
+.since{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--board-muted)}
+.since input{width:auto;background:rgba(255,255,255,.08);color:var(--board-ink);border-color:rgba(255,255,255,.2)}
+
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+@media (max-width:640px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--surface);padding:14px 16px;display:grid;gap:2px}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+.stat b{font-family:var(--mono);font-weight:500;font-size:20px;font-variant-numeric:tabular-nums}
+.stat em{font-style:normal;font-size:12px;color:var(--muted)}
+
+.milestones{display:grid;gap:8px}
+.milestones h2{font-family:var(--display);font-size:18px;margin:0}
+.ms{display:grid;grid-template-columns:1fr auto;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:14px;align-items:center}
+.ms:last-child{border-bottom:0}
+.ms .price{font-family:var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ms.done .label{color:var(--accent);font-weight:600}
+.ms .label::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;border:1.5px solid var(--muted);margin-right:9px;vertical-align:1px}
+.ms.done .label::before{background:var(--accent);border-color:var(--accent)}
+.col{display:grid;gap:24px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer}
+.check input{margin-top:4px;accent-color:var(--accent)}
+.check small{display:block;color:var(--muted);font-size:12px;font-family:var(--mono)}
+.btn-plain{background:transparent;color:var(--ink);border:1px solid var(--line);justify-self:start}
+.note{font-size:12px;color:var(--muted);max-width:80ch;margin:0}
+.note a{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.running .dot{animation:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Volksschule Kanton St. Gallen · SGV-Lohntabelle 2026</div>
+    <h1>Was verdiene ich in dieser Lektion?</h1>
+    <p class="lead">Lohnklasse wählen, Lektion starten und live zuschauen, wie der Lohn mitläuft.</p>
+  </header>
+
+  <div class="grid">
+    <!-- Einstellungen -->
+    <form class="panel" id="settings" autocomplete="off">
+      <div class="field">
+        <span class="legend">Funktion</span>
+        <div class="seg" role="radiogroup">
+          <label><input type="radio" name="rolle" id="rolle-prim" value="prim" checked> <span>Lehrperson Kindergarten / Primar<small>SGV-Tabelle Seite 1, LK 1–27</small></span></label>
+          <label><input type="radio" name="rolle" id="rolle-ober" value="ober"> <span>Lehrperson Oberstufe<small>SGV-Tabelle Seite 3, LK 1–25</small></span></label>
+          <label><input type="radio" name="rolle" id="rolle-shp" value="shp"> <span>Schulische Heilpädagogik<small>EDK-anerkannt, mit Lehrdiplom für Regelklassen · Seite 3</small></span></label>
+          <label><input type="radio" name="rolle" id="rolle-eigen" value="eigen"> <span>Eigener Jahreslohn<small>Betrag vom Lohnausweis eintragen</small></span></label>
+        </div>
+      </div>
+
+      <div class="field" id="stufeField">
+        <label for="stufe">Lohnklasse</label>
+        <div class="row">
+          <input type="range" id="stufe" min="1" max="27" value="3">
+          <span class="stufe-badge" id="stufeLabel">LK 3</span>
+        </div>
+      </div>
+
+      <div class="field" id="eigenField" hidden>
+        <label for="eigenLohn">Jahreslohn brutto bei 100 %, inkl. 13. (CHF)</label>
+        <input type="number" id="eigenLohn" min="0" step="1" value="95000">
+      </div>
+
+      <label class="check" id="klpField"><input type="checkbox" id="klp"> <span>Klassenlehrerzulage <small id="klpAmount">+ CHF 2'035.55 / Jahr</small></span></label>
+
+      <div class="field">
+        <span class="legend">Jahreslohn brutto, 100 %, inkl. 13.</span>
+        <div class="salary" id="jahreslohn">CHF 82'492.10</div>
+        <p class="hint" id="salaryHint"></p>
+      </div>
+
+      <div class="field">
+        <label for="pensum">Pensum</label>
+        <div class="row">
+          <input type="range" id="pensum" min="10" max="100" step="5" value="100">
+          <span class="stufe-badge" id="pensumLabel">100 %</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="legend">Berechnung</span>
+        <div class="seg">
+          <label><input type="radio" name="modus" id="modus-lektion" value="lektion" checked> <span>SGV-Lektionsansatz<small>3,24 % des Wochenlohns (1/39 des Jahreslohns), wie Kolonne 4</small></span></label>
+          <label><input type="radio" name="modus" id="modus-stunde" value="stunde"> <span>Pro Arbeitsstunde<small>Jahreslohn ÷ Jahresarbeitszeit</small></span></label>
+        </div>
+      </div>
+
+      <details>
+        <summary>Annahmen anpassen</summary>
+        <div class="inner">
+          <div class="two">
+            <div class="field"><label for="lekDauer">Lektionsdauer (Min.)</label><input type="number" id="lekDauer" min="10" max="120" value="45"></div>
+            <div class="field"><label for="jahresstd">Jahresarbeitszeit (Std.)</label><input type="number" id="jahresstd" min="1000" max="2400" value="1900"></div>
+          </div>
+          <p class="hint">Die Jahresarbeitszeit gilt nur für „Pro Arbeitsstunde“ und ist eine Annahme für ein Vollpensum.</p>
+          <button type="button" id="resetDefaults" class="btn-plain">Standardwerte wiederherstellen</button>
+        </div>
+      </details>
+    </form>
+
+    <!-- Live -->
+    <div class="col">
+      <section class="board" id="board" aria-live="off">
+        <div class="board-top">
+          <div class="status"><span class="dot"></span><span id="statusText">Bereit</span></div>
+          <div class="status" id="clock">--:--:--</div>
+        </div>
+        <div>
+          <div class="big" id="big"><span class="cur">CHF</span><span id="bigMain">0.00</span><span class="tail" id="bigTail">00</span></div>
+          <p class="sub" id="bigSub">in dieser Lektion verdient</p>
+        </div>
+        <div>
+          <div class="bar"><i id="barFill"></i></div>
+          <div class="bar-legend"><span id="elapsed">00:00</span><span id="lekTotal">von 45:00 · CHF 0.00</span></div>
+        </div>
+        <div class="controls">
+          <button type="button" class="btn-main" id="startBtn">Lektion starten</button>
+          <button type="button" class="btn-ghost" id="stopBtn">Beenden</button>
+        </div>
+        <div class="since">
+          <label for="beganAt">Lektion hat schon begonnen um</label>
+          <input type="time" id="beganAt">
+          <button type="button" class="btn-ghost" id="beganBtn" style="padding:6px 12px">Übernehmen</button>
+        </div>
+      </section>
+
+      <div class="stats">
+        <div class="stat"><span>Pro Lektion</span><b id="sLek">–</b><em id="sLekSub">45 Min.</em></div>
+        <div class="stat"><span>Pro Minute</span><b id="sMin">–</b><em>Rp. pro Sekunde: <span id="sSek">–</span></em></div>
+        <div class="stat"><span>Heute total</span><b id="sHeute">–</b><em id="sHeuteSub">0 Lektionen</em></div>
+        <div class="stat"><span>Monatslohn</span><b id="sMonat">–</b><em id="sMonatSub">× 13 bei 100 %</em></div>
+      </div>
+
+      <section class="panel milestones">
+        <h2>In dieser Lektion schon verdient</h2>
+        <div id="msList"></div>
+      </section>
+
+      <p class="note">Quelle: Verband St. Galler Volksschulträger (SGV), Lohntabelle 2026, Grundlage Regierungsbeschluss über die Lohnansätze für die Volksschul-Lehrpersonen im Jahr 2026 (sGS 213.513). Bruttowerte bei 100 % inkl. 13. Monatslohn, vor Abzügen (AHV/IV/EO 5,3 %, ALV 1,1 %, Pensionskasse). LK 1 und 2 der Primartabelle werden seit 2016 auf den Betrag von LK 3 erhöht. Der SGV-Lektionsansatz entspricht Kolonne 4 (Einzellektion Stellvertretung, 3,24 % von 1/39 des Jahreslohns). Die Jahresarbeitszeit für den Stundenmodus ist eine Annahme. <a href="https://www.sgv-sg.ch/werkzeuge/lohntabellen/" target="_blank" rel="noopener">SGV-Lohntabellen</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const TAB = {
+    prim: [75212.50,78852.35,82492.10,82492.10,85887.55,89284.35,92681.40,96078.35,99475.25,99475.25,99475.25,99475.25,102629.25,105783.40,108937.60,112091.65,115245.65,115245.65,115245.65,115245.65,115245.65,116458.50,117792.70,119005.35,120219.65,121553.85,122766.65],
+    ober: [95472.75,99596.75,103720.80,103720.80,107966.10,112213.05,116458.50,120705.55,120705.55,120705.55,120705.55,124708.00,128710.45,132714.70,136717.20,140721.25,140721.25,140721.25,140721.25,140721.25,140721.25,141326.95,141934.10,142541.25,143146.90]
+  };
+  TAB.shp = TAB.ober;
+  const LETTERS = {
+    prim: ['A1','A2','A3','A4','B1','B2','B3','B4','B5','B6','B7','B8','C1','C2','C3','C4','C5','C6','C7','C8','C9','D1','D2','D3','D4','D5','D6'],
+    ober: ['A1','A2','A3','A4','B1','B2','B3','B4','B5','B6','B7','C1','C2','C3','C4','C5','C6','C7','C8','C9','C10','D1','D2','D3','D4']
+  };
+  LETTERS.shp = LETTERS.ober;
+  const KLP = {prim: 2035.55, ober: 2558.80, shp: 2558.80, eigen: 0};
+  const DEFAULTS = {lekDauer:45, jahresstd:1900, eigenLohn:95000, stufe:3, pensum:100};
+  const KEY = 'lektionslohn-sg-v2';
+  const numIds = Object.keys(DEFAULTS);
+
+  const store = {
+    get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
+    set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+
+  const saved = store.get(KEY) || {};
+  if (saved.rolle && $('rolle-' + saved.rolle)) $('rolle-' + saved.rolle).checked = true;
+  if (saved.modus && $('modus-' + saved.modus)) $('modus-' + saved.modus).checked = true;
+  if (saved.klp) $('klp').checked = true;
+  $('stufe').max = TAB[saved.rolle] ? TAB[saved.rolle].length : 27;
+  numIds.forEach(id => { if (saved[id] != null && $(id)) $(id).value = saved[id]; });
+
+  const fmt = (n, d=2) => n.toLocaleString('de-CH', {minimumFractionDigits:d, maximumFractionDigits:d});
+  const chf = (n, d=2) => 'CHF ' + fmt(n, d);
+  const num = id => parseFloat($(id).value) || 0;
+  const radio = name => document.querySelector('input[name="' + name + '"]:checked').value;
+  const pad = n => String(n).padStart(2, '0');
+  const mmss = s => pad(Math.floor(s/60)) + ':' + pad(Math.floor(s%60));
+
+  let calc = {};
+  function compute(){
+    const rolle = radio('rolle'), modus = radio('modus');
+    const st = $('stufe');
+    let jahr, stufe = 0;
+    if (rolle === 'eigen') jahr = num('eigenLohn');
+    else {
+      const tab = TAB[rolle];
+      st.max = tab.length;
+      if (+st.value > tab.length) st.value = tab.length;
+      stufe = +st.value;
+      jahr = tab[stufe - 1];
+      if (rolle === 'prim' && stufe < 3) jahr = tab[2]; // seit 2016 auf LK 3 erhöht
+    }
+    const zulage = $('klp').checked ? KLP[rolle] : 0;
+    const jahrTotal = jahr + zulage;
+    const pensum = num('pensum') / 100;
+    const dauer = Math.max(1, num('lekDauer'));
+    let proMin, proLek;
+    if (modus === 'lektion') { proLek = jahrTotal / 39 * 0.0324; proMin = proLek / dauer; }
+    else { proMin = jahrTotal / (num('jahresstd') * 60); proLek = proMin * dauer; }
+    calc = {rolle, modus, stufe, jahr: jahrTotal, pensum, dauer, proMin, proSek: proMin / 60, proLek};
+
+    $('stufeField').hidden = rolle === 'eigen';
+    $('eigenField').hidden = rolle !== 'eigen';
+    $('klpField').hidden = rolle === 'eigen';
+    $('klpAmount').textContent = '+ ' + chf(KLP[rolle]) + ' / Jahr' + (rolle === 'prim' ? '' : ' (Oberstufe/Kleinklassen)');
+    if (rolle !== 'eigen') $('stufeLabel').textContent = 'LK ' + stufe + ' · ' + LETTERS[rolle][stufe - 1];
+    $('pensumLabel').textContent = Math.round(pensum*100) + ' %';
+    $('jahreslohn').textContent = chf(jahrTotal);
+    let hint = rolle === 'eigen' ? 'Eigener Betrag, hochgerechnet auf 100 %.' : 'Lohnklasse ' + stufe + ' gemäss SGV-Lohntabelle 2026.';
+    if (rolle === 'prim' && stufe < 3) hint += ' Tabellenwert ' + chf(TAB.prim[stufe-1]) + ', wird aber auf den Betrag von LK 3 erhöht.';
+    if (zulage) hint += ' Inkl. Klassenlehrerzulage.';
+    if (pensum < 1) hint += ' Bei ' + Math.round(pensum*100) + ' %: ' + chf(jahrTotal*pensum) + '.';
+    $('salaryHint').textContent = hint;
+
+    $('sLek').textContent = chf(proLek);
+    $('sLekSub').textContent = dauer + ' Min.' + (modus === 'lektion' ? ', SGV-Ansatz' : ', Arbeitszeit');
+    $('sMin').textContent = chf(proMin, 3);
+    $('sSek').textContent = fmt(calc.proSek * 100, 2);
+    $('sMonat').textContent = chf(jahrTotal * pensum / 13);
+    $('sMonatSub').textContent = '1/13 bei ' + Math.round(pensum*100) + ' %';
+
+    const s = {rolle, modus, klp: $('klp').checked};
+    numIds.forEach(id => s[id] = $(id).value);
+    store.set(KEY, s);
+    render();
+  }
+
+  // Timer state
+  const T_KEY = 'lektionslohn-timer-v1';
+  let timer = store.get(T_KEY) || {start:null};
+  const todayKey = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate(); };
+  let day = store.get('lektionslohn-day') || {};
+  if (day.date !== todayKey()) day = {date: todayKey(), chf: 0, count: 0};
+
+  function elapsedSec(){ return timer.start ? Math.max(0, (Date.now() - timer.start) / 1000) : 0; }
+
+  function finish(){
+    if (!timer.start) return;
+    const sec = Math.min(elapsedSec(), calc.dauer * 60);
+    if (day.date !== todayKey()) day = {date: todayKey(), chf: 0, count: 0};
+    day.chf += sec / 60 * calc.proMin;
+    day.count += 1;
+    store.set('lektionslohn-day', day);
+    timer = {start:null, last: sec};
+    store.set(T_KEY, timer);
+  }
+
+  const MILESTONES = [
+    ['Ein Kafi im Lehrerzimmer', 4.5],
+    ['Ein Gipfeli fürs Znüni', 2.2],
+    ['Eine Packung Wandtafelkreide', 9.9],
+    ['Ein Klassensatz Leimstifte (20 Stück)', 36],
+    ['Ein Mittagsmenü', 21.5],
+    ['Ein Bilderbuch für die Klassenbibliothek', 26.9],
+    ['Ein Monats-Abo Ostwind Zone 10', 62]
+  ].sort((a,b) => a[1] - b[1]);
+  const msList = $('msList');
+  msList.innerHTML = MILESTONES.map(([l,p]) => '<div class="ms"><span class="label">' + l + '</span><span class="price">' + chf(p) + '</span></div>').join('');
+  const msEls = [...msList.children];
+
+  function render(){
+    const now = new Date();
+    $('clock').textContent = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+    const total = calc.dauer * 60;
+    let sec = timer.start ? elapsedSec() : (timer.last || 0);
+    if (timer.start && sec >= total) { finish(); sec = total; }
+    const running = !!timer.start;
+    const earned = Math.min(sec, total) / 60 * calc.proMin;
+    const str = fmt(earned, 4);
+    $('bigMain').textContent = str.slice(0, -2);
+    $('bigTail').textContent = str.slice(-2);
+    $('board').classList.toggle('running', running);
+    $('statusText').textContent = running ? 'Lektion läuft' : (sec >= total ? 'Lektion vorbei, Glocke!' : sec > 0 ? 'Beendet' : 'Bereit');
+    $('bigSub').textContent = running ? 'in dieser Lektion verdient, läuft mit' : 'in dieser Lektion verdient';
+    $('barFill').style.width = Math.min(100, sec / total * 100) + '%';
+    $('elapsed').textContent = mmss(Math.min(sec, total));
+    $('lekTotal').textContent = 'von ' + mmss(total) + ' · ' + chf(calc.proLek);
+    $('startBtn').textContent = running ? 'Neu starten' : 'Lektion starten';
+    const heute = day.chf + (running ? earned : 0);
+    $('sHeute').textContent = chf(heute);
+    $('sHeuteSub').textContent = day.count + (day.count === 1 ? ' Lektion' : ' Lektionen') + ' abgeschlossen';
+    msEls.forEach((el, i) => el.classList.toggle('done', earned >= MILESTONES[i][1]));
+  }
+
+  $('startBtn').addEventListener('click', () => { if (timer.start) finish(); timer = {start: Date.now()}; store.set(T_KEY, timer); render(); });
+  $('stopBtn').addEventListener('click', () => { finish(); render(); });
+  $('beganBtn').addEventListener('click', () => {
+    const v = $('beganAt').value; if (!v) return;
+    const [h, m] = v.split(':').map(Number);
+    const d = new Date(); d.setHours(h, m, 0, 0);
+    if (d > new Date()) return;
+    if (timer.start) finish();
+    timer = {start: d.getTime()}; store.set(T_KEY, timer); render();
+  });
+  $('resetDefaults').addEventListener('click', () => { numIds.forEach(id => { if ($(id)) $(id).value = DEFAULTS[id]; }); compute(); });
+  $('settings').addEventListener('input', compute);
+  $('settings').addEventListener('change', compute);
+  $('settings').addEventListener('submit', e => e.preventDefault());
+
+  compute();
+  (function loop(){ render(); requestAnimationFrame(loop); })();
+})();
+</script>

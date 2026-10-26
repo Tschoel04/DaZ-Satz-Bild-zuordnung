@@ -1,0 +1,993 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geisterbahn Live</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  body.running { cursor: none; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  #help {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.86); color: #ddd; font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+    transition: opacity .7s; padding: 16px; box-sizing: border-box;
+  }
+  #help.hidden { opacity: 0; pointer-events: none; }
+  .box { max-width: 760px; width: 100%; background: #111; border: 1px solid #333; border-radius: 14px; padding: 22px 28px; }
+  h1 { margin: 0 0 4px; font-size: 26px; color: #f2f2f2; }
+  p { margin: 6px 0 14px; color: #aaa; }
+  table { border-collapse: collapse; width: 100%; }
+  td { padding: 4px 8px; vertical-align: top; }
+  td:first-child { white-space: nowrap; width: 1%; }
+  kbd { display: inline-block; min-width: 1.4em; text-align: center; padding: 1px 7px; border: 1px solid #555;
+        border-bottom-width: 3px; border-radius: 6px; background: #1d1d1d; color: #fff; font: 600 14px system-ui, sans-serif; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  .start { margin-top: 14px; padding: 10px 14px; background: #1b2a1b; border: 1px solid #2f4f2f; border-radius: 10px; color: #cfe8cf; }
+  @media (max-width: 700px) { .cols { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="help">
+  <div class="box">
+    <h1>Geisterbahn Live</h1>
+    <p>Alle Übergänge laufen weich. Auf dem Bild ist nie zu sehen, dass jemand eine Taste drückt.</p>
+    <div class="cols">
+      <table>
+        <tr><td><kbd>Leertaste</kbd></td><td>Start / anhalten / weiterfahren</td></tr>
+        <tr><td><kbd>T</kbd></td><td>Tür knattert und geht auf (fährt man gerade, taucht eine neue Tür auf)</td></tr>
+        <tr><td><kbd>D</kbd></td><td>Drehung 360°</td></tr>
+        <tr><td><kbd>F</kbd></td><td>Licht flackert</td></tr>
+        <tr><td><kbd>L</kbd></td><td>Licht aus / wieder an</td></tr>
+        <tr><td><kbd>A</kbd></td><td>Augen in den Wänden</td></tr>
+        <tr><td><kbd>G</kbd></td><td>Gespenst fliegt vorbei</td></tr>
+      </table>
+      <table>
+        <tr><td><kbd>S</kbd></td><td>Schluss-Schreck (Ende der Fahrt)</td></tr>
+        <tr><td><kbd>N</kbd></td><td>Neue Fahrt (zurück vor die Tür)</td></tr>
+        <tr><td><kbd>K</kbd></td><td>Kindermodus (weniger gruselig)</td></tr>
+        <tr><td><kbd>E</kbd></td><td>Erwachsenenmodus (sehr gruselig)</td></tr>
+        <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>schneller / langsamer</td></tr>
+        <tr><td><kbd>M</kbd></td><td>Ton aus / an</td></tr>
+        <tr><td><kbd>V</kbd></td><td>Vollbild</td></tr>
+        <tr><td><kbd>H</kbd></td><td>diese Hilfe zeigen / verstecken</td></tr>
+      </table>
+    </div>
+    <div class="start" id="startline">Erst <kbd>V</kbd> für Vollbild, dann <kbd>Leertaste</kbd>: Das Bild blendet vor der geschlossenen Tür ein (Kindermodus).</div>
+  </div>
+</div>
+
+<script id="vs" type="x-shader/x-vertex">
+attribute vec2 aPos;
+void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+</script>
+
+<script id="fs" type="x-shader/x-fragment">
+precision highp float;
+uniform vec2 uRes;
+uniform float uTime, uCamZ, uCamX, uCamY, uRoll, uYaw, uScary, uLight, uLampsOff, uCart, uFade;
+uniform vec4 uDoor;      // z, Öffnung (0..1), Einblendung, vorhanden
+uniform vec2 uDoorA;     // Winkel linker / rechter Flügel
+uniform vec4 uEyes[16];  // x, y, z, Helligkeit
+uniform vec4 uGhost;     // x, y, z, Deckkraft
+uniform vec2 uGhostP;    // Grösse, Wackeln
+
+const float HW = 1.2, FL = -1.0, CE = 1.4, DX = 0.85, DY = 0.95;
+const float TAU = 6.2831853;
+// Alle Muster wiederholen sich exakt nach 63 Einheiten (Kamera-z wird modulo 63 übergeben).
+const float K = TAU / 63.0;
+
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+
+vec3 bricks(float s, float y) {
+  float row = floor((y + 1.0) / 0.25);
+  float off = mod(row, 2.0) * 0.25;
+  float col = mod(floor((s + off) / 0.5), 126.0);
+  float fs = fract((s + off) / 0.5), fy = fract((y + 1.0) / 0.25);
+  float h = hash(vec2(row, col));
+  float stain = 0.75 + 0.25 * sin(s * K * 13.0 + y * 2.1) * sin(s * K * 4.0 + 1.0);
+  vec3 c = vec3(0.34, 0.30, 0.27) * (0.55 + 0.6 * h) * stain;
+  float moss = clamp(sin(s * K * 9.0) * sin(y * 3.0 + s * K * 10.0) - 0.5, 0.0, 1.0);
+  c = mix(c, vec3(0.12, 0.25, 0.1), moss);
+  if (fs < 0.05 || fy < 0.1) c *= 0.35;
+  return c;
+}
+
+float cobweb(float s, float y) {
+  float ds = s - (floor(s / 6.3 + 0.5) * 6.3 + 1.0);
+  float dy = CE - y;
+  float r = length(vec2(ds, dy));
+  float ang = atan(dy, ds);
+  float sp = step(0.47, abs(fract(ang / (3.14159 / 7.0)) - 0.5));
+  float rg = step(0.44, abs(fract(r / 0.09 + 0.3 * sin(ang * 7.0)) - 0.5));
+  return max(sp, rg) * step(r, 0.65) * clamp(1.2 - r * 1.6, 0.0, 1.0);
+}
+
+vec3 lampCol(float k) {
+  float h = hash(vec2(mod(k, 14.0), 7.0));
+  vec3 kc = h < 0.25 ? vec3(0.75, 0.35, 1.0) : h < 0.5 ? vec3(0.35, 1.0, 0.4) : h < 0.75 ? vec3(1.0, 0.6, 0.2) : vec3(0.3, 0.8, 1.0);
+  vec3 ac = h < 0.5 ? vec3(1.0, 0.5, 0.15) : h < 0.75 ? vec3(0.35, 1.0, 0.3) : vec3(1.0, 0.12, 0.08);
+  return mix(kc, ac, uScary);
+}
+
+float lampLv(float k) {
+  float km = mod(k, 14.0);
+  float lv = 0.85 + 0.15 * sin(uTime * 31.0 + km * 1.7);
+  if (hash(vec2(km, floor(uTime * 12.0))) < mix(0.03, 0.09, uScary)) lv = 0.15;
+  float keep = abs(km - 5.0) < 0.5 ? step(0.7, hash(vec2(floor(uTime * 9.0), 2.0))) : 0.0;
+  lv = mix(lv, keep * 0.9, uLampsOff);
+  return lv * uLight;
+}
+
+float glow(vec3 P, vec3 c, vec3 d, float T, float r) {
+  vec3 w = P - c;
+  float al = dot(w, d) / dot(d, d);
+  if (al < 0.05 || al > T + 0.4) return 0.0;
+  vec3 perp = w - al * d;
+  return exp(-dot(perp, perp) / (r * r));
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / uRes * 2.0 - 1.0;
+  uv.x *= uRes.x / uRes.y;
+  uv *= 0.85;
+  float cr = cos(uRoll), sr = sin(uRoll), cp = cos(uYaw), sp = sin(uYaw);
+  float dx0 = uv.x * cr - uv.y * sr;
+  vec3 d = vec3(dx0 * cp + sp, uv.x * sr + uv.y * cr, -dx0 * sp + cp);
+  vec3 c = vec3(uCamX, uCamY, uCamZ);
+
+  float T = 1e4, id = -1.0, pu = 0.0;
+  vec2 pn = vec2(0.0);
+  if (d.x > 1e-5) { float t = (HW - c.x) / d.x; if (t < T) { T = t; id = 0.0; } }
+  if (d.x < -1e-5) { float t = (-HW - c.x) / d.x; if (t < T) { T = t; id = 1.0; } }
+  if (d.y < -1e-5) { float t = (FL - c.y) / d.y; if (t < T) { T = t; id = 2.0; } }
+  if (d.y > 1e-5) { float t = (CE - c.y) / d.y; if (t < T) { T = t; id = 3.0; } }
+
+  if (uDoor.w > 0.5 && abs(d.z) > 1e-5) {
+    float t = (uDoor.x - c.z) / d.z;
+    vec3 q = c + t * d;
+    if (t > 1e-4 && t < T && !(abs(q.x) < DX && q.y < DY)) { T = t; id = 4.0; }
+    for (int k = 0; k < 2; k++) {
+      float side = k == 0 ? 1.0 : -1.0;
+      float hx = -side * DX;
+      float ang = k == 0 ? uDoorA.x : uDoorA.y;
+      float Dx = side * cos(ang), Dz = sin(ang);
+      float det = -d.x * Dz + Dx * d.z;
+      if (abs(det) > 1e-6) {
+        float tp = (-(hx - c.x) * Dz + Dx * (uDoor.x - c.z)) / det;
+        float up = (d.x * (uDoor.x - c.z) - d.z * (hx - c.x)) / det;
+        float yp = c.y + tp * d.y;
+        if (tp > 1e-4 && up >= 0.0 && up <= DX && yp > FL && yp < DY && tp < T) { T = tp; id = 5.0; pu = up; pn = vec2(-Dz, Dx); }
+      }
+    }
+  }
+  T = min(T, 200.0);
+  vec3 p = c + T * d;
+
+  vec3 col = vec3(0.0), n = vec3(0.0);
+  float spec = 0.0;
+  if (id < 1.5) {
+    col = bricks(p.z, p.y);
+    float web = cobweb(p.z + id * 3.0, p.y);
+    // Blutspuren nur im Erwachsenenmodus
+    float bc = mod(floor(p.z * 3.0), 189.0);
+    float bh = hash(vec2(bc, id + 4.0));
+    float blen = 0.2 + hash(vec2(bc, id + 9.0)) * 1.1;
+    float bw = 0.1 * (1.0 - 0.5 * clamp((CE - p.y) / blen, 0.0, 1.0));
+    float drip = step(0.9, bh) * step(abs(fract(p.z * 3.0) - 0.5), bw) * step(CE - blen, p.y);
+    float drop = step(0.9, bh) * step(length(vec2((fract(p.z * 3.0) - 0.5) / 3.0, p.y - (CE - blen))), 0.045);
+    col = mix(col, vec3(0.28, 0.01, 0.01), max(drip, drop) * smoothstep(0.35, 1.0, uScary));
+    spec = max(drip, drop) * 0.8 * uScary;
+    col = mix(col, vec3(0.75, 0.75, 0.7), web * 0.8);
+    n = vec3(id < 0.5 ? -1.0 : 1.0, 0.0, 0.0);
+  } else if (id < 2.5) {
+    float g = 0.5 + 0.5 * hash(vec2(floor(p.x * 8.0), mod(floor(p.z * 8.0), 504.0)));
+    col = vec3(0.16, 0.14, 0.12) * g;
+    if (fract(p.z / 0.6) < 0.35 && abs(p.x) < 0.55) {
+      float gr = 0.8 + 0.2 * sin(p.z * K * 902.0 + sin(p.x * 13.0) * 2.0);
+      col = vec3(0.35, 0.2, 0.1) * gr;
+    }
+    if (abs(abs(p.x) - 0.3) < 0.028) { col = vec3(0.55, 0.55, 0.6); spec = 1.0; }
+    n = vec3(0.0, 1.0, 0.0);
+  } else if (id < 3.5) {
+    col = fract(p.z / 1.5) < 0.2 ? vec3(0.25, 0.15, 0.08) : vec3(0.07);
+    float web = cobweb(p.z, CE - abs(abs(p.x) - HW));
+    col = mix(col, vec3(0.6, 0.6, 0.55), web * 0.7);
+    n = vec3(0.0, -1.0, 0.0);
+  } else if (id < 4.5) {
+    col = bricks(p.x + 0.3, p.y) * 0.9 * uDoor.z;
+    n = vec3(0.0, 0.0, -1.0);
+  } else {
+    float pl = fract(pu / 0.17);
+    float gr = 0.75 + 0.25 * sin(p.y * 40.0 + sin(pu * 30.0) * 3.0) * (0.5 + 0.5 * hash(vec2(floor(pu / 0.17), 3.0)));
+    col = vec3(0.32, 0.18, 0.09) * gr;
+    if (pl < 0.06) col *= 0.3;
+    bool band = abs(p.y + 0.55) < 0.05 || abs(p.y - 0.55) < 0.05;
+    if (band) { col = vec3(0.2, 0.17, 0.15); spec = 0.5; }
+    if (band && abs(pl - 0.5) < 0.12) col = vec3(0.45, 0.4, 0.35);
+    if (abs(length(vec2(pu - 0.72, p.y)) - 0.07) < 0.015) { col = vec3(0.5, 0.42, 0.3); spec = 0.5; }
+    col *= uDoor.z;
+    n = vec3(pn.x, 0.0, pn.y);
+  }
+
+  // Licht
+  vec3 light = vec3(mix(0.05, 0.012, uScary)) * mix(1.0, 0.3, uLampsOff);
+  vec3 glows = vec3(0.0);
+  float lampStr = mix(1.9, 1.6, uScary);
+  float doorOpen = clamp(uDoorA.x / 1.2, 0.0, 1.0);
+  float kb = floor((uCamZ - 2.0) / 4.5);
+  for (int i = -2; i < 9; i++) {
+    float k = kb + float(i);
+    float lz = k * 4.5 + 2.0;
+    float side = mod(k, 2.0) < 0.5 ? -1.0 : 1.0;
+    vec3 L = vec3(side * (HW - 0.08), 0.5, lz);
+    float lv = lampLv(k);
+    if (lv < 0.001) continue;
+    vec3 lc = lampCol(k);
+    vec3 v = L - p;
+    float d2 = dot(v, v);
+    float lam = abs(dot(n, v)) * inversesqrt(d2);
+    float f = lv * lampStr * (0.25 + 0.75 * lam) / (1.0 + 0.9 * d2);
+    if (uDoor.w > 0.5 && lz > uDoor.x && p.z < uDoor.x - 0.02) f *= doorOpen;
+    light += f * lc;
+    glows += lv * (lc * 0.9 * glow(L, c, d, T, 0.18) + vec3(1.0, 1.0, 0.9) * 1.5 * glow(L, c, d, T, 0.05));
+  }
+  if (uDoor.w > 0.5) {
+    vec3 L = vec3(0.0, 1.15, uDoor.x - 0.6);
+    float lv = uDoor.z * (0.85 + 0.15 * sin(uTime * 23.0)) * uLight * (1.0 - 0.8 * uLampsOff);
+    vec3 v = L - p;
+    float d2 = dot(v, v);
+    float lam = abs(dot(n, v)) * inversesqrt(d2);
+    light += lv * 1.3 * (0.25 + 0.75 * lam) / (1.0 + 0.9 * d2) * vec3(1.0, 0.7, 0.35);
+    glows += lv * (vec3(1.0, 0.7, 0.35) * 0.9 * glow(L, c, d, T, 0.18) + vec3(1.0, 1.0, 0.9) * 1.5 * glow(L, c, d, T, 0.05));
+  }
+  {
+    vec3 v = vec3(c.x, c.y + 0.3, c.z) - p;
+    float d2 = dot(v, v);
+    float lam = abs(dot(n, v)) * inversesqrt(d2);
+    light += uCart * 0.45 * (0.3 + 0.7 * lam) / (1.0 + 0.35 * d2) * vec3(0.55, 0.6, 0.8);
+  }
+
+  float fogD = mix(0.045, 0.075, uScary);
+  float dist = T * length(d);
+  col = col * light * (1.0 + spec * 1.5) * exp(-fogD * dist);
+
+  // Gespenst (Billboard in der Welt, dreht sich bei der Rolle mit)
+  if (uGhost.w > 0.001 && d.z > 1e-4) {
+    float tg = (uGhost.z - c.z) / d.z;
+    if (tg > 0.05 && tg < T + 0.5) {
+      vec3 q = c + tg * d;
+      float s = uGhostP.x;
+      float a = (q.x - uGhost.x) / s, b = (uGhost.y - q.y) / s;
+      float sm = smoothstep(0.35, 0.65, uScary);
+      // Umriss Kindermodus: rund mit welligem Saum
+      float head = length(vec2(a, b + 0.25)) - 0.55;
+      float hem = 0.75 + 0.1 * sin(a * 18.0 + uTime * 12.0);
+      float sdK = min(head, max(abs(a) - 0.55, max(-0.25 - b, b - hem)));
+      // Umriss Erwachsenenmodus: schmaler Kopf, weiter Umhang, zerfetzter Saum, leichtes Wabern
+      float aw = a + 0.035 * sin(b * 5.0 + uTime * 4.0);
+      float headA = length(vec2(aw * 1.15, (b + 0.3) * 0.9)) - 0.48;
+      float hemA = 1.15 - 0.45 * abs(fract(aw * 3.2 + uTime * 0.4) - 0.5) * 2.0 - 0.1 * sin(aw * 5.0 + uTime * 2.0);
+      float sdA = min(headA, max(abs(aw) - (0.42 + 0.22 * max(b, 0.0)), max(-0.3 - b, b - hemA)));
+      float sd = mix(sdK, sdA, sm);
+      float shape = 1.0 - smoothstep(-0.02, 0.02, sd);
+      shape *= mix(1.0, 0.75 + 0.25 * sin(b * 9.0 - uTime * 3.0) * sin(a * 7.0 + uTime), sm);
+      shape *= mix(1.0, 1.0 - 0.6 * smoothstep(0.5, 1.1, b), sm);
+      vec3 gc = mix(vec3(0.93, 0.96, 1.0), vec3(0.72, 0.8, 0.74), uScary) * (0.8 + 0.2 * cos(b * 2.0));
+      // Kindergesicht: runde Augen mit Glanzpunkt, Bäckchen, Lächeln
+      float ke = length(vec2(abs(a) - 0.2, b + 0.33)) - 0.11;
+      float kh = length(vec2(abs(a) - 0.165, b + 0.37)) - 0.035;
+      float smile = max(abs(length(vec2(a, b + 0.05)) - 0.2) - 0.03, 0.03 - b);
+      float cheek = length(vec2(abs(a) - 0.33, b + 0.12)) - 0.07;
+      vec3 kidC = mix(gc, vec3(1.0, 0.62, 0.72), 1.0 - smoothstep(-0.01, 0.01, cheek));
+      kidC = mix(kidC, vec3(0.05, 0.03, 0.08), 1.0 - smoothstep(-0.01, 0.01, min(ke, smile)));
+      kidC = mix(kidC, vec3(1.0), 1.0 - smoothstep(-0.005, 0.005, kh));
+      // Erwachsenengesicht: hohle, hängende Augen, langer offener Mund
+      float aeye = length(vec2((abs(a) - 0.18) * 1.5, (b + 0.36 - 0.12 * abs(a)) * 0.8)) - 0.1;
+      float apup = length(vec2(abs(a) - 0.18, b + 0.34)) - 0.025;
+      float amouth = length(vec2(a * 2.4 * (1.0 + 0.12 * sin(uTime * 9.0)), (b - 0.12) * 0.5)) - 0.2;
+      vec3 adC = mix(gc, vec3(0.0), 1.0 - smoothstep(-0.02, 0.02, min(aeye, amouth)));
+      adC = mix(adC, vec3(2.5, 0.15, 0.05), 1.0 - smoothstep(-0.01, 0.01, apup));
+      vec3 fc = mix(kidC, adC, sm);
+      float gfog = exp(-fogD * tg * length(d));
+      float alpha = shape * uGhost.w * mix(0.93, 0.72, uScary);
+      col = mix(col, fc * gfog, alpha);
+      col += exp(-(a * a + (b - 0.2) * (b - 0.2)) / 0.8) * 0.25 * uGhost.w * gfog * vec3(0.5, 0.6, 1.0);
+    }
+  }
+
+  // Augen in der Dunkelheit
+  vec3 eyeC = mix(vec3(1.0, 0.85, 0.15), vec3(1.0, 0.08, 0.03), uScary);
+  float eyeR = mix(0.06, 0.035, uScary);
+  for (int i = 0; i < 16; i++) {
+    vec4 e = uEyes[i];
+    if (e.w > 0.001) {
+      glows += e.w * eyeC * (2.5 * glow(e.xyz, c, d, T + 0.3, eyeR) + 0.35 * glow(e.xyz, c, d, T + 0.3, eyeR * 3.5));
+    }
+  }
+  col += glows * exp(-fogD * 0.5 * dist);
+
+  col = 1.0 - exp(-col * 1.4);
+  col = pow(clamp(col, 0.0, 1.0), vec3(0.85));
+  vec2 sq = gl_FragCoord.xy / uRes - 0.5;
+  col *= clamp(1.15 - 0.55 * (sq.x * sq.x * 3.2 + sq.y * sq.y * 3.2), 0.0, 1.0);
+  col += (hash(gl_FragCoord.xy * 0.37 + fract(uTime * 7.0) * 91.0) - 0.5) * 0.035;
+  gl_FragColor = vec4(clamp(col * uFade, 0.0, 1.0), 1.0);
+}
+</script>
+
+<script>
+"use strict";
+const PERIOD = 63, HW = 1.2;
+const smooth = x => { x = Math.min(Math.max(x, 0), 1); return x * x * x * (x * (6 * x - 15) + 10); };
+const lerp = (a, b, t) => a + (b - a) * t;
+const clamp = (x, a, b) => Math.min(Math.max(x, a), b);
+const h1 = (a, b) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); };
+const rnd = (a = 0, b = 1) => a + Math.random() * (b - a);
+
+// ------------------------------------------------------------ Zustand
+const S = {
+  started: false, t: 0, cz: 0, speed: 0, cruise: 1.6, halted: true,
+  scary: 0, scaryTarget: 0,
+  roll: 0, rollAnim: null, rollDir: 1, rollQueue: 0,
+  door: null, flick: null, darkT: 0, dark: 0,
+  eyes: [], ghost: null, ghostDir: 1, finale: null,
+  fade: 0, fadeTarget: 0, fadeRate: 0.7, ended: false, pending: null,
+  lastSleeper: 0, nextBeat: 0, bpm: 70, nextAmbient: 12, muted: false,
+  lightMul: 1, buzz: 0,
+};
+
+function newDoorAhead(dist, phase) {
+  S.door = { z: S.cz + dist, phase, pt: 0, angL: 0, angR: 0, fade: phase === "approach" ? 0 : 1 };
+}
+
+function resetRide() {
+  S.cz = 0; S.speed = 0; S.halted = true; S.roll = 0; S.rollAnim = null; S.rollQueue = 0;
+  S.darkT = 0; S.dark = 0; S.eyes = []; S.ghost = null; S.finale = null; S.flick = null;
+  S.ended = false; S.lastSleeper = 0;
+  newDoorAhead(2.0, "closed");
+  S.fadeTarget = 1; S.fadeRate = 0.6;
+}
+resetRide();
+S.fade = 0;
+
+// ------------------------------------------------------------ Aktionen
+function actDoor() {
+  if (S.ended || S.finale) return;
+  if (!S.door) { newDoorAhead(Math.max(16, S.speed * 6 + 11), "approach"); S.halted = false; return; }
+  if (S.door.phase === "closed") { S.door.phase = "rattle"; S.door.pt = 0; Snd.rattle(); }
+}
+function actRoll() {
+  if (S.ended) return;
+  if (S.rollAnim) { S.rollQueue = Math.min(S.rollQueue + 1, 2); return; }
+  startRoll();
+}
+function startRoll() {
+  const dur = lerp(4.6, 3.0, S.scary);
+  S.rollAnim = { t0: S.t, dur, dir: S.rollDir };
+  S.rollDir *= -1;
+}
+function actFlicker() {
+  if (S.ended) return;
+  S.flick = { t0: S.t, dur: lerp(1.6, 1.9, S.scary) };
+}
+function actDark() { if (!S.ended && !S.finale) S.darkT = S.darkT > 0.5 ? 0 : 1; }
+function actEyes() {
+  if (S.ended) return;
+  const n = Math.round(lerp(3, 6, S.scary));
+  for (let i = 0; i < n; i++) {
+    const side = Math.random() < 0.5 ? -1 : 1;
+    S.eyes.push({ side, y: rnd(-0.6, 0.9), z: S.cz + 6 + i * 2.2 + rnd(0, 2), born: S.t + i * rnd(0.2, 0.6), life: lerp(7, 9, S.scary), seed: Math.random() * 100 });
+  }
+  while (S.eyes.length > 8) S.eyes.shift();
+  if (S.scary > 0.5) Snd.growl(); else Snd.pling();
+}
+function actGhost() {
+  if (S.ended || S.finale || S.ghost) return;
+  S.ghost = { type: "cross", t0: S.t, dur: lerp(3.4, 2.6, S.scary), dir: S.ghostDir };
+  Snd.moan(S.ghostDir, S.ghost.dur);
+  S.ghostDir *= -1;
+}
+function actFinale() {
+  if (S.ended || S.finale) return;
+  S.finale = { t0: S.t, kid: null, rushT0: 0 };
+  S.darkT = 1;
+}
+function actNew() {
+  if (S.pending) return;
+  if (S.ended || S.fade < 0.02) { resetRide(); Snd.ambient(true); return; }
+  S.fadeTarget = 0; S.fadeRate = 0.7;
+  S.pending = { at: S.t + 1.6, fn: () => { resetRide(); Snd.ambient(true); } };
+}
+function actHalt() {
+  if (S.ended) { actNew(); return; }
+  if (S.door && S.door.phase === "closed") return;
+  S.halted = !S.halted;
+}
+function setMode(scary) { S.scaryTarget = scary; }
+
+// ------------------------------------------------------------ Simulation
+function update(dt) {
+  S.t += dt;
+  const t = S.t;
+  S.scary += (S.scaryTarget - S.scary) * Math.min(1, dt / 1.1);
+
+  if (S.pending && t >= S.pending.at) { const f = S.pending.fn; S.pending = null; f(); }
+
+  // Tempo
+  let target = S.halted ? 0 : S.cruise;
+  if (S.door && S.door.phase === "approach") target = Math.max(target, 1.8);
+  if (S.finale) target = Math.min(target, S.finale.kid === true && t - S.finale.rushT0 > 2.6 ? 0 : 0.7);
+  if (S.ended) target = 0;
+  S.speed += clamp(target - S.speed, -0.75 * dt, 0.6 * dt);
+  const d = S.door;
+  if (d) {
+    const blocking = ["approach", "pause", "closed", "rattle"].includes(d.phase) || (d.phase === "open" && d.pt < 1.2);
+    if (blocking) {
+      const rem = d.z - 2.0 - S.cz;
+      S.speed = Math.min(S.speed, Math.sqrt(2 * 0.55 * Math.max(rem, 0)));
+    }
+  }
+  S.cz += S.speed * dt;
+
+  // Tür
+  if (d) {
+    d.pt += dt;
+    d.fade = Math.min(1, d.fade + dt / 2.5);
+    if (d.phase === "approach" && d.z - 2.0 - S.cz < 0.03 && S.speed < 0.05) { d.phase = "pause"; d.pt = 0; }
+    if (d.phase === "pause" && d.pt > 0.8) { d.phase = "rattle"; d.pt = 0; Snd.rattle(); }
+    if (d.phase === "rattle") {
+      d.angL = 0.035 * Math.abs(Math.sin(t * 70)) * h1(Math.floor(t * 30), 3);
+      d.angR = 0.035 * Math.abs(Math.sin(t * 63 + 1)) * h1(Math.floor(t * 30), 5);
+      if (d.pt > 1.4) { d.phase = "open"; d.pt = 0; Snd.creak(); }
+    } else if (d.phase === "open") {
+      const p = d.pt / 2.3;
+      const a = 1.75 * smooth(p + 0.04 * Math.sin(p * 40) * (1 - p));
+      d.angL = a; d.angR = a * 0.97;
+      if (d.pt > 0.9 && S.halted) S.halted = false;
+      if (p >= 1) { d.phase = "done"; Snd.thud(); }
+    } else if (d.phase !== "done") {
+      d.angL = d.angR = 0;
+    }
+    if (d.phase === "done" && S.cz > d.z + 3) S.door = null;
+  }
+
+  // Drehung
+  if (S.rollAnim) {
+    const p = (t - S.rollAnim.t0) / S.rollAnim.dur;
+    S.roll = S.rollAnim.dir * 2 * Math.PI * smooth(p);
+    if (p >= 1) {
+      S.roll = 0; S.rollAnim = null;
+      if (S.rollQueue > 0) { S.rollQueue--; startRoll(); }
+    }
+  }
+
+  // Flackern
+  let lm = 1, buzz = 0;
+  if (S.flick) {
+    const p = (t - S.flick.t0) / S.flick.dur;
+    if (p >= 1) S.flick = null;
+    else {
+      const edge = Math.min(1, p * 12, (1 - p) * 12);
+      const kidV = 0.45 + 0.55 * h1(Math.floor(t * 9), 11);
+      const adV = h1(Math.floor(t * 22), 7) > 0.55 ? 1 : 0.03;
+      const v = lerp(kidV, adV, S.scary);
+      lm = lerp(1, v, edge);
+      buzz = edge;
+    }
+  }
+  S.lightMul = lm; S.buzz = buzz;
+  S.dark += (S.darkT - S.dark) * Math.min(1, dt / 0.7);
+
+  // Augen
+  S.eyes = S.eyes.filter(e => t - e.born < e.life && e.z > S.cz + 0.5);
+
+  // Gespenst vorbei
+  if (S.ghost && S.ghost.type === "cross" && t - S.ghost.t0 > S.ghost.dur) S.ghost = null;
+
+  // Finale
+  const f = S.finale;
+  if (f) {
+    const ft = t - f.t0;
+    if (f.kid === null && ft > 2.6) {
+      f.kid = S.scary < 0.5; f.rushT0 = t;
+      S.ghost = { type: f.kid ? "kid" : "rush", t0: t, dur: f.kid ? 3.0 : 1.6 };
+      if (f.kid) Snd.huu(); else Snd.shriek(1.6);
+    }
+    if (f.kid === true) {
+      const gt = t - f.rushT0;
+      if (gt > 3.0 && !f.buh) { f.buh = true; Snd.buh(); }
+      if (gt > 4.6 && !f.out) { f.out = true; S.fadeTarget = 0; S.fadeRate = 0.5; }
+      if (gt > 6.8) endRide();
+    } else if (f.kid === false) {
+      if (t - f.rushT0 >= 1.6) { S.fade = 0; S.fadeTarget = 0; Snd.boom(); endRide(); }
+    }
+  }
+
+  // Ausblenden / Einblenden
+  if (S.fade < S.fadeTarget) S.fade = Math.min(S.fadeTarget, S.fade + dt * S.fadeRate);
+  else S.fade = Math.max(S.fadeTarget, S.fade - dt * S.fadeRate);
+
+  // Geräusche, die vom Zustand abhängen
+  Snd.tick(dt);
+}
+
+function endRide() {
+  S.ended = true; S.finale = null; S.ghost = null; S.halted = true; S.eyes = [];
+  S.fadeTarget = 0;
+  Snd.ambient(false);
+}
+
+// ------------------------------------------------------------ Grafik
+const canvas = document.getElementById("c");
+const gl = canvas.getContext("webgl", { antialias: false, preserveDrawingBuffer: true });
+function compile(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, compile(gl.VERTEX_SHADER, document.getElementById("vs").textContent));
+gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, document.getElementById("fs").textContent));
+gl.linkProgram(prog);
+if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+gl.useProgram(prog);
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+const aPos = gl.getAttribLocation(prog, "aPos");
+gl.enableVertexAttribArray(aPos);
+gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+const U = {};
+["uRes", "uTime", "uCamZ", "uCamX", "uCamY", "uRoll", "uYaw", "uScary", "uLight", "uLampsOff", "uCart", "uFade",
+ "uDoor", "uDoorA", "uEyes", "uGhost", "uGhostP"].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+
+function resize() {
+  const maxW = 1600;
+  const dpr = window.devicePixelRatio || 1;
+  let w = innerWidth * dpr, h = innerHeight * dpr;
+  if (w > maxW) { h = h * maxW / w; w = maxW; }
+  canvas.width = Math.round(w); canvas.height = Math.round(h);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+}
+addEventListener("resize", resize);
+resize();
+
+const eyeArr = new Float32Array(64);
+function draw() {
+  const t = S.t;
+  const czm = ((S.cz % PERIOD) + PERIOD) % PERIOD;
+  const rel = z => z - S.cz + czm;
+  const moving = Math.min(S.speed / 1.6, 1);
+  const shake = S.finale && S.scary > 0.5 ? 0.012 * smooth((t - S.finale.t0) / 3) : 0;
+  const camX = 0.05 * Math.sin(t * 0.7) * moving + shake * (Math.random() - 0.5);
+  const camY = 0.035 * Math.sin(S.cz * 2 * Math.PI * 0.875) * moving + shake * (Math.random() - 0.5);
+  const roll = S.roll + 0.02 * Math.sin(t * 1.9) * moving;
+  const yaw = 0.05 * Math.sin(t * 0.45) * moving;
+
+  gl.uniform2f(U.uRes, canvas.width, canvas.height);
+  gl.uniform1f(U.uTime, t % 1000);
+  gl.uniform1f(U.uCamZ, czm);
+  gl.uniform1f(U.uCamX, camX);
+  gl.uniform1f(U.uCamY, camY);
+  gl.uniform1f(U.uRoll, roll);
+  gl.uniform1f(U.uYaw, yaw);
+  gl.uniform1f(U.uScary, S.scary);
+  gl.uniform1f(U.uLight, S.lightMul);
+  const off = S.dark * lerp(0.75, 1.0, S.scary);
+  gl.uniform1f(U.uLampsOff, off);
+  let cart = 1 - S.dark * lerp(0.35, 0.6, S.scary);
+  if (S.dark > 0.5 && S.scary > 0.5 && h1(Math.floor(t * 15), 5) < 0.15) cart *= 0.25;
+  gl.uniform1f(U.uCart, cart * Math.max(S.lightMul, 0.3));
+  gl.uniform1f(U.uFade, smooth(S.fade));
+  const d = S.door;
+  if (d) {
+    gl.uniform4f(U.uDoor, rel(d.z), 0, d.fade, 1);
+    gl.uniform2f(U.uDoorA, d.angL, d.angR);
+  } else {
+    gl.uniform4f(U.uDoor, 0, 0, 0, 0);
+    gl.uniform2f(U.uDoorA, 0, 0);
+  }
+  eyeArr.fill(0);
+  S.eyes.slice(0, 8).forEach((e, i) => {
+    const age = t - e.born;
+    let a = age < 0 ? 0 : smooth(age / 1.0) * smooth((e.life - age) / 1.0);
+    if (h1(Math.floor(t * 2.5), e.seed) < 0.12) a = 0;
+    a *= Math.max(S.lightMul, 0.6);
+    const x = e.side * (HW - 0.06);
+    for (let k = 0; k < 2; k++) {
+      const o = (i * 2 + k) * 4;
+      eyeArr[o] = x; eyeArr[o + 1] = e.y; eyeArr[o + 2] = rel(e.z + (k ? 0.08 : -0.08)); eyeArr[o + 3] = a;
+    }
+  });
+  gl.uniform4fv(U.uEyes, eyeArr);
+
+  const g = S.ghost;
+  if (g) {
+    const p = (t - g.t0) / g.dur;
+    if (g.type === "cross") {
+      const x = g.dir * (1.7 - 3.4 * p);
+      gl.uniform4f(U.uGhost, x, 0.25 + 0.15 * Math.sin(p * 9), rel(S.cz + 3.5), Math.min(1, p * 5, (1 - p) * 5) * 0.9);
+      gl.uniform2f(U.uGhostP, 0.55, 0);
+    } else if (g.type === "rush") {
+      const zr = 14 * Math.pow(1 - Math.min(p, 1), 2.2) + 0.25;
+      gl.uniform4f(U.uGhost, 0.15 * Math.sin(p * 13), 0.15, rel(S.cz + zr), Math.min(1, p * 4) * 0.9);
+      gl.uniform2f(U.uGhostP, 0.5, 0);
+    } else {
+      const gt = t - g.t0;
+      const zr = 1.4 + 9 * (1 - smooth(gt / 3.0));
+      const bump = gt > 3.0 ? 1 + 0.18 * Math.sin(Math.min((gt - 3.0) / 0.5, 1) * Math.PI) : 1;
+      gl.uniform4f(U.uGhost, 0.06 * Math.sin(gt * 2.2), 0.05 + 0.06 * Math.sin(gt * 3.1), rel(S.cz + zr), Math.min(1, gt * 1.5) * 0.95);
+      gl.uniform2f(U.uGhostP, 0.45 * bump, 0);
+    }
+  } else {
+    gl.uniform4f(U.uGhost, 0, 0, 0, 0);
+  }
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+// ------------------------------------------------------------ Ton (alles live synthetisiert)
+const Snd = (() => {
+  let AC = null, master, bus, noise;
+  const B = {};
+  const L = {};
+  let ambientOn = 1;
+
+  function bufFrom(arr) { const b = AC.createBuffer(1, arr.length, AC.sampleRate); b.copyToChannel(arr, 0); return b; }
+  function norm(x, peak) { let m = 0; for (const v of x) m = Math.max(m, Math.abs(v)); if (m > 0) for (let i = 0; i < x.length; i++) x[i] *= peak / m; return x; }
+  function gen(sec, fn) { const sr = AC.sampleRate, n = Math.floor(sec * sr), x = new Float32Array(n); fn(x, sr, n); return x; }
+
+  function makeBuffers() {
+    const sr = AC.sampleRate;
+    noise = AC.createBuffer(1, sr * 3, sr);
+    const nd = noise.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+
+    B.rattle = bufFrom(norm(gen(1.45, (x, sr, n) => {
+      let t0 = 0.02;
+      while (t0 < 1.35) {
+        const f = 160 + 200 * Math.random(), f2 = 2400 + 1500 * Math.random(), a = 0.5 + 0.5 * Math.random();
+        const s = Math.floor(t0 * sr);
+        for (let i = 0; i < 0.05 * sr && s + i < n; i++) {
+          const k = i / sr;
+          x[s + i] += a * (Math.sin(2 * Math.PI * f * k) * Math.exp(-k * 90) + (Math.random() * 2 - 1) * Math.exp(-k * 400) * 0.6 + Math.sin(2 * Math.PI * f2 * k) * Math.exp(-k * 160) * 0.25);
+        }
+        t0 += 0.025 + 0.04 * Math.random();
+      }
+    }), 0.9));
+
+    B.creak = bufFrom(norm(gen(2.4, (x, sr, n) => {
+      const kl = Math.floor(0.03 * sr), ker = new Float32Array(kl);
+      for (let i = 0; i < kl; i++) { const k = i / sr; ker[i] = (Math.sin(2 * Math.PI * 420 * k) + 0.7 * Math.sin(2 * Math.PI * 870 * k) + 0.4 * Math.sin(2 * Math.PI * 1530 * k)) * Math.exp(-k * 160); }
+      let ph = 0;
+      for (let i = 0; i < n; i++) {
+        const k = i / sr;
+        ph += (35 + 90 * Math.abs(Math.sin(k * 2.3)) + 30 * Math.sin(k * 11)) / sr;
+        if (ph >= 1) {
+          ph -= 1;
+          const a = (0.6 + 0.4 * Math.random()) * Math.min(1, k / 0.15) * Math.min(1, (2.4 - k) / 0.25);
+          for (let j = 0; j < kl && i + j < n; j++) x[i + j] += a * ker[j];
+        }
+      }
+    }), 0.8));
+
+    B.thud = bufFrom(norm(gen(1.2, (x, sr, n) => {
+      let lp = 0;
+      for (let i = 0; i < n; i++) { const k = i / sr; lp += 0.05 * ((Math.random() * 2 - 1) - lp); x[i] = Math.sin(2 * Math.PI * 62 * k) * Math.exp(-k * 7) + lp * Math.exp(-k * 12) * 3; }
+    }), 0.9));
+
+    B.boom = bufFrom(norm(gen(2.5, (x, sr, n) => {
+      for (let i = 0; i < n; i++) { const k = i / sr; x[i] = (Math.sin(2 * Math.PI * 45 * k) * 1.2 + Math.sin(2 * Math.PI * 233 * k) * 0.3 + Math.sin(2 * Math.PI * 311 * k) * 0.3) * Math.exp(-k * 2.2) + (Math.random() * 2 - 1) * Math.exp(-k * 18) * 0.6; }
+    }), 1.0));
+
+    B.clack = bufFrom(norm(gen(0.08, (x, sr, n) => {
+      for (let i = 0; i < n; i++) { const k = i / sr; x[i] = (Math.sin(2 * Math.PI * 900 * k) * 0.4 + (Math.random() * 2 - 1) * 0.6) * Math.exp(-k * 120); }
+    }), 0.8));
+
+    B.heart = bufFrom(norm(gen(0.3, (x, sr, n) => {
+      for (let i = 0; i < n; i++) { const k = i / sr; x[i] = Math.sin(2 * Math.PI * 48 * k) * Math.exp(-k * 22) + Math.sin(2 * Math.PI * 90 * k) * Math.exp(-k * 40) * 0.4; }
+    }), 1.0));
+
+    B.click = bufFrom(norm(gen(0.02, (x, sr, n) => { for (let i = 0; i < n; i++) x[i] = (Math.random() * 2 - 1) * Math.exp(-i / sr * 300); }), 1.0));
+
+    // „Buh!“: Stimmpulse durch Formantfilter (Vokal u)
+    B.buh = bufFrom(norm(gen(0.9, (x, sr, n) => {
+      const src = new Float32Array(n);
+      let ph = 0;
+      for (let i = 0; i < n; i++) {
+        const k = i / sr;
+        const f0 = 300 - 90 * Math.min(k / 0.7, 1);
+        ph += f0 / sr;
+        if (ph >= 1) { ph -= 1; src[i] = 1; }
+        const env = Math.min(1, k / 0.03) * Math.max(0, 1 - Math.max(0, k - 0.45) / 0.4);
+        src[i] *= env;
+        if (k < 0.012) src[i] += (Math.random() * 2 - 1) * 0.6 * (1 - k / 0.012);
+      }
+      for (const [F, bw, g] of [[350, 80, 1], [800, 100, 0.5], [2300, 150, 0.15]]) {
+        const r = Math.exp(-Math.PI * bw / sr), w = 2 * Math.PI * F / sr;
+        const a1 = 2 * r * Math.cos(w), a2 = -r * r;
+        let y1 = 0, y2 = 0;
+        for (let i = 0; i < n; i++) { const y = src[i] + a1 * y1 + a2 * y2; y2 = y1; y1 = y; x[i] += y * g; }
+      }
+    }), 0.9));
+
+    B.hoot = bufFrom(norm(gen(1.6, (x, sr, n) => {
+      const hoots = [[0, 0.45], [0.7, 0.2], [0.95, 0.5]];
+      for (const [s0, len] of hoots) {
+        for (let i = Math.floor(s0 * sr); i < Math.floor((s0 + len) * sr) && i < n; i++) {
+          const k = i / sr - s0;
+          const env = Math.sin(Math.PI * k / len);
+          x[i] += Math.sin(2 * Math.PI * (390 - 40 * k / len) * k) * env * env;
+        }
+      }
+    }), 0.6));
+  }
+
+  function makeIR() {
+    const sr = AC.sampleRate, n = Math.floor(1.6 * sr), b = AC.createBuffer(2, n, sr);
+    for (let c = 0; c < 2; c++) {
+      const d = b.getChannelData(c);
+      for (let i = Math.floor(0.02 * sr); i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / sr * 4);
+    }
+    return b;
+  }
+
+  function out(node, pan = 0) {
+    const p = AC.createStereoPanner();
+    p.pan.value = pan;
+    node.connect(p); p.connect(bus);
+    return p;
+  }
+  function play(buf, { gain = 1, pan = 0, when = 0, rate = 1 } = {}) {
+    if (!AC) return;
+    const s = AC.createBufferSource(); s.buffer = buf; s.playbackRate.value = rate;
+    const g = AC.createGain(); g.gain.value = gain;
+    s.connect(g); out(g, pan);
+    s.start(AC.currentTime + when);
+  }
+  function noiseSrc() { const s = AC.createBufferSource(); s.buffer = noise; s.loop = true; s.loopStart = Math.random(); s.start(); return s; }
+  function osc(type, f) { const o = AC.createOscillator(); o.type = type; o.frequency.value = f; o.start(); return o; }
+  function gainNode(v = 0) { const g = AC.createGain(); g.gain.value = v; return g; }
+  function filt(type, f, q = 1) { const b = AC.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; }
+  const set = (param, v, tc = 0.08) => param.setTargetAtTime(v, AC.currentTime, tc);
+
+  function init() {
+    if (AC) { AC.resume(); return; }
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    master = gainNode(0.9);
+    const comp = AC.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.ratio.value = 4; comp.attack.value = 0.005; comp.release.value = 0.25;
+    master.connect(comp); comp.connect(AC.destination);
+    bus = gainNode(1);
+    const rev = AC.createConvolver(); rev.buffer = makeIR();
+    const wet = gainNode(0.35);
+    bus.connect(master); bus.connect(rev); rev.connect(wet); wet.connect(master);
+    makeBuffers();
+
+    // Dauerklänge
+    L.drone = gainNode();
+    [41.2, 55, 58.3, 87.3].forEach((f, i) => { const g = gainNode([1, 0.7, 0.5, 0.25][i]); osc("sine", f).connect(g); g.connect(L.drone); });
+    out(L.drone);
+    L.diss = gainNode();
+    const dl = filt("lowpass", 320, 0.7);
+    osc("sawtooth", 77.8).connect(dl); osc("sawtooth", 116.5).connect(dl); dl.connect(L.diss); out(L.diss);
+    L.wind = gainNode();
+    const wf = filt("bandpass", 500, 0.6);
+    const lfo = osc("sine", 0.07), lg = gainNode(250); lfo.connect(lg); lg.connect(wf.frequency);
+    noiseSrc().connect(wf); wf.connect(L.wind); out(L.wind, 0.3);
+    L.rumble = gainNode();
+    const rf = filt("lowpass", 140, 0.7);
+    noiseSrc().connect(rf); rf.connect(L.rumble); out(L.rumble);
+    L.buzz = gainNode();
+    const bf = filt("lowpass", 1500, 0.7);
+    osc("square", 100).connect(bf); osc("sine", 200).connect(bf); bf.connect(L.buzz); out(L.buzz, 0.2);
+    L.whoosh = gainNode();
+    L.whooshF = filt("bandpass", 300, 1.4);
+    noiseSrc().connect(L.whooshF); L.whooshF.connect(L.whoosh);
+    L.whooshP = out(L.whoosh);
+    L.whooshT = osc("sine", 140);
+    L.whooshTG = gainNode(0); L.whooshT.connect(L.whooshTG); L.whooshTG.connect(L.whoosh);
+  }
+
+  function tick(dt) {
+    if (!AC) return;
+    const sc = S.scary;
+    const amb = ambientOn * (S.started ? 1 : 0);
+    set(L.drone.gain, amb * lerp(0.05, 0.09, sc), 0.5);
+    set(L.diss.gain, amb * 0.05 * sc, 0.5);
+    set(L.wind.gain, amb * lerp(0.07, 0.11, sc), 0.5);
+    set(L.rumble.gain, amb * 0.7 * Math.min(S.speed / 1.6, 1.5), 0.1);
+    set(L.buzz.gain, S.buzz * (0.06 + 0.2 * (1 - S.lightMul)) * lerp(0.5, 1, sc), 0.01);
+    if (S.buzz > 0 && Math.random() < dt * lerp(8, 25, sc)) play(B.click, { gain: rnd(0.2, 0.6), pan: rnd(-0.5, 0.5) });
+
+    // Drehung: Wusch kreist im Stereobild
+    if (S.rollAnim) {
+      const p = (S.t - S.rollAnim.t0) / S.rollAnim.dur;
+      const vel = Math.max(0, Math.sin(Math.PI * clamp(p, 0, 1)));
+      set(L.whooshF.frequency, 200 + 1400 * vel, 0.05);
+      set(L.whoosh.gain, 0.5 * vel, 0.05);
+      set(L.whooshT.frequency, 120 + 200 * vel, 0.05);
+      set(L.whooshTG.gain, 0.25 * vel, 0.05);
+      set(L.whooshP.pan, Math.sin(S.roll) * 0.9, 0.03);
+    } else {
+      set(L.whoosh.gain, 0, 0.1); set(L.whooshTG.gain, 0, 0.1);
+    }
+
+    // Schienenstösse
+    const sl = Math.floor(S.cz / 0.6);
+    if (sl !== S.lastSleeper) {
+      S.lastSleeper = sl;
+      if (S.speed > 0.15) {
+        const g = 0.22 * Math.min(S.speed / 1.6, 1.3);
+        play(B.clack, { gain: g }); play(B.clack, { gain: g * 0.7, when: 0.11 });
+      }
+    }
+
+    // Herzschlag in der Dunkelheit
+    const heart = (S.dark > 0.5 || S.finale) && !S.ended;
+    if (heart) {
+      if (S.t >= S.nextBeat) {
+        const g = lerp(0.35, 0.9, sc);
+        play(B.heart, { gain: g }); play(B.heart, { gain: g * 0.65, when: 0.22 });
+        S.bpm = Math.min(S.bpm + lerp(3, 7, sc), lerp(100, 135, sc));
+        S.nextBeat = S.t + 60 / S.bpm;
+      }
+    } else { S.bpm = 70; S.nextBeat = S.t + 0.4; }
+
+    // Zufällige Hintergrundgeräusche
+    if (S.started && !S.ended && S.fade > 0.5 && S.t > S.nextAmbient) {
+      S.nextAmbient = S.t + rnd(14, 26);
+      if (sc > 0.5) whisper(); else play(B.hoot, { gain: 0.25, pan: rnd(-0.8, 0.8) });
+    }
+  }
+
+  function whisper() {
+    const now = AC.currentTime, dur = 1.8;
+    const s = noiseSrc(), bp = filt("bandpass", rnd(2500, 4000), 2.5), g = gainNode(0);
+    s.connect(bp); bp.connect(g); out(g, rnd(-0.9, 0.9));
+    for (let k = 0; k < dur; k += 0.12) g.gain.setValueAtTime(Math.random() < 0.6 ? rnd(0.1, 0.28) * Math.sin(Math.PI * k / dur) : 0.01, now + k);
+    g.gain.setTargetAtTime(0, now + dur, 0.05);
+    s.stop(now + dur + 0.5);
+  }
+
+  return {
+    init, tick,
+    ambient(on) { ambientOn = on ? 1 : 0; },
+    mute(m) { if (AC) set(master.gain, m ? 0 : 0.9, 0.3); },
+    rattle() { play(B.rattle, { gain: 0.8 }); },
+    creak() { play(B.creak, { gain: 0.65 }); },
+    thud() { play(B.thud, { gain: 0.45, pan: -0.4 }); play(B.thud, { gain: 0.45, pan: 0.4, when: 0.1 }); },
+    boom() { play(B.boom, { gain: 1.0 }); },
+    buh() { play(B.buh, { gain: 0.9, rate: 1.1 }); },
+    pling() {
+      if (!AC) return;
+      const now = AC.currentTime;
+      [0, 0.18, 0.36].forEach((w, i) => {
+        const o = osc("sine", 520 * (1 + i * 0.25)), g = gainNode(0);
+        o.frequency.exponentialRampToValueAtTime(900 * (1 + i * 0.25), now + w + 0.25);
+        g.gain.setValueAtTime(0, now + w); g.gain.linearRampToValueAtTime(0.12, now + w + 0.02); g.gain.exponentialRampToValueAtTime(0.001, now + w + 0.5);
+        o.connect(g); out(g, rnd(-0.6, 0.6)); o.stop(now + w + 0.6);
+      });
+    },
+    growl() {
+      if (!AC) return;
+      const now = AC.currentTime, dur = 2.4;
+      const s = noiseSrc(), lp = filt("lowpass", 260, 2), am = gainNode(0), g = gainNode(0);
+      const mod = osc("sine", 28), mg = gainNode(0.5); mod.connect(mg); mg.connect(am.gain); am.gain.value = 0.6;
+      s.connect(lp); lp.connect(am); am.connect(g); out(g, rnd(-0.7, 0.7));
+      g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(0.7, now + 0.6); g.gain.linearRampToValueAtTime(0, now + dur);
+      s.stop(now + dur + 0.1); mod.stop(now + dur + 0.1);
+    },
+    moan(dir, dur) {
+      if (!AC) return;
+      const now = AC.currentTime, sc = S.scary;
+      const f0 = lerp(470, 220, sc);
+      const o1 = osc("sawtooth", f0), o2 = osc("sawtooth", f0 * lerp(1.0, 1.03, sc));
+      const vib = osc("sine", lerp(6, 4.5, sc)), vg = gainNode(f0 * 0.04);
+      vib.connect(vg); vg.connect(o1.frequency); vg.connect(o2.frequency);
+      [o1, o2].forEach(o => { o.frequency.setValueAtTime(o.frequency.value, now); o.frequency.linearRampToValueAtTime(o.frequency.value * lerp(0.85, 0.7, sc), now + dur); });
+      const lp = filt("lowpass", lerp(950, 600, sc), 6), g = gainNode(0);
+      o1.connect(lp); o2.connect(lp); lp.connect(g);
+      const p = out(g, dir);
+      p.pan.setValueAtTime(dir, now); p.pan.linearRampToValueAtTime(-dir, now + dur);
+      const curve = new Float32Array(64);
+      for (let i = 0; i < 64; i++) {
+        const x = i / 63;
+        const kid = Math.pow(Math.sin(Math.PI * Math.min(x * 2, 1)), 2) * (x < 0.5 ? 1 : 0) + Math.pow(Math.sin(Math.PI * Math.max(x * 2 - 1, 0)), 2) * (x >= 0.5 ? 1 : 0);
+        const ad = Math.pow(Math.sin(Math.PI * x), 1.5);
+        curve[i] = lerp(kid, ad, sc) * 0.18;
+      }
+      g.gain.setValueCurveAtTime(curve, now, dur);
+      [o1, o2, vib].forEach(o => o.stop(now + dur + 0.05));
+    },
+    huu() {
+      if (!AC) return;
+      const now = AC.currentTime, dur = 2.8;
+      const o = osc("triangle", 330), vib = osc("sine", 5.5), vg = gainNode(14);
+      vib.connect(vg); vg.connect(o.frequency);
+      o.frequency.setValueAtTime(330, now); o.frequency.linearRampToValueAtTime(420, now + dur * 0.5); o.frequency.linearRampToValueAtTime(300, now + dur);
+      const g = gainNode(0); o.connect(g); out(g);
+      g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(0.2, now + 0.8); g.gain.linearRampToValueAtTime(0, now + dur);
+      o.stop(now + dur + 0.05); vib.stop(now + dur + 0.05);
+    },
+    shriek(dur) {
+      if (!AC) return;
+      const now = AC.currentTime;
+      const g = gainNode(0), bp = filt("bandpass", 1400, 0.8);
+      [1, 2.01, 3.02].forEach((m, i) => {
+        const o = osc("sawtooth", 300 * m);
+        o.frequency.setValueAtTime(300 * m, now); o.frequency.exponentialRampToValueAtTime(1400 * m, now + dur);
+        const og = gainNode([1, 0.5, 0.3][i]); o.connect(og); og.connect(bp); o.stop(now + dur);
+      });
+      const s = noiseSrc(), ng = gainNode(0);
+      s.connect(ng); ng.connect(bp); ng.gain.setValueAtTime(0, now); ng.gain.linearRampToValueAtTime(0.5, now + dur); s.stop(now + dur);
+      bp.connect(g); out(g);
+      g.gain.setValueAtTime(0.01, now); g.gain.exponentialRampToValueAtTime(0.5, now + dur);
+      g.gain.setValueAtTime(0, now + dur);
+    },
+  };
+})();
+
+// ------------------------------------------------------------ Bedienung
+const help = document.getElementById("help");
+function toggleHelp(show) {
+  const hidden = help.classList.contains("hidden");
+  const want = show === undefined ? hidden : show;
+  help.classList.toggle("hidden", !want);
+}
+function toggleFS() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+  else document.exitFullscreen();
+}
+function start() {
+  Snd.init();
+  S.started = true;
+  S.fadeTarget = 1; S.fadeRate = 0.6;
+  document.body.classList.add("running");
+  document.getElementById("startline").textContent = "Läuft. H blendet diese Hilfe wieder aus.";
+  toggleHelp(false);
+}
+
+function handleKey(k) {
+  if (k === "h") { toggleHelp(); return; }
+  if (k === "v") { toggleFS(); return; }
+  if (!S.started) { if (k === " " || k === "enter") start(); return; }
+  switch (k) {
+    case " ": actHalt(); break;
+    case "t": actDoor(); break;
+    case "d": actRoll(); break;
+    case "f": actFlicker(); break;
+    case "l": actDark(); break;
+    case "a": actEyes(); break;
+    case "g": actGhost(); break;
+    case "s": actFinale(); break;
+    case "n": actNew(); break;
+    case "k": setMode(0); break;
+    case "e": setMode(1); break;
+    case "arrowup": S.cruise = Math.min(S.cruise + 0.4, 3.2); break;
+    case "arrowdown": S.cruise = Math.max(S.cruise - 0.4, 0.4); break;
+    case "m": S.muted = !S.muted; Snd.mute(S.muted); break;
+  }
+}
+addEventListener("keydown", e => {
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === " " || k.startsWith("arrow")) e.preventDefault();
+  handleKey(k);
+});
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, 0.05);
+  last = now;
+  update(dt);
+  draw();
+  requestAnimationFrame(frame);
+}
+window.GB = { S, update, draw, handleKey, start };
+if (!location.hash.includes("manual")) requestAnimationFrame(frame);
+</script>
+</body>
+</html>

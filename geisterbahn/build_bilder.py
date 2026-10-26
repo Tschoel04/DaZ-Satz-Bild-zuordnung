@@ -7,7 +7,7 @@ einem Ordner mit diesen Namen (Endung egal):
     vampir.*    Vampir-Gemälde im verzierten Rahmen, weisser Hintergrund
     zombie.*    Zombie freigestellt (PNG/WebP mit Transparenz)
     clown.*     Porträt, kommt in den Rahmen des Vampir-Bildes
-    maedchen.*  Mädchen vor blauem Hintergrund
+    maedchen.*  Mädchen (ganze Figur) auf weissem Hintergrund
 
 Aufruf:  python3 build_bilder.py ORDNER [ausgabe.html]
 Ergebnis: geisterbahn-live-bilder.html (alles in einer Datei, läuft offline)
@@ -61,22 +61,14 @@ def key_white(im, thr):
     return out.crop(out.getbbox())
 
 
-def key_girl(im):
-    """Blauen Hintergrund weg, Gesicht behalten, unten weich ausblenden."""
-    a = np.asarray(im.convert("RGB")).astype(float)
-    h, w, _ = a.shape
-    br = np.clip(a[..., 2] - a[..., 0], 0, 255).astype(np.uint8)
-    br = np.asarray(Image.fromarray(br).filter(ImageFilter.GaussianBlur(2))).astype(float)
-    key = 1 - np.clip((br - 92) / 22, 0, 1)
-    yy, xx = np.mgrid[0:h, 0:w]
-    core = np.clip(1.6 - np.hypot((xx - w * 0.5) / (w * 0.25), (yy - h * 0.52) / (h * 0.2)), 0, 1)
-    al = np.maximum(key, core)
-    al *= np.clip((h * 0.97 - yy) / (h * 0.22), 0, 1)
-    al *= np.clip(xx / (w * 0.12), 0, 1) * np.clip((w - xx) / (w * 0.06), 0, 1)
-    al = Image.fromarray((al * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(2.5))
-    out = im.convert("RGBA")
-    out.putalpha(al)
-    return out
+def zombie_hand(zombie):
+    """Unterarm mit Hand aus dem Zombie-Bild, waagrecht gedreht (Hand zeigt nach links)."""
+    arm = zombie.crop((0, 440, 150, 800))
+    a = np.asarray(arm).copy()
+    a[60:, 128:, 3] = 0      # Hemdfetzen rechts weg
+    a[:90, 110:, 3] = 0
+    a[:40, :, 3] = (a[:40, :, 3] * np.linspace(0, 1, 40)[:, None]).astype(np.uint8)
+    return Image.fromarray(a).rotate(-90, expand=True)
 
 
 def framed(frame, pic):
@@ -104,9 +96,9 @@ def main():
     z = find(folder, "zombie").convert("RGBA")
     zombie = z.crop(z.getbbox())
     clown = find(folder, "clown")
-    girl = key_girl(find(folder, "maedchen"))
+    girl = key_white(find(folder, "maedchen"), 55)
     zhead = zombie.crop((int(zombie.width * 0.5), 0, zombie.width, int(zombie.height * 0.3)))
-    gface = girl.crop((0, int(girl.height * 0.12), girl.width, int(girl.height * 0.8)))
+    gface = girl.crop((0, 0, girl.width, int(girl.height * 0.5)))
     portraits = [vampire, framed(vampire, clown), framed(vampire, zhead), framed(vampire, gface)]
 
     atlas = Image.new("RGBA", (ATLAS_SIZE, ATLAS_SIZE), (0, 0, 0, 0))
@@ -126,6 +118,7 @@ def main():
     _, zi = put("zombie", zombie, 4, 4, h=1000)
     _, gi = put("girl", girl, zi.width + 12, 4, h=1000)
     put("spider", spider, zi.width + gi.width + 20, 4, w=ATLAS_SIZE - zi.width - gi.width - 24)
+    put("hand", zombie_hand(zombie), 4, 1548, h=300)
     rects["portraits"] = []
     x = 4
     for p in portraits:

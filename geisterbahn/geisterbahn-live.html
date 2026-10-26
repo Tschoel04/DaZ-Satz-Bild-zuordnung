@@ -54,15 +54,13 @@
         <table>
           <tr><td><kbd>F</kbd></td><td>Licht flackert</td></tr>
           <tr><td><kbd>L</kbd></td><td>Licht aus / an</td></tr>
-          <tr><td><kbd>A</kbd></td><td>Augen in den Wänden</td></tr>
           <tr><td><kbd>G</kbd></td><td>Gespenst fliegt vorbei</td></tr>
           <tr><td><kbd>Z</kbd></td><td>Zombie</td></tr>
           <tr><td><kbd>U</kbd></td><td>Spinne kommt von oben</td></tr>
-          <tr><td><kbd>P</kbd></td><td>Mädchen (nur Erwachsene)</td></tr>
+          <tr><td><kbd>P</kbd></td><td>Mädchen in der Ferne (nur Erwachsene); nach C hin und zurück ist es weg</td></tr>
+          <tr><td><kbd>X</kbd></td><td>Zombie-Hand greift aus der Wand (nur Erwachsene)</td></tr>
           <tr><td><kbd>O</kbd></td><td>Guillotine (nur Erwachsene)</td></tr>
-          <tr><td><kbd>X</kbd></td><td>Axt-Szene (Kinder: Kürbis)</td></tr>
           <tr><td><kbd>B</kbd></td><td>Blutspritzer (Kinder: Schleim)</td></tr>
-          <tr><td><kbd>R</kbd></td><td>Schrift an der Wand</td></tr>
         </table>
       </div>
       <div>
@@ -72,7 +70,6 @@
           <tr><td><kbd>N</kbd></td><td>Neue Fahrt (vor der Tür)</td></tr>
           <tr><td><kbd>K</kbd></td><td>Kindermodus</td></tr>
           <tr><td><kbd>E</kbd></td><td>Erwachsenenmodus</td></tr>
-          <tr><td><kbd>M</kbd></td><td>Ton aus / an</td></tr>
           <tr><td><kbd>V</kbd></td><td>Vollbild</td></tr>
           <tr><td><kbd>H</kbd></td><td>Hilfe zeigen / verstecken</td></tr>
         </table>
@@ -95,7 +92,6 @@ uniform vec3 uCam, uRight, uFwd;
 uniform vec4 uFeat;      // Typ (0 gerade, 1 Kurve, 2 Falltür), s0, Überblendung
 uniform vec4 uDoor;      // s, -, Einblendung, vorhanden
 uniform vec2 uDoorA;
-uniform vec4 uEyes[16];
 uniform vec4 uGhost;
 uniform vec2 uGhostP;
 uniform vec4 uFigA[4];   // Position, Deckkraft
@@ -103,8 +99,6 @@ uniform vec4 uFigB[4];   // Typ, Grösse, p1, p2
 uniform vec4 uFigC[4];   // p3..p6
 uniform vec4 uSplat[6];  // x, y, Grösse, Deckkraft (Bildschirm)
 uniform vec4 uSplatB[6]; // Zufallswert, Alter
-uniform vec4 uText;      // s, Seite, Fortschritt, Wort
-uniform float uTextAge;
 uniform vec4 uFigD[4];   // Leuchten, Störung, Faden, Fadenende
 uniform sampler2D uAtlas;
 uniform float uHasImg, uLampOff, uPortraitSwap;
@@ -196,41 +190,6 @@ float sdCap(vec2 p, vec2 a, vec2 b, float r) {
   vec2 pa = p - a, ba = b - a;
   float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
   return length(pa - ba * h) - r;
-}
-
-// ---------- Schrift an der Wand ("HUHU" für Kinder, "LAUF" für Erwachsene)
-float segR(vec2 p, vec2 a, vec2 b, float rev) {
-  if (rev <= 0.0) return 1e3;
-  return sdCap(p, a, mix(a, b, clamp(rev, 0.0, 1.0)), 0.07);
-}
-float letter(float id, vec2 p, float rev) {
-  float d = 1e3;
-  if (id < 0.5) {        // L
-    d = min(segR(p, vec2(0.0, 1.4), vec2(0.0, 0.0), rev * 2.0), segR(p, vec2(0.0, 0.0), vec2(0.8, 0.0), rev * 2.0 - 1.0));
-  } else if (id < 1.5) { // A
-    d = min(segR(p, vec2(0.0, 0.0), vec2(0.4, 1.4), rev * 3.0), segR(p, vec2(0.4, 1.4), vec2(0.8, 0.0), rev * 3.0 - 1.0));
-    d = min(d, segR(p, vec2(0.18, 0.6), vec2(0.62, 0.6), rev * 3.0 - 2.0));
-  } else if (id < 2.5) { // U
-    d = min(segR(p, vec2(0.0, 1.4), vec2(0.0, 0.3), rev * 3.0), segR(p, vec2(0.0, 0.3), vec2(0.4, 0.0), rev * 3.0 - 1.0));
-    d = min(d, segR(p, vec2(0.4, 0.0), vec2(0.8, 0.3), rev * 3.0 - 1.5));
-    d = min(d, segR(p, vec2(0.8, 0.3), vec2(0.8, 1.4), rev * 3.0 - 2.0));
-  } else if (id < 3.5) { // F
-    d = min(segR(p, vec2(0.0, 0.0), vec2(0.0, 1.4), rev * 3.0), segR(p, vec2(0.0, 1.4), vec2(0.8, 1.4), rev * 3.0 - 1.0));
-    d = min(d, segR(p, vec2(0.0, 0.75), vec2(0.6, 0.75), rev * 3.0 - 2.0));
-  } else {               // H
-    d = min(segR(p, vec2(0.0, 0.0), vec2(0.0, 1.4), rev * 3.0), segR(p, vec2(0.8, 0.0), vec2(0.8, 1.4), rev * 3.0 - 1.0));
-    d = min(d, segR(p, vec2(0.0, 0.7), vec2(0.8, 0.7), rev * 3.0 - 2.0));
-  }
-  return d;
-}
-float wordSD(vec2 p, float prog, float kid) {
-  float d = 1e3;
-  for (int i = 0; i < 4; i++) {
-    float fi = float(i);
-    float id = kid > 0.5 ? (mod(fi, 2.0) < 0.5 ? 4.0 : 2.0) : fi;
-    d = min(d, letter(id, p - vec2(fi * 1.25, 0.0), prog * 4.0 - fi));
-  }
-  return d;
 }
 
 struct Hit { float T; vec3 p; vec3 n; float mat; float s; float l; float side; float yr; float u; float bx; };
@@ -342,24 +301,6 @@ vec3 shade(Hit h, vec3 c, vec3 d, float ft) {
           col = col * (1.0 - tx.a * k2) + tx.rgb * 1.7 * k2;
           spec = max(spec, tx.a * k2 * 0.3);
         }
-      }
-    }
-    // Schrift
-    if (uText.z > 0.0 && side * uText.y > 0.0) {
-      float u = side < 0.0 ? (h.s - uText.x) : (uText.x + 4.9 * 0.36 - h.s);
-      vec2 tp = vec2(u, h.yr + 0.15) / 0.36;
-      if (tp.x > -0.5 && tp.x < 5.5 && tp.y > -3.0 && tp.y < 2.0) {
-        float sd = wordSD(tp, uText.z, uText.w);
-        float m = 1.0 - smoothstep(-0.02, 0.03, sd);
-        float dcol = floor(tp.x * 6.0);
-        float dl = min(uTextAge * 0.35, 1.0) * (0.4 + 1.6 * hash(vec2(dcol, 9.0))) * step(0.55, hash(vec2(dcol, 4.0)));
-        float dr = step(abs(fract(tp.x * 6.0) - 0.5), 0.18) * step(-dl, tp.y) * step(tp.y, 0.1);
-        float run = dr * step(wordSD(vec2(tp.x, 0.05), uText.z, uText.w), 0.08);
-        m = max(m, run * (1.0 - uText.w));
-        vec3 tc = mix(vec3(0.25, 0.9, 0.35), vec3(0.36, 0.0, 0.01), 1.0 - uText.w);
-        col = mix(col, tc, m);
-        emis += m * mix(vec3(0.05, 0.0, 0.0), vec3(0.25, 1.0, 0.35) * 0.6, uText.w);
-        spec = max(spec, m * 0.6);
       }
     }
   } else if (h.mat < 2.5) {
@@ -584,64 +525,6 @@ void humanoid(vec2 p, float kind, vec4 B, vec4 C, inout vec4 acc, inout vec3 em)
   }
 }
 
-void pumpkin(vec2 p, float split, inout vec4 acc, inout vec3 em) {
-  if (abs(p.x) > 1.2 || p.y < -0.1 || p.y > 0.8) return;
-  for (int i = 0; i < 2; i++) {
-    float sd = i == 0 ? -1.0 : 1.0;
-    float a = sd * split * 0.6;
-    vec2 o = vec2(sd * split * 0.45, 0.22 + split * 0.12 * sin(split * 3.14));
-    vec2 q = p - o;
-    q = vec2(cos(a) * q.x + sin(a) * q.y, -sin(a) * q.x + cos(a) * q.y);
-    float body = sdEll(q, vec2(0.0), vec2(0.26, 0.21));
-    if (split > 0.01) body = max(body, sd * -q.x);
-    vec3 oc = vec3(1.0, 0.5, 0.08) * (0.85 + 0.15 * cos(q.x * 26.0));
-    ink(acc, body, oc);
-    if (split > 0.01) paintA(acc, max(body, abs(q.x) - 0.03), vec3(1.0, 0.85, 0.4), 1.0);
-    float eye = min(length((q - vec2(-0.09, 0.05)) * vec2(1.0, 1.4)) - 0.045, length((q - vec2(0.09, 0.05)) * vec2(1.0, 1.4)) - 0.045);
-    float mo = max(sdEll(q, vec2(0.0, -0.07), vec2(0.13, 0.05)), -(q.y + 0.07 - 0.03 * abs(sin(q.x * 40.0))));
-    float face = max(min(eye, mo), body);
-    paintA(acc, face, vec3(1.0, 0.9, 0.3), 1.0);
-    em += (1.0 - smoothstep(0.0, 0.01, face)) * vec3(1.0, 0.7, 0.2) * 0.5;
-    if (i == 0 || split < 0.01) ink(acc, max(sdRBox(q, vec2(0.0, 0.23), vec2(0.025, 0.05), 0.01), split > 0.01 ? -q.x : -1.0), vec3(0.3, 0.45, 0.1));
-  }
-}
-
-void armPiece(vec2 p, vec4 B, inout vec4 acc) {
-  if (length(p) > 0.4) return;
-  float a = B.z;
-  p = vec2(cos(a) * p.x + sin(a) * p.y, -sin(a) * p.x + cos(a) * p.y);
-  float sm = smoothstep(0.35, 0.65, uScary);
-  vec3 skin = vec3(0.72, 0.65, 0.48) * (0.85 + 0.15 * step(0.5, fract(p.x * 14.0)));
-  ink(acc, sdCap(p, vec2(-0.17, 0.0), vec2(0.15, 0.0), 0.055), skin);
-  handDraw(acc, p, vec2(0.17, 0.0), vec2(1.0, 0.0), 0.06, skin * 0.9, vec3(0.15, 0.1, 0.05));
-  paintA(acc, length(p - vec2(-0.2, 0.0)) - 0.055, vec3(0.45, 0.01, 0.01) * mix(1.0, 1.3, sm), 1.0);
-  paintA(acc, length(p - vec2(-0.2, 0.0)) - 0.022, vec3(0.95, 0.9, 0.8), 1.0);
-}
-
-void particles(vec2 p, vec4 B, vec4 C, inout vec4 acc) {
-  float tau = B.z, seed = B.w, kind = C.x, dirb = C.y, floorY = C.z;
-  if (abs(p.x) > 2.5 || p.y > 2.5 || p.y < floorY - 0.2) return;
-  vec3 colB = kind > 0.5 ? vec3(1.0, 0.55, 0.1) : vec3(0.5, 0.01, 0.01);
-  for (int i = 0; i < 16; i++) {
-    float fi = float(i);
-    float h1 = hash(vec2(fi, seed)), h2 = hash(vec2(seed, fi + 3.0)), h3 = hash(vec2(fi + 7.0, seed));
-    float age = tau - h3 * (kind > 0.5 ? 0.15 : 1.4);
-    if (age < 0.0 || age > 3.0) continue;
-    vec2 v = vec2(dirb * (0.4 + 1.1 * h1) + (h1 - 0.5) * 0.8, 0.8 + 2.2 * h2);
-    vec2 pos = v * age + vec2(0.0, -4.9) * age * age;
-    float r = (kind > 0.5 ? 0.04 : 0.018) + 0.025 * h1;
-    float onF = step(pos.y, floorY);
-    if (onF > 0.5) {
-      // Landestelle: flacher Fleck
-      float tl = (v.y + sqrt(max(v.y * v.y - 19.6 * floorY, 0.0))) / 9.8;
-      vec2 lp = vec2(v.x * tl, floorY);
-      paintA(acc, sdEll(p, lp, vec2(r * 2.2, r * 0.5)), colB * 0.8, 1.0);
-    } else {
-      paintA(acc, sdEll(p, pos, vec2(r, r * (1.0 + 0.6 * min(age * 3.0, 1.0)))), colB, 1.0);
-    }
-  }
-}
-
 void guillotine(vec2 p, float drop, inout vec4 acc) {
   if (abs(p.x) > 1.0 || p.y < -0.05 || p.y > 2.5) return;
   vec3 wood = vec3(0.32, 0.19, 0.1) * (0.8 + 0.2 * sin(p.y * 40.0 + sin(p.x * 30.0) * 2.0));
@@ -740,9 +623,6 @@ void main() {
     vec3 em = vec3(0.0);
     if (B.x < 1.5) humanoid(p, 0.0, B, C, acc, em);
     else if (B.x < 2.5) humanoid(p, 1.0, B, C, acc, em);
-    else if (B.x < 3.5) pumpkin(p, B.z, acc, em);
-    else if (B.x < 4.5) armPiece(p, B, acc);
-    else if (B.x < 5.5) particles(p, B, C, acc);
     else if (B.x < 6.5) guillotine(p, B.z, acc);
     else if (B.x < 7.5) spiderProc(p, Dd, acc, em);
     else if (uHasImg > 0.5) imageFig(p, B, C, Dd, acc, em);
@@ -791,16 +671,6 @@ void main() {
       col += exp(-(a * a + (b - 0.2) * (b - 0.2)) / 0.8) * 0.25 * uGhost.w * gfog * vec3(0.5, 0.6, 1.0);
     }
   }
-
-  // Augen
-  vec3 eyeC = mix(vec3(1.0, 0.85, 0.15), vec3(1.0, 0.08, 0.03), uScary);
-  float eyeR = mix(0.06, 0.035, uScary);
-  vec3 eg = vec3(0.0);
-  for (int i = 0; i < 16; i++) {
-    vec4 e = uEyes[i];
-    if (e.w > 0.001) eg += e.w * eyeC * (2.5 * glow(e.xyz, c, d, T + 0.3, eyeR) + 0.35 * glow(e.xyz, c, d, T + 0.3, eyeR * 3.5));
-  }
-  col += eg;
 
   col = 1.0 - exp(-col * 1.4);
   col = pow(clamp(col, 0.0, 1.0), vec3(0.85));
@@ -861,11 +731,11 @@ const S = {
   roll: 0, rollAnim: null, rollQueue: 0,
   door: null, feature: null, fallY: 0, fallV: 0,
   flick: null, darkT: 0, dark: 0,
-  eyes: [], ghost: null, ghostDir: 1, finale: null,
-  acts: [], scene: null, stopAt: null, splats: [], text: null,
+  ghost: null, ghostDir: 1, finale: null,
+  acts: [], splats: [],
   bumpT: -99, shakeHeld: false, shake: 0, flashT: -99,
   fade: 0, fadeTarget: 0, fadeRate: 0.7, ended: false, pending: null,
-  lastSleeper: 0, nextBeat: 0, bpm: 70, nextAmbient: 12, muted: false,
+  lastSleeper: 0, nextBeat: 0, bpm: 70, nextAmbient: 12,
   lightMul: 1, buzz: 0,
   look: 0, lookAnim: null, back: false, dipT: -99, kickT: -99, portraitSwap: false, girlProx: 0,
 };
@@ -881,9 +751,9 @@ function newDoorAhead(dist, phase) {
 }
 function resetRide() {
   S.s = 0; S.speed = 0; S.halted = true; S.roll = 0; S.rollAnim = null; S.rollQueue = 0;
-  S.darkT = 0; S.dark = 0; S.eyes = []; S.ghost = null; S.finale = null; S.flick = null;
-  S.feature = null; S.fallY = 0; S.fallV = 0; S.acts = []; S.scene = null; S.stopAt = null; S.guillo = null;
-  S.splats = []; S.text = null; S.ended = false; S.lastSleeper = 0;
+  S.darkT = 0; S.dark = 0; S.ghost = null; S.finale = null; S.flick = null;
+  S.feature = null; S.fallY = 0; S.fallV = 0; S.acts = []; S.guillo = null;
+  S.splats = []; S.ended = false; S.lastSleeper = 0;
   S.look = 0; S.lookAnim = null; S.back = false; S.portraitSwap = false; S.girlProx = 0;
   newDoorAhead(2.0, "closed");
   S.fadeTarget = 1; S.fadeRate = 0.6;
@@ -911,11 +781,11 @@ function heading(sv) {
   const dx = b[0] - a[0], dz = b[2] - a[2], n = Math.hypot(dx, dz) || 1;
   return [dx / n, dz / n];
 }
-const busy = () => !!(S.feature || (S.door && S.door.phase !== "done") || S.scene || S.finale || S.ended || S.guillo);
+const busy = () => !!(S.feature || (S.door && S.door.phase !== "done") || S.finale || S.ended || S.guillo);
 
 // ------------------------------------------------------------ Aktionen
 function actDoor() {
-  if (S.ended || S.finale || S.feature || S.scene) return;
+  if (S.ended || S.finale || S.feature) return;
   if (!S.door) { newDoorAhead(Math.max(16, S.speed * 6 + 11), "approach"); S.halted = false; return; }
   if (S.door.phase === "closed") { S.door.phase = "rattle"; S.door.pt = 0; Snd.rattle(); }
 }
@@ -938,15 +808,6 @@ function actDrop() {
 function actBump() { if (!S.ended) { S.bumpT = S.t; Snd.bump(); } }
 function actFlicker() { if (!S.ended) S.flick = { t0: S.t, dur: lerp(1.6, 1.9, S.scary) }; }
 function actDark() { if (!S.ended && !S.finale) S.darkT = S.darkT > 0.5 ? 0 : 1; }
-function actEyes() {
-  if (S.ended) return;
-  const n = Math.round(lerp(3, 6, S.scary));
-  for (let i = 0; i < n; i++) {
-    S.eyes.push({ side: pick(), y: rnd(-0.6, 0.9), z: S.s + vd() * (6 + i * 2.2 + rnd(0, 2)), vd: vd(), born: S.t + i * rnd(0.2, 0.6), life: lerp(7, 9, S.scary), seed: Math.random() * 100 });
-  }
-  while (S.eyes.length > 8) S.eyes.shift();
-  if (S.scary > 0.5) Snd.growl(); else Snd.pling();
-}
 function actGhost() {
   if (S.ended || S.finale || S.ghost) return;
   S.ghost = { type: "cross", t0: S.t, dur: lerp(3.4, 2.6, S.scary), dir: S.ghostDir, vd: vd() };
@@ -971,14 +832,15 @@ function actHalt() {
   S.halted = !S.halted;
 }
 function actSplat() { if (!S.ended) { addSplat(); if (kidNow()) Snd.bloop(); else Snd.splat(); } }
-function actText() {
-  if (S.ended || S.finale || S.text) return;
-  S.text = { s: S.s + vd() * Math.max(5.5, S.speed * 2.5 + 3), side: pick(), t0: S.t, kid: kidNow(), vd: vd() };
-  Snd.scratch();
-}
 function actZombie() { if (!S.ended && !S.finale && S.acts.length < 2) S.acts.push(kidNow() ? zombieKid() : hasImg ? zombieImg() : zombieAdult()); }
 function actSpider() { if (!S.ended && !S.finale && S.acts.length < 2 && !S.acts.some(a => a.spider)) S.acts.push(spiderAct(kidNow())); }
-function actGirl() { if (!kidNow() && hasImg && !S.ended && !S.finale && !S.acts.some(a => a.girl)) S.acts.push(girlAct()); }
+function actGirl() {
+  if (kidNow() || !hasImg || S.ended || S.finale) return;
+  const g = S.acts.find(a => a.girl);
+  if (g) g.leave(); else S.acts.push(girlAct());
+}
+function actHand() { if (!kidNow() && hasImg && !S.ended && !S.finale && !S.acts.some(a => a.hand)) S.acts.push(handAct()); }
+function girlGone() { S.portraitSwap = false; S.girlProx = 0; Snd.music(false); }
 function actGuillotine() {
   if (kidNow() || busy()) return;
   S.halted = false;
@@ -990,16 +852,11 @@ function actLook() {
   S.lookAnim = { t0: S.t, dur: 1.5, from, to: from - Math.PI };   // immer über links
   S.back = !S.back;
 }
-function actAxe() {
-  if (busy() || S.back) return;
-  S.halted = false;
-  S.scene = axeScene(kidNow());
-}
 function setMode(scary) { S.scaryTarget = scary; }
 
-function addSplat(x, y, size) {
+function addSplat(x, y, size, life = 6) {
   const asp = innerWidth / innerHeight;
-  S.splats.push({ x: x ?? rnd(-0.45, 0.45) * asp, y: y ?? rnd(-0.3, 0.3), size: size ?? rnd(0.18, 0.32), born: S.t, seed: rnd(0, 100) });
+  S.splats.push({ x: x ?? rnd(-0.45, 0.45) * asp, y: y ?? rnd(-0.3, 0.3), size: size ?? rnd(0.18, 0.32), born: S.t, seed: rnd(0, 100), life });
   while (S.splats.length > 6) S.splats.shift();
 }
 function flash() { S.flashT = S.t; Snd.hit(); }
@@ -1027,7 +884,7 @@ function zombieAdult() {
         s = lerp(s0, S.s + v * 0.5, e); l = lerp(side * 0.75, 0, e); reach = lerp(0.45, 1, p); mouth = 1; y = FL + 0.25 * Math.sin(Math.PI * p);
         if (!roared) { roared = true; Snd.roar(); }
       }
-      if (tau >= 1.9 && !flashed) { flashed = true; flash(); addSplat(rnd(-0.3, 0.3), rnd(-0.1, 0.2), 0.36); }
+      if (tau >= 1.9 && !flashed) { flashed = true; flash(); }
       this.figs = flashed ? [] : [fig(1, s, l, y, 1, 1, [reach, mouth, 0.08 * Math.sin(S.t * 2.3), -9, 1, 0])];
       return !flashed;
     },
@@ -1064,7 +921,7 @@ function zombieImg() {
         y = lerp(FL, -1.72, e); glitch = 0.15 + 0.7 * p; emis = 0.05 + 0.4 * p;
         if (!roared) { roared = true; Snd.roar(); Snd.scream(0.7, 0.55); S.flick = { t0: S.t, dur: 0.55 }; S.kickT = S.t; }
       }
-      if (tau >= 2.05 && !flashed) { flashed = true; flash(); addSplat(rnd(-0.3, 0.3), rnd(-0.1, 0.2), 0.38); addSplat(); }
+      if (tau >= 2.05 && !flashed) { flashed = true; flash(); }
       this.figs = flashed ? [] : [imgFig("zombie", s, l + jit, y, 1, 1.85, side > 0, [emis, glitch, 0, 0])];
       return !flashed;
     },
@@ -1106,34 +963,45 @@ function spiderAct(kid) {
   };
 }
 
-// Mädchen: steht weit weg, kommt ruckweise näher, plötzlich direkt vor dem Gesicht
+// Mädchen: steht in der Ferne und hält Abstand. Nach C (rückwärts) und C (vorwärts) ist es weg,
+// damit ein echtes Mädchen in der Geisterbahn übernehmen kann.
 function girlAct() {
-  const t0 = S.t, v = vd(), hg = 1.15;
-  let gs = S.s + v * 22, nextJump = S.t + rnd(2.2, 3.2), phase = "far", ct0 = 0, flashed = false;
+  const t0 = S.t, v = vd(), hg = 1.3;
+  let gs = S.s + v * 16, out = null;
   S.portraitSwap = true;
   Snd.music(true);
   return {
-    girl: true, slow: true,
+    girl: true, vd: v,
+    leave() { if (out === null) out = S.t; },
     step() {
-      const tau = S.t - t0, dist = (gs - S.s) * v;
-      if (phase === "far") {
-        if (S.t > nextJump) { gs -= v * rnd(1.2, 2.0); nextJump = S.t + rnd(2.0, 3.2); S.dipT = S.t; }
-        S.girlProx = clamp(1 - dist / 22, 0, 1);
-        if (dist < 5 || tau > 26) {
-          phase = "close"; ct0 = S.t; S.dipT = S.t; this.slow = false;
-          Snd.music(false); Snd.girlScream(); S.flick = { t0: S.t + 0.15, dur: 0.9 }; S.kickT = S.t;
-        }
-      }
-      let s = gs, y = -0.55, a = Math.min(1, tau / 2.5), glitch = 0.05, emis = 0.75;
-      if (phase === "close") {
-        const ct = S.t - ct0;
-        s = S.s + v * 0.5; a = 1; emis = 0.35;
-        glitch = ct < 0.18 ? 1 : 0.15 + 0.15 * Math.sin(ct * 31);
-        y = -0.55 + 0.01 * Math.sin(S.t * 40);
-        if (ct > 1.2 && !flashed) { flashed = true; flash(); S.portraitSwap = false; S.girlProx = 0; }
-      }
-      this.figs = flashed ? [] : [imgFig("girl", s, 0, y, a, hg, false, [emis, glitch, 0, 0])];
-      return !flashed;
+      if ((gs - S.s) * v < 5) gs = S.s + v * 5;
+      S.girlProx = clamp(1 - ((gs - S.s) * v - 5) / 11, 0, 1);
+      let a = Math.min(1, (S.t - t0) / 2.5);
+      if (out !== null) a *= 1 - Math.min(1, (S.t - out) / 1.5);
+      this.figs = [imgFig("girl", gs, 0.02 * Math.sin(S.t * 0.9), FL, a, hg, false, [0.45, 0.02, 0, 0])];
+      const alive = out === null || S.t - out < 1.5;
+      if (!alive) girlGone();
+      return alive;
+    },
+  };
+}
+
+// Zombie-Hand greift von rechts aus der Wand und zieht sich wieder zurück
+function handAct() {
+  const t0 = S.t, v = vd(), side = v, L = 1.25, H = L * ATLAS.hand[5];
+  Snd.handGrab();
+  return {
+    hand: true,
+    step() {
+      const tau = S.t - t0;
+      let reach;
+      if (tau < 0.35) reach = smooth(tau / 0.35);
+      else if (tau < 1.25) reach = 1 - 0.06 * (0.5 + 0.5 * Math.sin((tau - 0.35) * 14));
+      else reach = 1 - smooth((tau - 1.25) / 0.5);
+      const l = side * (HW + L / 2 - 0.95 * reach);
+      const y = -0.05 - H / 2 + 0.02 * Math.sin(S.t * 19);
+      this.figs = [imgFig("hand", S.s + v * 1.6, l, y, 1, H, side < 0, [0.15, 0, 0, 0])];
+      return tau < 1.8;
     },
   };
 }
@@ -1152,73 +1020,13 @@ function guillotineAct() {
         drop = Math.min(1, (S.t - dropT) / 0.14); drop *= drop;
         if (drop >= 1 && !hit) {
           hit = true; Snd.chop(); Snd.thud(); S.bumpT = S.t;
-          if (!back) { flash(); Snd.scream(0.5, 1.2); addSplat(); addSplat(); addSplat(rnd(-0.2, 0.2), rnd(-0.1, 0.1), 0.45); }
+          if (!back) { flash(); Snd.scream(0.5, 1.2); addSplat(undefined, undefined, undefined, 2.5); addSplat(undefined, undefined, undefined, 2.5); addSplat(rnd(-0.2, 0.2), rnd(-0.1, 0.1), 0.45, 2.5); }
         }
       }
       this.figs = [fig(6, gs, 0, FL, 1, 1, [drop, 0, 0, 0, 0, 0])];
       return !(hit && (back ? -ahead > 8 : ahead < -0.5));
     },
   };
-}
-
-function axeScene(kid) {
-  const s0 = S.s + Math.max(7.5, S.speed * 2.5 + 4.5);
-  S.stopAt = s0 - 3.0;
-  let t0 = null, chopped = false, arm = null, growled = false, lunging = false, flashed = false, released = false;
-  const st = { kid, figs: [] };
-  st.step = function (dt) {
-    if (t0 === null && (S.stopAt - S.s < 0.08 || (S.speed < 0.02 && S.stopAt - S.s < 0.6))) t0 = S.t;
-    const tau = t0 === null ? -1 : S.t - t0;
-    let axe = 0.5, mouthZ = 0.3, reachM = 0.6, cut = 0, leanM = 0.05 * Math.sin(S.t * 9), eyeG = 0.3, zl = kid ? -0.6 : -0.45, zs = s0, zy = FL, zreach = 0.2;
-    if (tau >= 0) {
-      if (tau < 1.0) axe = lerp(0.5, -0.5, smooth(tau));
-      else if (tau < 1.15) axe = lerp(-0.5, 2.1, (tau - 1.0) / 0.15);
-      else axe = lerp(2.1, kid ? 0.4 : 1.2, smooth((tau - 1.15) / 0.8));
-      if (tau >= 1.12 && !chopped) {
-        chopped = true;
-        Snd.chop();
-        if (kid) { Snd.bloop(); Snd.bwah(1.3, 0.5); }
-        else {
-          Snd.scream(1.6, 1.15); Snd.splat();
-          addSplat(rnd(-0.6, -0.1), rnd(0.0, 0.25), 0.26); addSplat(rnd(0.1, 0.6), rnd(-0.2, 0.15), 0.2);
-          arm = { l: 0.45 - 0.33, y: FL + 1.05, vl: -1.1, vy: 2.4, rot: 0, vr: 9, landed: false };
-        }
-      }
-      if (chopped && !kid) { cut = 2; reachM = 0.6; leanM = 0.15 * Math.sin((tau - 1.12) * 7) * Math.exp(-(tau - 1.12)); }
-      if (!kid && tau > 2.6) { eyeG = 1; mouthZ = 1; if (!growled) { growled = true; Snd.roar(); } }
-      if (!kid && tau > 3.4) {
-        const p = Math.min((tau - 3.4) / 0.6, 1), e = p * p;
-        zs = lerp(s0, S.s + 0.5, e); zl = lerp(-0.45, 0, e); zy = FL + 0.25 * Math.sin(Math.PI * p); axe = -0.3; zreach = 1;
-        if (!lunging) { lunging = true; Snd.scream(0.6, 0.7); }
-      }
-      if (!kid && tau >= 4.0 && !flashed) {
-        flashed = true; flash(); addSplat(rnd(-0.2, 0.2), rnd(-0.1, 0.2), 0.4);
-        S.stopAt = null; S.halted = false;
-      }
-      if (kid && tau > 3.2 && !released) { released = true; S.stopAt = null; S.halted = false; }
-    }
-    if (arm) {
-      arm.vy -= 9.8 * dt; arm.l += arm.vl * dt; arm.y += arm.vy * dt; arm.rot += arm.vr * dt;
-      if (arm.y < FL + 0.06) { arm.y = FL + 0.06; arm.vy = 0; arm.vl *= 0.9; arm.vr *= 0.85; }
-    }
-    const figs = [];
-    if (!flashed) {
-      const zp = kid ? [zreach, mouthZ, 0.05 * Math.sin(S.t * 2), axe, eyeG, tau > 1.6 ? 1 : 0] : [zreach, mouthZ, 0.04 * Math.sin(S.t * 2), axe, eyeG, 0];
-      figs.push(fig(1, zs, zl, kid && tau > 1.4 ? zy + Math.abs(Math.sin(S.t * 9)) * 0.12 : zy, 1, 1, zp));
-      if (kid) figs.push(fig(3, s0, 0.05, FL, 1, 1, [chopped ? smooth((tau - 1.12) / 0.5) : 0, 0, 0, 0, 0, 0]));
-      else figs.push(fig(2, s0, 0.45, FL, 1, 1, [reachM, chopped ? 1 : 0.3, leanM, -9, eyeG, cut]));
-      if (arm) figs.push(fig(4, s0 - 0.05, arm.l, arm.y, 1, 1, [arm.rot, 0, 0, 0, 0, 0]));
-      if (chopped && tau - 1.12 < (kid ? 1.6 : 3.2)) {
-        figs.push(kid
-          ? fig(5, s0 - 0.05, 0.05, FL + 0.25, 1, 1, [tau - 1.12, 3.7, 1, 0, -0.25, 0])
-          : fig(5, s0 - 0.05, 0.45 - 0.33, FL + 1.12, 1, 1, [tau - 1.12, 7.3, 0, -0.6, -1.12, 0]));
-      }
-    }
-    st.figs = figs;
-    const behind = s0 < S.s - 0.3;
-    return !(flashed || (kid && released && behind));
-  };
-  return st;
 }
 
 // ------------------------------------------------------------ Simulation
@@ -1233,14 +1041,12 @@ function update(dt) {
   const F = S.feature;
   if (S.door && S.door.phase === "approach") target = Math.max(target, 1.8);
   if (F && F.type === "corner" && S.s < F.s0 + ARC) target = Math.max(target, 2.3);
-  if (S.acts.some(a => a.girl && a.slow)) target = Math.min(target, 1.1);
   if (S.finale) target = Math.min(target, S.finale.kid === true && t - S.finale.rushT0 > 2.6 ? 0 : 0.7);
   if (S.ended) target = 0;
   S.speed += clamp(target - S.speed, -0.75 * dt, 0.7 * dt);
   let stopS = null;
   const d = S.door;
   if (d && (["approach", "pause", "closed", "rattle"].includes(d.phase) || (d.phase === "open" && d.pt < 1.2))) stopS = d.z - 2.0;
-  if (S.stopAt !== null) stopS = stopS === null ? S.stopAt : Math.min(stopS, S.stopAt);
   if (stopS !== null) S.speed = Math.min(S.speed, Math.sqrt(2 * 0.55 * Math.max(stopS - S.s, 0)));
   if (F && F.type === "drop" && F.phase === "fall") S.speed = Math.min(S.speed, 1.0);
   S.s += S.speed * dt;
@@ -1285,7 +1091,11 @@ function update(dt) {
   if (S.lookAnim) {
     const p = (t - S.lookAnim.t0) / S.lookAnim.dur;
     S.look = lerp(S.lookAnim.from, S.lookAnim.to, smooth(p));
-    if (p >= 1) { S.look = S.back ? -Math.PI : 0; S.lookAnim = null; }
+    if (p >= 1) {
+      S.look = S.back ? -Math.PI : 0; S.lookAnim = null;
+      const g = S.acts.find(a => a.girl);
+      if (g && g.vd !== vd()) { S.acts = S.acts.filter(a => a !== g); girlGone(); }
+    }
   }
 
   // Drehung (immer nach links)
@@ -1317,13 +1127,10 @@ function update(dt) {
   S.lightMul = lm; S.buzz = buzz;
   S.dark += (S.darkT - S.dark) * Math.min(1, dt / 0.7);
 
-  S.eyes = S.eyes.filter(e => t - e.born < e.life && (e.z - S.s) * e.vd > 0.5);
   if (S.ghost && S.ghost.type === "cross" && t - S.ghost.t0 > S.ghost.dur) S.ghost = null;
   S.acts = S.acts.filter(a => a.step(dt));
-  if (S.scene && !S.scene.step(dt)) { S.scene = null; S.stopAt = null; }
   if (S.guillo && !S.guillo.step(dt)) S.guillo = null;
-  S.splats = S.splats.filter(sp => t - sp.born < 9);
-  if (S.text && (S.text.s - S.s) * S.text.vd < -3) S.text = null;
+  S.splats = S.splats.filter(sp => t - sp.born < sp.life);
 
   // Finale
   const f = S.finale;
@@ -1340,7 +1147,7 @@ function update(dt) {
       if (gt > 4.6 && !f.out) { f.out = true; S.fadeTarget = 0; S.fadeRate = 0.5; }
       if (gt > 6.8) endRide();
     } else if (f.kid === false && t - f.rushT0 >= 1.6) {
-      S.fade = 0; S.fadeTarget = 0; Snd.boom(); addSplat(0, 0, 0.5); endRide();
+      S.fade = 0; S.fadeTarget = 0; Snd.boom(); endRide();
     }
   }
 
@@ -1349,8 +1156,8 @@ function update(dt) {
   Snd.tick(dt);
 }
 function endRide() {
-  S.ended = true; S.finale = null; S.ghost = null; S.halted = true; S.eyes = []; S.acts = []; S.scene = null; S.stopAt = null;
-  S.guillo = null; S.portraitSwap = false; S.girlProx = 0; Snd.music(false);
+  S.ended = true; S.finale = null; S.ghost = null; S.halted = true; S.acts = [];
+  S.guillo = null; girlGone();
   S.fadeTarget = 0;
   Snd.ambient(false);
 }
@@ -1377,8 +1184,8 @@ gl.enableVertexAttribArray(aPos);
 gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 const U = {};
 ["uRes", "uTime", "uCamS", "uScary", "uLight", "uLampsOff", "uCart", "uFade", "uSig", "uRoll", "uYaw", "uPitch", "uFigLight",
- "uCam", "uRight", "uFwd", "uFeat", "uDoor", "uDoorA", "uEyes", "uGhost", "uGhostP", "uFigA", "uFigB", "uFigC",
- "uSplat", "uSplatB", "uText", "uTextAge", "uFigD", "uAtlas", "uHasImg", "uLampOff", "uRectP", "uPortraitSwap"].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+ "uCam", "uRight", "uFwd", "uFeat", "uDoor", "uDoorA", "uGhost", "uGhostP", "uFigA", "uFigB", "uFigC",
+ "uSplat", "uSplatB", "uFigD", "uAtlas", "uHasImg", "uLampOff", "uRectP", "uPortraitSwap"].forEach(n => U[n] = gl.getUniformLocation(prog, n));
 
 {
   // Platzhalter-Textur, bis (oder falls nie) Bilder geladen sind
@@ -1417,7 +1224,6 @@ function resize() {
 addEventListener("resize", resize);
 resize();
 
-const eyeArr = new Float32Array(64);
 const figA = new Float32Array(16), figB = new Float32Array(16), figC = new Float32Array(16), figD = new Float32Array(16);
 const splA = new Float32Array(24), splB = new Float32Array(24);
 function draw() {
@@ -1482,19 +1288,6 @@ function draw() {
   if (d) { gl.uniform4f(U.uDoor, rel(d.z), 0, d.fade, 1); gl.uniform2f(U.uDoorA, d.angL, d.angR); }
   else { gl.uniform4f(U.uDoor, 0, 0, 0, 0); gl.uniform2f(U.uDoorA, 0, 0); }
 
-  eyeArr.fill(0);
-  S.eyes.slice(0, 8).forEach((e, i) => {
-    const age = t - e.born;
-    let a = age < 0 ? 0 : smooth(age / 1.0) * smooth((e.life - age) / 1.0);
-    if (h1(Math.floor(t * 2.5), e.seed) < 0.12) a = 0;
-    a *= Math.max(S.lightMul, 0.6);
-    for (let k = 0; k < 2; k++) {
-      const P = Lpos(e.z + (k ? 0.08 : -0.08), e.side * (HW - 0.06), e.y), o = (i * 2 + k) * 4;
-      eyeArr[o] = P[0]; eyeArr[o + 1] = P[1]; eyeArr[o + 2] = P[2]; eyeArr[o + 3] = a;
-    }
-  });
-  gl.uniform4fv(U.uEyes, eyeArr);
-
   const g = S.ghost;
   if (g) {
     const p = (t - g.t0) / g.dur;
@@ -1514,7 +1307,6 @@ function draw() {
   figA.fill(0); figB.fill(0); figC.fill(0); figD.fill(0);
   const figs = [];
   if (S.guillo && S.guillo.figs) figs.push(...S.guillo.figs);
-  if (S.scene) figs.push(...S.scene.figs);
   S.acts.forEach(a => a.figs && figs.push(...a.figs));
   figs.slice(0, 4).forEach((f, i) => {
     const P = Lpos(f.s, f.l, f.y), o = i * 4;
@@ -1529,15 +1321,10 @@ function draw() {
   S.splats.forEach((sp, i) => {
     const age = t - sp.born, o = i * 4;
     const grow = smooth(age / 0.08);
-    splA[o] = sp.x; splA[o + 1] = sp.y; splA[o + 2] = sp.size * (0.6 + 0.4 * grow); splA[o + 3] = grow * smooth((9 - age) / 2.5);
+    splA[o] = sp.x; splA[o + 1] = sp.y; splA[o + 2] = sp.size * (0.6 + 0.4 * grow); splA[o + 3] = grow * smooth((sp.life - age) / Math.min(1.5, sp.life * 0.5));
     splB[o] = sp.seed; splB[o + 1] = age;
   });
   gl.uniform4fv(U.uSplat, splA); gl.uniform4fv(U.uSplatB, splB);
-
-  if (S.text) {
-    gl.uniform4f(U.uText, rel(S.text.s), S.text.side, clamp((t - S.text.t0) / 2.2, 0.001, 1), S.text.kid ? 1 : 0);
-    gl.uniform1f(U.uTextAge, Math.max(0, t - S.text.t0 - 1.0));
-  } else gl.uniform4f(U.uText, 0, 0, 0, 0);
 
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
@@ -1785,6 +1572,12 @@ const Snd = (() => {
     },
     girlScream() { this.shriek(0.5); this.scream(1.1, 1.45); play(B.boom, { gain: 0.9 }); },
     ropeCreak() { play(B.creak, { gain: 0.35, rate: 0.8 }); },
+    handGrab() {
+      if (!AC) return;
+      play(B.rattle, { gain: 0.35, rate: 0.7, pan: 0.6 });
+      play(B.thud, { gain: 0.5, rate: 1.5, pan: 0.6 });
+      this.raspy();
+    },
     swish() {
       if (!AC) return;
       const now = AC.currentTime, s = noiseSrc(), bp = filt("bandpass", 600, 1.2), g = gainNode(0);
@@ -1792,7 +1585,6 @@ const Snd = (() => {
       s.connect(bp); bp.connect(g); out(g); env(g, now, [[0.12, 0.9], [0.2, 0]]); s.stop(now + 0.25);
       play(B.clang, { gain: 0.4, when: 0.14, rate: 0.8 });
     },
-    mute(m) { if (AC) set(master.gain, m ? 0 : 0.9, 0.3); },
     rattle() { play(B.rattle, { gain: 0.8 }); },
     creak() { play(B.creak, { gain: 0.65 }); },
     thud() { play(B.thud, { gain: 0.45, pan: -0.4 }); play(B.thud, { gain: 0.45, pan: 0.4, when: 0.1 }); },
@@ -1827,16 +1619,6 @@ const Snd = (() => {
       bp.frequency.setValueAtTime(1800, now); bp.frequency.exponentialRampToValueAtTime(250, now + 0.9);
       s.connect(bp); bp.connect(ng); out(ng); env(ng, now, [[0.1, 0.7], [0.9, 0]]); s.stop(now + 1);
       if (sc > 0.5) this.scream(0.9, 0.8);
-    },
-    pling() {
-      if (!AC) return;
-      const now = AC.currentTime;
-      [0, 0.18, 0.36].forEach((w, i) => {
-        const o = osc("sine", 520 * (1 + i * 0.25)), g = gainNode(0);
-        o.frequency.exponentialRampToValueAtTime(900 * (1 + i * 0.25), now + w + 0.25);
-        g.gain.setValueAtTime(0, now + w); g.gain.linearRampToValueAtTime(0.12, now + w + 0.02); g.gain.exponentialRampToValueAtTime(0.001, now + w + 0.5);
-        o.connect(g); out(g, rnd(-0.6, 0.6)); o.stop(now + w + 0.6);
-      });
     },
     growl() {
       if (!AC) return;
@@ -1881,15 +1663,6 @@ const Snd = (() => {
       out(g, rnd(-0.3, 0.3));
       env(g, now, [[0.05, 0.9], [dur * 0.8, 0.7], [dur, 0]]);
       [o, vib, s].forEach(n => n.stop(now + dur + 0.1));
-    },
-    scratch() {
-      if (!AC) return;
-      const now = AC.currentTime, dur = 2.2;
-      const s = noiseSrc(), hp = filt("bandpass", 3500, 1.2), g = gainNode(0);
-      s.connect(hp); hp.connect(g); out(g, rnd(-0.6, 0.6));
-      for (let k = 0; k < dur; k += 0.07) g.gain.setValueAtTime(Math.random() < 0.7 ? rnd(0.08, 0.25) : 0.0, now + k);
-      g.gain.setValueAtTime(0, now + dur);
-      s.stop(now + dur + 0.1);
     },
     moan(dir, dur) {
       if (!AC) return;
@@ -1972,23 +1745,20 @@ function handleKey(k) {
     case "s": S.shakeHeld = true; break;
     case "f": actFlicker(); break;
     case "l": actDark(); break;
-    case "a": actEyes(); break;
     case "g": actGhost(); break;
     case "z": actZombie(); break;
     case "u": actSpider(); break;
     case "p": actGirl(); break;
     case "o": actGuillotine(); break;
     case "c": actLook(); break;
-    case "x": actAxe(); break;
+    case "x": actHand(); break;
     case "b": actSplat(); break;
-    case "r": actText(); break;
     case "q": actFinale(); break;
     case "n": actNew(); break;
     case "k": setMode(0); break;
     case "e": setMode(1); break;
     case "+": S.cruise = Math.min(S.cruise + 0.4, 3.2); break;
     case "-": S.cruise = Math.max(S.cruise - 0.4, 0.4); break;
-    case "m": S.muted = !S.muted; Snd.mute(S.muted); break;
   }
 }
 addEventListener("keydown", e => {

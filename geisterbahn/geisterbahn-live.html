@@ -986,22 +986,24 @@ function girlAct() {
   };
 }
 
-// Zombie-Hand greift von rechts aus der Wand und zieht sich wieder zurück
+// Zombie-Hand: greift weiter vorne ruhig aus der rechten Wand, man fährt näher,
+// kurz vorher zieht sie sich zurück (dann packt die echte Hand zu)
 function handAct() {
-  const t0 = S.t, v = vd(), side = v, L = 1.25, H = L * ATLAS.hand[5];
+  const t0 = S.t, v = vd(), side = v, L = 1.4, H = L * ATLAS.hand[5];
+  const hs = S.s + v * Math.max(8, S.speed * 4 + 3);
+  let backT = null;
   Snd.handGrab();
   return {
     hand: true,
     step() {
-      const tau = S.t - t0;
-      let reach;
-      if (tau < 0.35) reach = smooth(tau / 0.35);
-      else if (tau < 1.25) reach = 1 - 0.06 * (0.5 + 0.5 * Math.sin((tau - 0.35) * 14));
-      else reach = 1 - smooth((tau - 1.25) / 0.5);
-      const l = side * (HW + L / 2 - 0.95 * reach);
-      const y = -0.05 - H / 2 + 0.02 * Math.sin(S.t * 19);
-      this.figs = [imgFig("hand", S.s + v * 1.6, l, y, 1, H, side < 0, [0.15, 0, 0, 0])];
-      return tau < 1.8;
+      const tau = S.t - t0, dist = (hs - S.s) * v;
+      if (backT === null && (dist < 2.6 || tau > 14)) backT = S.t;
+      let reach = smooth(tau / 2.2) * (1 - 0.04 * (0.5 + 0.5 * Math.sin(tau * 2.5)));
+      if (backT !== null) reach *= 1 - smooth((S.t - backT) / 1.1);
+      const l = side * (HW + L / 2 - 0.9 * reach);
+      const y = -0.1 - H / 2 + 0.015 * Math.sin(S.t * 1.7);
+      this.figs = [imgFig("hand", hs, l, y, 1, H, side < 0, [0.3, 0, 0, 0])];
+      return !(backT !== null && S.t - backT > 1.2);
     },
   };
 }
@@ -1574,8 +1576,7 @@ const Snd = (() => {
     ropeCreak() { play(B.creak, { gain: 0.35, rate: 0.8 }); },
     handGrab() {
       if (!AC) return;
-      play(B.rattle, { gain: 0.35, rate: 0.7, pan: 0.6 });
-      play(B.thud, { gain: 0.5, rate: 1.5, pan: 0.6 });
+      play(B.creak, { gain: 0.25, rate: 0.6, pan: 0.6 });
       this.raspy();
     },
     swish() {

@@ -10,21 +10,22 @@
   canvas { display: block; width: 100vw; height: 100vh; }
   #help {
     position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-    background: rgba(0,0,0,.86); color: #ddd; font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
-    transition: opacity .7s; padding: 16px; box-sizing: border-box;
+    background: rgba(0,0,0,.86); color: #ddd; font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    transition: opacity .7s; padding: 16px; box-sizing: border-box; overflow: auto;
   }
   #help.hidden { opacity: 0; pointer-events: none; }
-  .box { max-width: 760px; width: 100%; background: #111; border: 1px solid #333; border-radius: 14px; padding: 22px 28px; }
-  h1 { margin: 0 0 4px; font-size: 26px; color: #f2f2f2; }
-  p { margin: 6px 0 14px; color: #aaa; }
+  .box { max-width: 900px; width: 100%; background: #111; border: 1px solid #333; border-radius: 14px; padding: 20px 26px; }
+  h1 { margin: 0 0 4px; font-size: 24px; color: #f2f2f2; }
+  h2 { margin: 12px 0 4px; font-size: 13px; color: #8a8a8a; text-transform: uppercase; letter-spacing: .06em; }
+  p { margin: 4px 0 8px; color: #aaa; }
   table { border-collapse: collapse; width: 100%; }
-  td { padding: 4px 8px; vertical-align: top; }
+  td { padding: 3px 8px; vertical-align: top; }
   td:first-child { white-space: nowrap; width: 1%; }
   kbd { display: inline-block; min-width: 1.4em; text-align: center; padding: 1px 7px; border: 1px solid #555;
-        border-bottom-width: 3px; border-radius: 6px; background: #1d1d1d; color: #fff; font: 600 14px system-ui, sans-serif; }
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
-  .start { margin-top: 14px; padding: 10px 14px; background: #1b2a1b; border: 1px solid #2f4f2f; border-radius: 10px; color: #cfe8cf; }
-  @media (max-width: 700px) { .cols { grid-template-columns: 1fr; } }
+        border-bottom-width: 3px; border-radius: 6px; background: #1d1d1d; color: #fff; font: 600 13px system-ui, sans-serif; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 14px; }
+  .start { margin-top: 12px; padding: 10px 14px; background: #1b2a1b; border: 1px solid #2f4f2f; border-radius: 10px; color: #cfe8cf; }
+  @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -34,25 +35,45 @@
     <h1>Geisterbahn Live</h1>
     <p>Alle Übergänge laufen weich. Auf dem Bild ist nie zu sehen, dass jemand eine Taste drückt.</p>
     <div class="cols">
-      <table>
-        <tr><td><kbd>Leertaste</kbd></td><td>Start / anhalten / weiterfahren</td></tr>
-        <tr><td><kbd>T</kbd></td><td>Tür knattert und geht auf (fährt man gerade, taucht eine neue Tür auf)</td></tr>
-        <tr><td><kbd>D</kbd></td><td>Drehung 360°</td></tr>
-        <tr><td><kbd>F</kbd></td><td>Licht flackert</td></tr>
-        <tr><td><kbd>L</kbd></td><td>Licht aus / wieder an</td></tr>
-        <tr><td><kbd>A</kbd></td><td>Augen in den Wänden</td></tr>
-        <tr><td><kbd>G</kbd></td><td>Gespenst fliegt vorbei</td></tr>
-      </table>
-      <table>
-        <tr><td><kbd>S</kbd></td><td>Schluss-Schreck (Ende der Fahrt)</td></tr>
-        <tr><td><kbd>N</kbd></td><td>Neue Fahrt (zurück vor die Tür)</td></tr>
-        <tr><td><kbd>K</kbd></td><td>Kindermodus (weniger gruselig)</td></tr>
-        <tr><td><kbd>E</kbd></td><td>Erwachsenenmodus (sehr gruselig)</td></tr>
-        <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>schneller / langsamer</td></tr>
-        <tr><td><kbd>M</kbd></td><td>Ton aus / an</td></tr>
-        <tr><td><kbd>V</kbd></td><td>Vollbild</td></tr>
-        <tr><td><kbd>H</kbd></td><td>diese Hilfe zeigen / verstecken</td></tr>
-      </table>
+      <div>
+        <h2>Fahrt</h2>
+        <table>
+          <tr><td><kbd>Leertaste</kbd></td><td>Start / anhalten / weiter</td></tr>
+          <tr><td><kbd>T</kbd></td><td>Tür knattert und geht auf</td></tr>
+          <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>ruckartig links / rechts abbiegen</td></tr>
+          <tr><td><kbd>↑</kbd></td><td>Ruckler nach oben</td></tr>
+          <tr><td><kbd>↓</kbd></td><td>Falltür</td></tr>
+          <tr><td><kbd>D</kbd></td><td>Drehung 360° nach links</td></tr>
+          <tr><td><kbd>S</kbd></td><td>Schütteln (solange gedrückt)</td></tr>
+          <tr><td><kbd>+</kbd> <kbd>−</kbd></td><td>schneller / langsamer</td></tr>
+        </table>
+      </div>
+      <div>
+        <h2>Grusel</h2>
+        <table>
+          <tr><td><kbd>F</kbd></td><td>Licht flackert</td></tr>
+          <tr><td><kbd>L</kbd></td><td>Licht aus / an</td></tr>
+          <tr><td><kbd>A</kbd></td><td>Augen in den Wänden</td></tr>
+          <tr><td><kbd>G</kbd></td><td>Gespenst fliegt vorbei</td></tr>
+          <tr><td><kbd>Z</kbd></td><td>Zombie</td></tr>
+          <tr><td><kbd>U</kbd></td><td>Mumie</td></tr>
+          <tr><td><kbd>X</kbd></td><td>Axt-Szene (Kinder: Kürbis)</td></tr>
+          <tr><td><kbd>B</kbd></td><td>Blutspritzer (Kinder: Schleim)</td></tr>
+          <tr><td><kbd>R</kbd></td><td>Schrift an der Wand</td></tr>
+        </table>
+      </div>
+      <div>
+        <h2>Steuerung</h2>
+        <table>
+          <tr><td><kbd>Q</kbd></td><td>Schluss-Schreck (Ende)</td></tr>
+          <tr><td><kbd>N</kbd></td><td>Neue Fahrt (vor der Tür)</td></tr>
+          <tr><td><kbd>K</kbd></td><td>Kindermodus</td></tr>
+          <tr><td><kbd>E</kbd></td><td>Erwachsenenmodus</td></tr>
+          <tr><td><kbd>M</kbd></td><td>Ton aus / an</td></tr>
+          <tr><td><kbd>V</kbd></td><td>Vollbild</td></tr>
+          <tr><td><kbd>H</kbd></td><td>Hilfe zeigen / verstecken</td></tr>
+        </table>
+      </div>
     </div>
     <div class="start" id="startline">Erst <kbd>V</kbd> für Vollbild, dann <kbd>Leertaste</kbd>: Das Bild blendet vor der geschlossenen Tür ein (Kindermodus).</div>
   </div>
@@ -66,20 +87,61 @@ void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
 <script id="fs" type="x-shader/x-fragment">
 precision highp float;
 uniform vec2 uRes;
-uniform float uTime, uCamZ, uCamX, uCamY, uRoll, uYaw, uScary, uLight, uLampsOff, uCart, uFade;
-uniform vec4 uDoor;      // z, Öffnung (0..1), Einblendung, vorhanden
-uniform vec2 uDoorA;     // Winkel linker / rechter Flügel
-uniform vec4 uEyes[16];  // x, y, z, Helligkeit
-uniform vec4 uGhost;     // x, y, z, Deckkraft
-uniform vec2 uGhostP;    // Grösse, Wackeln
+uniform float uTime, uCamS, uScary, uLight, uLampsOff, uCart, uFade, uSig, uRoll, uYaw, uPitch, uFigLight;
+uniform vec3 uCam, uRight, uFwd;
+uniform vec4 uFeat;      // Typ (0 gerade, 1 Kurve, 2 Falltür), s0, Überblendung
+uniform vec4 uDoor;      // s, -, Einblendung, vorhanden
+uniform vec2 uDoorA;
+uniform vec4 uEyes[16];
+uniform vec4 uGhost;
+uniform vec2 uGhostP;
+uniform vec4 uFigA[4];   // Position, Deckkraft
+uniform vec4 uFigB[4];   // Typ, Grösse, p1, p2
+uniform vec4 uFigC[4];   // p3..p6
+uniform vec4 uSplat[6];  // x, y, Grösse, Deckkraft (Bildschirm)
+uniform vec4 uSplatB[6]; // Zufallswert, Alter
+uniform vec4 uText;      // s, Seite, Fortschritt, Wort
+uniform float uTextAge;
 
 const float HW = 1.2, FL = -1.0, CE = 1.4, DX = 0.85, DY = 0.95;
+const float RR = 0.9, ARC = 1.41371669, HD = 2.2, LP = 1.6;
 const float TAU = 6.2831853;
-// Alle Muster wiederholen sich exakt nach 63 Einheiten (Kamera-z wird modulo 63 übergeben).
-const float K = TAU / 63.0;
+const float K = TAU / 63.0;   // alle Muster wiederholen sich nach 63 Einheiten
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 
+// ---------- Strecke: Kurve / Falltür (gerechnet im "Links-Raum", Rechtskurven werden gespiegelt)
+vec3 trackPos(float s, float l, float y, float ft, float s0) {
+  float lp = uSig * l;
+  if (ft > 0.5 && ft < 1.5 && s > s0) {
+    if (s <= s0 + ARC) { float th = (s - s0) / RR; float r = RR + lp; return vec3(-RR + r * cos(th), y, s0 + r * sin(th)); }
+    return vec3(-RR - (s - s0 - ARC), y, s0 + RR + lp);
+  }
+  return vec3(lp, y, s);
+}
+vec2 toTrack(vec3 p, float ft, float s0) {
+  if (ft > 0.5 && ft < 1.5 && p.z > s0) {
+    if (p.x >= -RR) {
+      vec2 rel = vec2(p.x + RR, p.z - s0);
+      float th = clamp(atan(rel.y, rel.x), 0.0, 1.5707963);
+      return vec2(s0 + RR * th, uSig * (length(rel) - RR));
+    }
+    return vec2(s0 + ARC + (-RR - p.x), uSig * (p.z - s0 - RR));
+  }
+  return vec2(p.z, uSig * p.x);
+}
+
+vec2 slab(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out float ax) {
+  vec3 r = vec3(abs(rd.x) < 1e-6 ? 1e-6 : rd.x, abs(rd.y) < 1e-6 ? 1e-6 : rd.y, abs(rd.z) < 1e-6 ? 1e-6 : rd.z);
+  vec3 t0 = (bmin - ro) / r, t1 = (bmax - ro) / r;
+  vec3 tn = min(t0, t1), tx = max(t0, t1);
+  float tin = max(max(tn.x, tn.y), tn.z);
+  float tout = min(min(tx.x, tx.y), tx.z);
+  ax = tout == tx.x ? 0.0 : (tout == tx.y ? 1.0 : 2.0);
+  return vec2(tin, tout);
+}
+
+// ---------- Texturen
 vec3 bricks(float s, float y) {
   float row = floor((y + 1.0) / 0.25);
   float off = mod(row, 2.0) * 0.25;
@@ -93,7 +155,6 @@ vec3 bricks(float s, float y) {
   if (fs < 0.05 || fy < 0.1) c *= 0.35;
   return c;
 }
-
 float cobweb(float s, float y) {
   float ds = s - (floor(s / 6.3 + 0.5) * 6.3 + 1.0);
   float dy = CE - y;
@@ -103,14 +164,12 @@ float cobweb(float s, float y) {
   float rg = step(0.44, abs(fract(r / 0.09 + 0.3 * sin(ang * 7.0)) - 0.5));
   return max(sp, rg) * step(r, 0.65) * clamp(1.2 - r * 1.6, 0.0, 1.0);
 }
-
 vec3 lampCol(float k) {
   float h = hash(vec2(mod(k, 14.0), 7.0));
   vec3 kc = h < 0.25 ? vec3(0.75, 0.35, 1.0) : h < 0.5 ? vec3(0.35, 1.0, 0.4) : h < 0.75 ? vec3(1.0, 0.6, 0.2) : vec3(0.3, 0.8, 1.0);
   vec3 ac = h < 0.5 ? vec3(1.0, 0.5, 0.15) : h < 0.75 ? vec3(0.35, 1.0, 0.3) : vec3(1.0, 0.12, 0.08);
   return mix(kc, ac, uScary);
 }
-
 float lampLv(float k) {
   float km = mod(k, 14.0);
   float lv = 0.85 + 0.15 * sin(uTime * 31.0 + km * 1.7);
@@ -119,7 +178,6 @@ float lampLv(float k) {
   lv = mix(lv, keep * 0.9, uLampsOff);
   return lv * uLight;
 }
-
 float glow(vec3 P, vec3 c, vec3 d, float T, float r) {
   vec3 w = P - c;
   float al = dot(w, d) / dot(d, d);
@@ -127,27 +185,89 @@ float glow(vec3 P, vec3 c, vec3 d, float T, float r) {
   vec3 perp = w - al * d;
   return exp(-dot(perp, perp) / (r * r));
 }
+float sdCap(vec2 p, vec2 a, vec2 b, float r) {
+  vec2 pa = p - a, ba = b - a;
+  float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+  return length(pa - ba * h) - r;
+}
 
-void main() {
-  vec2 uv = gl_FragCoord.xy / uRes * 2.0 - 1.0;
-  uv.x *= uRes.x / uRes.y;
-  uv *= 0.85;
-  float cr = cos(uRoll), sr = sin(uRoll), cp = cos(uYaw), sp = sin(uYaw);
-  float dx0 = uv.x * cr - uv.y * sr;
-  vec3 d = vec3(dx0 * cp + sp, uv.x * sr + uv.y * cr, -dx0 * sp + cp);
-  vec3 c = vec3(uCamX, uCamY, uCamZ);
+// ---------- Schrift an der Wand ("HUHU" für Kinder, "LAUF" für Erwachsene)
+float segR(vec2 p, vec2 a, vec2 b, float rev) {
+  if (rev <= 0.0) return 1e3;
+  return sdCap(p, a, mix(a, b, clamp(rev, 0.0, 1.0)), 0.07);
+}
+float letter(float id, vec2 p, float rev) {
+  float d = 1e3;
+  if (id < 0.5) {        // L
+    d = min(segR(p, vec2(0.0, 1.4), vec2(0.0, 0.0), rev * 2.0), segR(p, vec2(0.0, 0.0), vec2(0.8, 0.0), rev * 2.0 - 1.0));
+  } else if (id < 1.5) { // A
+    d = min(segR(p, vec2(0.0, 0.0), vec2(0.4, 1.4), rev * 3.0), segR(p, vec2(0.4, 1.4), vec2(0.8, 0.0), rev * 3.0 - 1.0));
+    d = min(d, segR(p, vec2(0.18, 0.6), vec2(0.62, 0.6), rev * 3.0 - 2.0));
+  } else if (id < 2.5) { // U
+    d = min(segR(p, vec2(0.0, 1.4), vec2(0.0, 0.3), rev * 3.0), segR(p, vec2(0.0, 0.3), vec2(0.4, 0.0), rev * 3.0 - 1.0));
+    d = min(d, segR(p, vec2(0.4, 0.0), vec2(0.8, 0.3), rev * 3.0 - 1.5));
+    d = min(d, segR(p, vec2(0.8, 0.3), vec2(0.8, 1.4), rev * 3.0 - 2.0));
+  } else if (id < 3.5) { // F
+    d = min(segR(p, vec2(0.0, 0.0), vec2(0.0, 1.4), rev * 3.0), segR(p, vec2(0.0, 1.4), vec2(0.8, 1.4), rev * 3.0 - 1.0));
+    d = min(d, segR(p, vec2(0.0, 0.75), vec2(0.6, 0.75), rev * 3.0 - 2.0));
+  } else {               // H
+    d = min(segR(p, vec2(0.0, 0.0), vec2(0.0, 1.4), rev * 3.0), segR(p, vec2(0.8, 0.0), vec2(0.8, 1.4), rev * 3.0 - 1.0));
+    d = min(d, segR(p, vec2(0.0, 0.7), vec2(0.8, 0.7), rev * 3.0 - 2.0));
+  }
+  return d;
+}
+float wordSD(vec2 p, float prog, float kid) {
+  float d = 1e3;
+  for (int i = 0; i < 4; i++) {
+    float fi = float(i);
+    float id = kid > 0.5 ? (mod(fi, 2.0) < 0.5 ? 4.0 : 2.0) : fi;
+    d = min(d, letter(id, p - vec2(fi * 1.25, 0.0), prog * 4.0 - fi));
+  }
+  return d;
+}
 
-  float T = 1e4, id = -1.0, pu = 0.0;
-  vec2 pn = vec2(0.0);
-  if (d.x > 1e-5) { float t = (HW - c.x) / d.x; if (t < T) { T = t; id = 0.0; } }
-  if (d.x < -1e-5) { float t = (-HW - c.x) / d.x; if (t < T) { T = t; id = 1.0; } }
-  if (d.y < -1e-5) { float t = (FL - c.y) / d.y; if (t < T) { T = t; id = 2.0; } }
-  if (d.y > 1e-5) { float t = (CE - c.y) / d.y; if (t < T) { T = t; id = 3.0; } }
+struct Hit { float T; vec3 p; vec3 n; float mat; float s; float l; float side; float yr; float u; float bx; };
 
-  if (uDoor.w > 0.5 && abs(d.z) > 1e-5) {
+Hit scene(vec3 c, vec3 d, float ft) {
+  Hit h;
+  h.mat = 0.0; h.u = 0.0; h.side = 1.0; h.yr = 0.0; h.l = 0.0; h.s = 0.0; h.bx = 0.0;
+  float s0 = uFeat.y;
+  vec3 aMin = vec3(-HW, FL, -1e5), aMax = vec3(HW, CE, 1e5);
+  vec3 bMin = vec3(0.0), bMax = vec3(0.0);
+  bool two = false;
+  if (ft > 0.5 && ft < 1.5) { float zc = s0 + RR; aMax.z = zc + HW; bMin = vec3(-1e5, FL, zc - HW); bMax = vec3(HW, CE, zc + HW); two = true; }
+  else if (ft > 1.5) { aMax.z = s0 + LP; bMin = vec3(-HW, FL - HD, s0); bMax = vec3(HW, CE - HD, 1e5); two = true; }
+  float axA = 0.0, axB = 0.0;
+  vec2 ia = slab(c, d, aMin, aMax, axA);
+  vec2 ib = two ? slab(c, d, bMin, bMax, axB) : vec2(1e9, -1e9);
+  float e = 0.0, ax = axA, bx = 0.0;
+  for (int it = 0; it < 4; it++) {
+    if (ia.x <= e + 1e-4 && ia.y > e + 1e-5) { e = ia.y; ax = axA; bx = 0.0; }
+    if (ib.x <= e + 1e-4 && ib.y > e + 1e-5) { e = ib.y; ax = axB; bx = 1.0; }
+  }
+  if (e <= 0.0) e = max(ia.y, 0.01);
+  float T = min(e, 200.0);
+  vec3 p = c + T * d;
+  vec3 n;
+  float sg = ax < 0.5 ? sign(d.x) : ax < 1.5 ? sign(d.y) : sign(d.z);
+  h.bx = bx;
+  if (ax < 0.5) {
+    h.mat = 0.0; n = vec3(1.0, 0.0, 0.0); h.s = p.z; h.side = uSig * sg;
+    h.yr = (ft > 1.5 && bx > 0.5) ? p.y + HD : p.y;
+  } else if (ax < 1.5) {
+    vec2 tr = toTrack(p, ft, s0); h.s = tr.x; h.l = tr.y;
+    h.mat = sg < 0.0 ? 2.0 : 3.0; n = vec3(0.0, 1.0, 0.0);
+  } else {
+    n = vec3(0.0, 0.0, 1.0);
+    if (ft > 0.5 && ft < 1.5) { h.mat = 0.0; h.s = s0 + ARC + (-RR - p.x); h.side = uSig * sg; h.yr = p.y; }
+    else { h.mat = 4.0; h.u = uSig * p.x; h.yr = p.y; h.s = p.z; }
+  }
+
+  // Tür (nur auf gerader Strecke)
+  if (ft < 0.5 && uDoor.w > 0.5 && abs(d.z) > 1e-5) {
     float t = (uDoor.x - c.z) / d.z;
     vec3 q = c + t * d;
-    if (t > 1e-4 && t < T && !(abs(q.x) < DX && q.y < DY)) { T = t; id = 4.0; }
+    if (t > 1e-4 && t < T && !(abs(q.x) < DX && q.y < DY)) { T = t; h.mat = 4.0; h.u = uSig * q.x; h.yr = q.y; h.s = q.z; n = vec3(0.0, 0.0, 1.0); }
     for (int k = 0; k < 2; k++) {
       float side = k == 0 ? 1.0 : -1.0;
       float hx = -side * DX;
@@ -158,89 +278,127 @@ void main() {
         float tp = (-(hx - c.x) * Dz + Dx * (uDoor.x - c.z)) / det;
         float up = (d.x * (uDoor.x - c.z) - d.z * (hx - c.x)) / det;
         float yp = c.y + tp * d.y;
-        if (tp > 1e-4 && up >= 0.0 && up <= DX && yp > FL && yp < DY && tp < T) { T = tp; id = 5.0; pu = up; pn = vec2(-Dz, Dx); }
+        if (tp > 1e-4 && up >= 0.0 && up <= DX && yp > FL && yp < DY && tp < T) { T = tp; h.mat = 5.0; h.u = up; h.yr = yp; h.s = c.z + tp * d.z; n = vec3(-Dz, 0.0, Dx); }
       }
     }
   }
-  T = min(T, 200.0);
-  vec3 p = c + T * d;
+  h.T = T; h.p = c + T * d; h.n = n;
+  return h;
+}
 
-  vec3 col = vec3(0.0), n = vec3(0.0);
+vec3 shade(Hit h, vec3 c, vec3 d, float ft) {
+  vec3 p = h.p, n = h.n;
+  vec3 col = vec3(0.0), emis = vec3(0.0);
   float spec = 0.0;
-  if (id < 1.5) {
-    col = bricks(p.z, p.y);
-    float web = cobweb(p.z + id * 3.0, p.y);
-    // Blutspuren nur im Erwachsenenmodus
-    float bc = mod(floor(p.z * 3.0), 189.0);
-    float bh = hash(vec2(bc, id + 4.0));
-    float blen = 0.2 + hash(vec2(bc, id + 9.0)) * 1.1;
-    float bw = 0.1 * (1.0 - 0.5 * clamp((CE - p.y) / blen, 0.0, 1.0));
-    float drip = step(0.9, bh) * step(abs(fract(p.z * 3.0) - 0.5), bw) * step(CE - blen, p.y);
-    float drop = step(0.9, bh) * step(length(vec2((fract(p.z * 3.0) - 0.5) / 3.0, p.y - (CE - blen))), 0.045);
-    col = mix(col, vec3(0.28, 0.01, 0.01), max(drip, drop) * smoothstep(0.35, 1.0, uScary));
-    spec = max(drip, drop) * 0.8 * uScary;
+  float s0 = uFeat.y;
+  if (h.mat < 0.5) {
+    float side = h.side;
+    col = bricks(h.s, h.yr);
+    float web = cobweb(h.s + (side < 0.0 ? 3.0 : 0.0), h.yr);
+    float sideId = side > 0.0 ? 0.0 : 1.0;
+    float bc = mod(floor(h.s * 3.0), 189.0);
+    float bh = hash(vec2(bc, sideId + 4.0));
+    float blen = 0.2 + hash(vec2(bc, sideId + 9.0)) * 1.1;
+    float bw = 0.1 * (1.0 - 0.5 * clamp((CE - h.yr) / blen, 0.0, 1.0));
+    float drip = step(0.9, bh) * step(abs(fract(h.s * 3.0) - 0.5), bw) * step(CE - blen, h.yr);
+    float drop = step(0.9, bh) * step(length(vec2((fract(h.s * 3.0) - 0.5) / 3.0, h.yr - (CE - blen))), 0.045);
+    // blutige Handabdrücke (nur Erwachsene)
+    float hc = mod(floor(h.s / 2.1), 30.0);
+    float hh = hash(vec2(hc, sideId + 21.0));
+    vec2 hp = vec2(fract(h.s / 2.1) * 2.1 - 1.05, h.yr - (0.1 + 0.5 * hash(vec2(hc, sideId + 3.0))));
+    float palm = length(hp * vec2(1.0, 0.85)) - 0.075;
+    for (int f = 0; f < 4; f++) {
+      float fa = -0.45 + float(f) * 0.3;
+      palm = min(palm, sdCap(hp, vec2(sin(fa), cos(fa)) * 0.07, vec2(sin(fa), cos(fa)) * 0.17, 0.022));
+    }
+    palm = min(palm, sdCap(hp, vec2(-0.06, -0.02), vec2(-0.15, 0.06), 0.022));
+    float hand = step(0.55, hh) * step(palm, 0.0);
+    float gore = max(max(drip, drop), hand) * smoothstep(0.35, 1.0, uScary);
+    col = mix(col, vec3(0.28, 0.01, 0.01), gore);
+    spec = gore * 0.8;
     col = mix(col, vec3(0.75, 0.75, 0.7), web * 0.8);
-    n = vec3(id < 0.5 ? -1.0 : 1.0, 0.0, 0.0);
-  } else if (id < 2.5) {
-    float g = 0.5 + 0.5 * hash(vec2(floor(p.x * 8.0), mod(floor(p.z * 8.0), 504.0)));
+    // Schrift
+    if (uText.z > 0.0 && side * uText.y > 0.0) {
+      float u = side < 0.0 ? (h.s - uText.x) : (uText.x + 4.9 * 0.36 - h.s);
+      vec2 tp = vec2(u, h.yr + 0.15) / 0.36;
+      if (tp.x > -0.5 && tp.x < 5.5 && tp.y > -3.0 && tp.y < 2.0) {
+        float sd = wordSD(tp, uText.z, uText.w);
+        float m = 1.0 - smoothstep(-0.02, 0.03, sd);
+        float dcol = floor(tp.x * 6.0);
+        float dl = min(uTextAge * 0.35, 1.0) * (0.4 + 1.6 * hash(vec2(dcol, 9.0))) * step(0.55, hash(vec2(dcol, 4.0)));
+        float dr = step(abs(fract(tp.x * 6.0) - 0.5), 0.18) * step(-dl, tp.y) * step(tp.y, 0.1);
+        float run = dr * step(wordSD(vec2(tp.x, 0.05), uText.z, uText.w), 0.08);
+        m = max(m, run * (1.0 - uText.w));
+        vec3 tc = mix(vec3(0.25, 0.9, 0.35), vec3(0.36, 0.0, 0.01), 1.0 - uText.w);
+        col = mix(col, tc, m);
+        emis += m * mix(vec3(0.05, 0.0, 0.0), vec3(0.25, 1.0, 0.35) * 0.6, uText.w);
+        spec = max(spec, m * 0.6);
+      }
+    }
+  } else if (h.mat < 2.5) {
+    float g = 0.5 + 0.5 * hash(vec2(floor(h.l * 8.0), mod(floor(h.s * 8.0), 504.0)));
     col = vec3(0.16, 0.14, 0.12) * g;
-    if (fract(p.z / 0.6) < 0.35 && abs(p.x) < 0.55) {
-      float gr = 0.8 + 0.2 * sin(p.z * K * 902.0 + sin(p.x * 13.0) * 2.0);
+    if (fract(h.s / 0.6) < 0.35 && abs(h.l) < 0.55) {
+      float gr = 0.8 + 0.2 * sin(h.s * K * 902.0 + sin(h.l * 13.0) * 2.0);
       col = vec3(0.35, 0.2, 0.1) * gr;
     }
-    if (abs(abs(p.x) - 0.3) < 0.028) { col = vec3(0.55, 0.55, 0.6); spec = 1.0; }
-    n = vec3(0.0, 1.0, 0.0);
-  } else if (id < 3.5) {
-    col = fract(p.z / 1.5) < 0.2 ? vec3(0.25, 0.15, 0.08) : vec3(0.07);
-    float web = cobweb(p.z, CE - abs(abs(p.x) - HW));
+    if (abs(abs(h.l) - 0.3) < 0.028) { col = vec3(0.55, 0.55, 0.6); spec = 1.0; }
+  } else if (h.mat < 3.5) {
+    col = fract(h.s / 1.5) < 0.2 ? vec3(0.25, 0.15, 0.08) : vec3(0.07);
+    float web = cobweb(h.s, CE - abs(abs(h.l) - HW));
     col = mix(col, vec3(0.6, 0.6, 0.55), web * 0.7);
-    n = vec3(0.0, -1.0, 0.0);
-  } else if (id < 4.5) {
-    col = bricks(p.x + 0.3, p.y) * 0.9 * uDoor.z;
-    n = vec3(0.0, 0.0, -1.0);
+  } else if (h.mat < 4.5) {
+    col = bricks(h.u + 0.3, h.yr) * 0.9;
+    if (ft < 0.5 && uDoor.w > 0.5) col *= uDoor.z;
   } else {
+    float pu = h.u;
     float pl = fract(pu / 0.17);
-    float gr = 0.75 + 0.25 * sin(p.y * 40.0 + sin(pu * 30.0) * 3.0) * (0.5 + 0.5 * hash(vec2(floor(pu / 0.17), 3.0)));
+    float gr = 0.75 + 0.25 * sin(h.yr * 40.0 + sin(pu * 30.0) * 3.0) * (0.5 + 0.5 * hash(vec2(floor(pu / 0.17), 3.0)));
     col = vec3(0.32, 0.18, 0.09) * gr;
     if (pl < 0.06) col *= 0.3;
-    bool band = abs(p.y + 0.55) < 0.05 || abs(p.y - 0.55) < 0.05;
+    bool band = abs(h.yr + 0.55) < 0.05 || abs(h.yr - 0.55) < 0.05;
     if (band) { col = vec3(0.2, 0.17, 0.15); spec = 0.5; }
     if (band && abs(pl - 0.5) < 0.12) col = vec3(0.45, 0.4, 0.35);
-    if (abs(length(vec2(pu - 0.72, p.y)) - 0.07) < 0.015) { col = vec3(0.5, 0.42, 0.3); spec = 0.5; }
+    if (abs(length(vec2(pu - 0.72, h.yr)) - 0.07) < 0.015) { col = vec3(0.5, 0.42, 0.3); spec = 0.5; }
     col *= uDoor.z;
-    n = vec3(pn.x, 0.0, pn.y);
   }
 
-  // Licht
   vec3 light = vec3(mix(0.05, 0.012, uScary)) * mix(1.0, 0.3, uLampsOff);
   vec3 glows = vec3(0.0);
   float lampStr = mix(1.9, 1.6, uScary);
   float doorOpen = clamp(uDoorA.x / 1.2, 0.0, 1.0);
-  float kb = floor((uCamZ - 2.0) / 4.5);
+  float kb = floor((uCamS - 2.0) / 4.5);
   for (int i = -2; i < 9; i++) {
     float k = kb + float(i);
-    float lz = k * 4.5 + 2.0;
-    float side = mod(k, 2.0) < 0.5 ? -1.0 : 1.0;
-    vec3 L = vec3(side * (HW - 0.08), 0.5, lz);
+    float ls = k * 4.5 + 2.0;
+    if (ft > 0.5 && ft < 1.5 && ls > s0 - 0.4 && ls < s0 + ARC + 0.4) continue;
+    if (ft > 1.5 && ls > s0 - 0.4 && ls < s0 + LP + 0.4) continue;
     float lv = lampLv(k);
     if (lv < 0.001) continue;
+    float side = mod(k, 2.0) < 0.5 ? -1.0 : 1.0;
+    bool lower = ft > 1.5 && ls > s0;
+    vec3 L = trackPos(ls, side * (HW - 0.08), lower ? 0.5 - HD : 0.5, ft, s0);
     vec3 lc = lampCol(k);
     vec3 v = L - p;
     float d2 = dot(v, v);
     float lam = abs(dot(n, v)) * inversesqrt(d2);
     float f = lv * lampStr * (0.25 + 0.75 * lam) / (1.0 + 0.9 * d2);
-    if (uDoor.w > 0.5 && lz > uDoor.x && p.z < uDoor.x - 0.02) f *= doorOpen;
+    if (ft < 0.5 && uDoor.w > 0.5 && ls > uDoor.x && h.s < uDoor.x - 0.02) f *= doorOpen;
+    if (ft > 1.5) {
+      if (lower && p.y > FL - 0.02 && h.s < s0) f = 0.0;
+      if (!lower && p.y < FL - 0.02 && h.s > s0 + LP) f = 0.0;
+    }
     light += f * lc;
-    glows += lv * (lc * 0.9 * glow(L, c, d, T, 0.18) + vec3(1.0, 1.0, 0.9) * 1.5 * glow(L, c, d, T, 0.05));
+    glows += lv * (lc * 0.9 * glow(L, c, d, h.T, 0.18) + vec3(1.0, 1.0, 0.9) * 1.5 * glow(L, c, d, h.T, 0.05));
   }
-  if (uDoor.w > 0.5) {
+  if (ft < 0.5 && uDoor.w > 0.5) {
     vec3 L = vec3(0.0, 1.15, uDoor.x - 0.6);
     float lv = uDoor.z * (0.85 + 0.15 * sin(uTime * 23.0)) * uLight * (1.0 - 0.8 * uLampsOff);
     vec3 v = L - p;
     float d2 = dot(v, v);
     float lam = abs(dot(n, v)) * inversesqrt(d2);
     light += lv * 1.3 * (0.25 + 0.75 * lam) / (1.0 + 0.9 * d2) * vec3(1.0, 0.7, 0.35);
-    glows += lv * (vec3(1.0, 0.7, 0.35) * 0.9 * glow(L, c, d, T, 0.18) + vec3(1.0, 1.0, 0.9) * 1.5 * glow(L, c, d, T, 0.05));
+    glows += lv * (vec3(1.0, 0.7, 0.35) * 0.9 * glow(L, c, d, h.T, 0.18) + vec3(1.0, 1.0, 0.9) * 1.5 * glow(L, c, d, h.T, 0.05));
   }
   {
     vec3 v = vec3(c.x, c.y + 0.3, c.z) - p;
@@ -248,34 +406,283 @@ void main() {
     float lam = abs(dot(n, v)) * inversesqrt(d2);
     light += uCart * 0.45 * (0.3 + 0.7 * lam) / (1.0 + 0.35 * d2) * vec3(0.55, 0.6, 0.8);
   }
-
   float fogD = mix(0.045, 0.075, uScary);
-  float dist = T * length(d);
-  col = col * light * (1.0 + spec * 1.5) * exp(-fogD * dist);
+  float dist = h.T * length(d);
+  vec3 res = (col * light * (1.0 + spec * 1.5) + emis) * exp(-fogD * dist);
+  return res + glows * exp(-fogD * 0.5 * dist);
+}
 
-  // Gespenst (Billboard in der Welt, dreht sich bei der Rolle mit)
-  if (uGhost.w > 0.001 && d.z > 1e-4) {
-    float tg = (uGhost.z - c.z) / d.z;
+// ---------- Comic-Figuren
+void paintA(inout vec4 acc, float sd, vec3 col, float k) {
+  float a = (1.0 - smoothstep(-0.005, 0.005, sd)) * k;
+  acc.rgb = mix(acc.rgb, col, a);
+  acc.a = max(acc.a, a);
+}
+void ink(inout vec4 acc, float sd, vec3 col) { paintA(acc, sd - 0.014, vec3(0.02), 1.0); paintA(acc, sd, col, 1.0); }
+float sdEll(vec2 p, vec2 c, vec2 r) { vec2 q = (p - c) / r; return (length(q) - 1.0) * min(r.x, r.y); }
+float sdRBox(vec2 p, vec2 c, vec2 hh, float r) { vec2 q = abs(p - c) - hh + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
+
+void handDraw(inout vec4 acc, vec2 p, vec2 hand, vec2 dir, float r, vec3 skin, vec3 claw) {
+  vec2 pr = vec2(-dir.y, dir.x);
+  for (int f = 0; f < 4; f++) {
+    float o = (float(f) - 1.5) * 0.7;
+    vec2 a = hand + pr * o * r * 0.8;
+    vec2 b = a + (dir + pr * o * 0.35) * r * 1.5;
+    ink(acc, sdCap(p, a, b, r * 0.26), skin);
+    paintA(acc, length(p - b) - r * 0.2, claw, 1.0);
+  }
+  ink(acc, length(p - hand) - r, skin);
+}
+
+// Mensch-Grundform: Zombie (kind 0) oder Mumie (kind 1)
+void humanoid(vec2 p, float kind, vec4 B, vec4 C, inout vec4 acc, inout vec3 em) {
+  float reach = B.z, mouth = B.w, lean = C.x, axe = C.y, eyeG = C.z, special = C.w;
+  if (abs(p.x) > 1.0 || p.y < -0.1 || p.y > 2.1) return;
+  float cl = cos(lean), sl = sin(lean);
+  p = vec2(cl * p.x + sl * p.y, -sl * p.x + cl * p.y);
+  float sc = uScary;
+  float sm = smoothstep(0.35, 0.65, sc);
+  vec3 blood = vec3(0.42, 0.01, 0.01);
+  vec3 skin, cloth, pants;
+  float stripe = 0.85 + 0.15 * step(0.5, fract(p.y * 14.0 + p.x * 3.0));
+  if (kind < 0.5) {
+    skin = mix(vec3(0.55, 0.8, 0.42), vec3(0.42, 0.52, 0.38), sc);
+    skin *= mix(1.0, 0.75 + 0.35 * hash(floor(p * 16.0)), sc);
+    cloth = mix(vec3(0.9, 0.4, 0.2), vec3(0.36, 0.34, 0.3), sc);
+    pants = mix(vec3(0.25, 0.35, 0.75), vec3(0.16, 0.16, 0.2), sc);
+  } else {
+    skin = mix(vec3(0.93, 0.88, 0.72), vec3(0.72, 0.65, 0.48), sc) * stripe;
+    skin *= mix(1.0, 0.85 + 0.25 * hash(floor(p * 9.0)), sc);
+    cloth = skin; pants = skin;
+  }
+  // Beine
+  ink(acc, sdCap(p, vec2(-0.1, 0.85), vec2(-0.14, 0.08), 0.075), pants);
+  ink(acc, sdCap(p, vec2(0.1, 0.85), vec2(0.15, 0.08), 0.075), pants);
+  ink(acc, sdEll(p, vec2(-0.16, 0.04), vec2(0.1, 0.05)), kind < 0.5 ? vec3(0.15, 0.1, 0.08) : skin);
+  ink(acc, sdEll(p, vec2(0.17, 0.04), vec2(0.1, 0.05)), kind < 0.5 ? vec3(0.15, 0.1, 0.08) : skin);
+  // Rumpf
+  float tor = sdRBox(p, vec2(0.0, 1.1), vec2(0.2, 0.28), 0.06);
+  ink(acc, tor, cloth);
+  if (kind < 0.5) {
+    float tear = min(sdEll(p, vec2(0.07, 1.0), vec2(0.07, 0.11)), sdEll(p, vec2(-0.09, 1.24), vec2(0.05, 0.06)));
+    tear = max(tear, tor);
+    paintA(acc, tear, mix(skin * 0.8, vec3(0.25, 0.05, 0.04), sm), 1.0);
+    float ribs = max(tear, (abs(fract(p.y * 22.0) - 0.5) - 0.22) / 22.0);
+    paintA(acc, ribs, vec3(0.85, 0.8, 0.68), sm);
+    paintA(acc, max(tor, sdEll(p, vec2(-0.06, 1.3), vec2(0.13, 0.08)) + 0.02 * sin(p.x * 60.0)), blood, sm);
+    paintA(acc, max(tor, sdEll(p, vec2(0.1, 0.92), vec2(0.07, 0.12))), blood * 0.8, sm);
+  } else {
+    paintA(acc, max(tor, sdEll(p, vec2(0.08, 1.15), vec2(0.08, 0.1))), vec3(0.3, 0.18, 0.06), 0.6 * sm);
+    paintA(acc, max(tor, sdEll(p, vec2(-0.1, 0.95), vec2(0.06, 0.07))), blood, sm);
+  }
+  // Arme
+  vec3 claw = mix(vec3(0.9), vec3(0.15, 0.1, 0.05), sm);
+  for (int s = 0; s < 2; s++) {
+    float sd = s == 0 ? -1.0 : 1.0;
+    vec2 sh = vec2(0.22 * sd, 1.3);
+    vec2 hand;
+    float hr = 0.06 * (1.0 + 0.6 * reach);
+    bool axeArm = sd > 0.0 && axe > -5.0;
+    if (axeArm) {
+      hand = sh + 0.42 * vec2(sin(axe), cos(axe));
+    } else if (special > 0.5 && sd < 0.0 && kind < 1.5) {
+      // Winken (Kindermodus)
+      hand = vec2(-0.36 + 0.07 * sin(uTime * 11.0), 1.68);
+    } else {
+      hand = mix(vec2(0.3 * sd, 0.8), vec2(0.25 * sd, 1.32 + 0.02 * sin(uTime * 7.0 + sd)), reach);
+    }
+    vec2 dir = normalize(hand - sh + vec2(0.0, 0.0001));
+    bool cut = kind > 0.5 && special > 1.5 && sd < 0.0;
+    vec2 elbow = mix(sh, hand, 0.5);
+    if (cut) {
+      ink(acc, sdCap(p, sh, elbow, 0.058), kind < 0.5 ? cloth : skin);
+      paintA(acc, length(p - elbow) - 0.05, mix(vec3(0.9, 0.6, 0.2), blood * 1.3, sm), 1.0);
+      paintA(acc, length(p - elbow) - 0.022, mix(vec3(1.0, 0.95, 0.85), vec3(0.95, 0.9, 0.8), sm), 1.0);
+      paintA(acc, sdCap(p, elbow, elbow - vec2(0.0, 0.35 * (1.0 + 0.2 * sin(uTime))), 0.014), blood, sm);
+    } else {
+      ink(acc, sdCap(p, sh, hand, 0.055), kind < 0.5 ? mix(cloth, skin, step(0.0, dot(p - elbow, dir))) : skin);
+      handDraw(acc, p, hand, dir, hr, kind < 0.5 ? skin : skin * 0.9, claw);
+    }
+    if (kind > 0.5) {
+      // lose Bandagen
+      float wv = 0.04 * sin(uTime * 3.0 + sd * 2.0 + p.y * 8.0);
+      ink(acc, sdCap(p, elbow + vec2(0.0, -0.02), elbow + vec2(0.05 * sd + wv, -0.3), 0.018), skin * 0.85);
+    }
+    if (axeArm) {
+      vec2 hEnd = hand + dir * 0.55;
+      vec2 perp = vec2(dir.y, -dir.x);
+      ink(acc, sdCap(p, hand - dir * 0.1, hEnd, 0.022), vec3(0.4, 0.24, 0.1));
+      float blade = sdCap(p, hEnd - dir * 0.07 + perp * 0.06, hEnd + dir * 0.07 + perp * 0.06, 0.075);
+      blade = max(blade, -dot(p - hEnd, perp) - 0.01);
+      ink(acc, blade, vec3(0.62, 0.64, 0.68));
+      paintA(acc, max(blade, -(dot(p - hEnd, perp) - 0.1)), blood * 1.2, sm);
+    }
+  }
+  // Kopf
+  vec2 hc = vec2(0.0, 1.57);
+  float head = sdEll(p, hc, vec2(0.15, 0.18));
+  ink(acc, head, skin);
+  if (kind < 0.5) {
+    paintA(acc, max(head, -(p.y - 1.66) + 0.02 * sin(p.x * 70.0)), vec3(0.12, 0.09, 0.05), 1.0);
+    // Erwachsene: hängendes Auge, tiefe Höhlen, Zähne, Blut am Kinn
+    float sockL = sdEll(p, vec2(-0.06, 1.565), vec2(0.045, 0.038));
+    float sockR = sdEll(p, vec2(0.06, 1.585), vec2(0.04, 0.034));
+    paintA(acc, min(sockL, sockR), vec3(0.06, 0.02, 0.02), sm);
+    float pup = min(length(p - vec2(-0.065, 1.56)) - 0.014, length(p - vec2(0.055, 1.588)) - 0.012);
+    paintA(acc, pup, vec3(1.0, 0.95, 0.6), sm);
+    em += (1.0 - smoothstep(0.0, 0.03, pup)) * vec3(1.0, 0.9, 0.4) * eyeG * sm * 0.8;
+    float mo = sdEll(p, vec2(0.0, 1.46 - 0.02 * mouth), vec2(0.065, 0.02 + 0.045 * mouth));
+    paintA(acc, mo, vec3(0.16, 0.0, 0.0), sm);
+    float teeth = max(mo, max(-(p.y - (1.46 + 0.005)), abs(fract(p.x * 32.0) - 0.5) - 0.3) );
+    paintA(acc, teeth, vec3(0.85, 0.8, 0.5), sm);
+    paintA(acc, sdCap(p, vec2(0.045, 1.43), vec2(0.055, 1.3), 0.012), blood, sm);
+    paintA(acc, sdCap(p, vec2(-0.09, 1.68), vec2(0.06, 1.64), 0.006), blood, sm);
+    // Kinder: Glupschaugen, Zunge
+    float eyeK = min(length(p - vec2(-0.06, 1.6)) - 0.05, length(p - vec2(0.06, 1.6)) - 0.05);
+    paintA(acc, eyeK - 0.01, vec3(0.02), 1.0 - sm);
+    paintA(acc, eyeK, vec3(1.0), 1.0 - sm);
+    paintA(acc, min(length(p - vec2(-0.04, 1.59)) - 0.02, length(p - vec2(0.04, 1.59)) - 0.02), vec3(0.02), 1.0 - sm);
+    float grin = max(abs(length(p - vec2(0.0, 1.52)) - 0.07) - 0.01, p.y - 1.5);
+    paintA(acc, grin, vec3(0.05), 1.0 - sm);
+    paintA(acc, sdEll(p, vec2(0.025, 1.43), vec2(0.028, 0.04)), vec3(1.0, 0.45, 0.55), 1.0 - sm);
+  } else {
+    float slit = sdRBox(p, vec2(0.0, 1.585), vec2(0.11, 0.022), 0.01);
+    paintA(acc, slit, vec3(0.03, 0.02, 0.01), 1.0);
+    float ey = min(length(p - vec2(-0.05, 1.585)) - mix(0.028, 0.017, sm), length(p - vec2(0.05, 1.585)) - mix(0.028, 0.017, sm));
+    vec3 ec = mix(vec3(0.4, 1.0, 0.6), vec3(1.0, 0.25, 0.05), sm);
+    paintA(acc, ey, ec, 1.0);
+    em += (1.0 - smoothstep(0.0, 0.05, ey)) * ec * (0.3 + eyeG);
+    paintA(acc, sdEll(p, vec2(0.0, 1.48), vec2(0.05, 0.015 + 0.035 * mouth)), vec3(0.08, 0.02, 0.01), sm);
+    paintA(acc, max(head, abs(p.y - 1.64 - 0.02 * sin(p.x * 30.0)) - 0.008), skin * 0.7, 1.0);
+  }
+}
+
+void pumpkin(vec2 p, float split, inout vec4 acc, inout vec3 em) {
+  if (abs(p.x) > 1.2 || p.y < -0.1 || p.y > 0.8) return;
+  for (int i = 0; i < 2; i++) {
+    float sd = i == 0 ? -1.0 : 1.0;
+    float a = sd * split * 0.6;
+    vec2 o = vec2(sd * split * 0.45, 0.22 + split * 0.12 * sin(split * 3.14));
+    vec2 q = p - o;
+    q = vec2(cos(a) * q.x + sin(a) * q.y, -sin(a) * q.x + cos(a) * q.y);
+    float body = sdEll(q, vec2(0.0), vec2(0.26, 0.21));
+    if (split > 0.01) body = max(body, sd * -q.x);
+    vec3 oc = vec3(1.0, 0.5, 0.08) * (0.85 + 0.15 * cos(q.x * 26.0));
+    ink(acc, body, oc);
+    if (split > 0.01) paintA(acc, max(body, abs(q.x) - 0.03), vec3(1.0, 0.85, 0.4), 1.0);
+    float eye = min(length((q - vec2(-0.09, 0.05)) * vec2(1.0, 1.4)) - 0.045, length((q - vec2(0.09, 0.05)) * vec2(1.0, 1.4)) - 0.045);
+    float mo = max(sdEll(q, vec2(0.0, -0.07), vec2(0.13, 0.05)), -(q.y + 0.07 - 0.03 * abs(sin(q.x * 40.0))));
+    float face = max(min(eye, mo), body);
+    paintA(acc, face, vec3(1.0, 0.9, 0.3), 1.0);
+    em += (1.0 - smoothstep(0.0, 0.01, face)) * vec3(1.0, 0.7, 0.2) * 0.5;
+    if (i == 0 || split < 0.01) ink(acc, max(sdRBox(q, vec2(0.0, 0.23), vec2(0.025, 0.05), 0.01), split > 0.01 ? -q.x : -1.0), vec3(0.3, 0.45, 0.1));
+  }
+}
+
+void armPiece(vec2 p, vec4 B, inout vec4 acc) {
+  if (length(p) > 0.4) return;
+  float a = B.z;
+  p = vec2(cos(a) * p.x + sin(a) * p.y, -sin(a) * p.x + cos(a) * p.y);
+  float sm = smoothstep(0.35, 0.65, uScary);
+  vec3 skin = vec3(0.72, 0.65, 0.48) * (0.85 + 0.15 * step(0.5, fract(p.x * 14.0)));
+  ink(acc, sdCap(p, vec2(-0.17, 0.0), vec2(0.15, 0.0), 0.055), skin);
+  handDraw(acc, p, vec2(0.17, 0.0), vec2(1.0, 0.0), 0.06, skin * 0.9, vec3(0.15, 0.1, 0.05));
+  paintA(acc, length(p - vec2(-0.2, 0.0)) - 0.055, vec3(0.45, 0.01, 0.01) * mix(1.0, 1.3, sm), 1.0);
+  paintA(acc, length(p - vec2(-0.2, 0.0)) - 0.022, vec3(0.95, 0.9, 0.8), 1.0);
+}
+
+void particles(vec2 p, vec4 B, vec4 C, inout vec4 acc) {
+  float tau = B.z, seed = B.w, kind = C.x, dirb = C.y, floorY = C.z;
+  if (abs(p.x) > 2.5 || p.y > 2.5 || p.y < floorY - 0.2) return;
+  vec3 colB = kind > 0.5 ? vec3(1.0, 0.55, 0.1) : vec3(0.5, 0.01, 0.01);
+  for (int i = 0; i < 16; i++) {
+    float fi = float(i);
+    float h1 = hash(vec2(fi, seed)), h2 = hash(vec2(seed, fi + 3.0)), h3 = hash(vec2(fi + 7.0, seed));
+    float age = tau - h3 * (kind > 0.5 ? 0.15 : 1.4);
+    if (age < 0.0 || age > 3.0) continue;
+    vec2 v = vec2(dirb * (0.4 + 1.1 * h1) + (h1 - 0.5) * 0.8, 0.8 + 2.2 * h2);
+    vec2 pos = v * age + vec2(0.0, -4.9) * age * age;
+    float r = (kind > 0.5 ? 0.04 : 0.018) + 0.025 * h1;
+    float onF = step(pos.y, floorY);
+    if (onF > 0.5) {
+      // Landestelle: flacher Fleck
+      float tl = (v.y + sqrt(max(v.y * v.y - 19.6 * floorY, 0.0))) / 9.8;
+      vec2 lp = vec2(v.x * tl, floorY);
+      paintA(acc, sdEll(p, lp, vec2(r * 2.2, r * 0.5)), colB * 0.8, 1.0);
+    } else {
+      paintA(acc, sdEll(p, pos, vec2(r, r * (1.0 + 0.6 * min(age * 3.0, 1.0)))), colB, 1.0);
+    }
+  }
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / uRes * 2.0 - 1.0;
+  uv.x *= uRes.x / uRes.y;
+  uv *= 0.85;
+  vec3 r = vec3(uv, 1.0);
+  float cpi = cos(uPitch), spi = sin(uPitch);
+  r = vec3(r.x, r.y * cpi + r.z * spi, -r.y * spi + r.z * cpi);
+  float cr = cos(uRoll), sr = sin(uRoll);
+  r = vec3(r.x * cr - r.y * sr, r.x * sr + r.y * cr, r.z);
+  float cp = cos(uYaw), sp = sin(uYaw);
+  vec3 d = vec3(r.x * cp + r.z * sp, r.y, -r.x * sp + r.z * cp);
+  d.x *= uSig;
+  vec3 c = uCam;
+
+  float mx = uFeat.z, ft = uFeat.x;
+  vec3 col = vec3(0.0);
+  float T = 200.0;
+  if (mx < 0.999) { Hit h0 = scene(c, d, 0.0); col = shade(h0, c, d, 0.0); T = h0.T; }
+  if (mx > 0.001) {
+    Hit h1 = scene(c, d, ft);
+    vec3 c1 = shade(h1, c, d, ft);
+    col = mx >= 0.999 ? c1 : mix(col, c1, mx);
+    if (mx > 0.5) T = h1.T;
+  }
+  float fogD = mix(0.045, 0.075, uScary);
+  float den = dot(d, uFwd);
+
+  // Figuren
+  for (int i = 0; i < 4; i++) {
+    vec4 A = uFigA[i];
+    if (A.w < 0.001 || den < 1e-3) continue;
+    vec4 B = uFigB[i], C = uFigC[i];
+    float tq = dot(A.xyz - c, uFwd) / den;
+    if (tq < 0.05 || tq > T + 0.05) continue;
+    vec3 q = c + tq * d;
+    vec2 p = vec2(dot(q - A.xyz, uRight), q.y - A.y) / B.y;
+    vec4 acc = vec4(0.0);
+    vec3 em = vec3(0.0);
+    if (B.x < 1.5) humanoid(p, 0.0, B, C, acc, em);
+    else if (B.x < 2.5) humanoid(p, 1.0, B, C, acc, em);
+    else if (B.x < 3.5) pumpkin(p, B.z, acc, em);
+    else if (B.x < 4.5) armPiece(p, B, acc);
+    else particles(p, B, C, acc);
+    float fogF = exp(-fogD * tq * length(d));
+    col = mix(col, acc.rgb * uFigLight * fogF, acc.a * A.w);
+    col += em * fogF * A.w;
+  }
+
+  // Gespenst
+  if (uGhost.w > 0.001 && den > 1e-3) {
+    float tg = dot(uGhost.xyz - c, uFwd) / den;
     if (tg > 0.05 && tg < T + 0.5) {
       vec3 q = c + tg * d;
       float s = uGhostP.x;
-      float a = (q.x - uGhost.x) / s, b = (uGhost.y - q.y) / s;
+      float a = dot(q - uGhost.xyz, uRight) / s, b = -(q.y - uGhost.y) / s;
       float sm = smoothstep(0.35, 0.65, uScary);
-      // Umriss Kindermodus: rund mit welligem Saum
       float head = length(vec2(a, b + 0.25)) - 0.55;
       float hem = 0.75 + 0.1 * sin(a * 18.0 + uTime * 12.0);
       float sdK = min(head, max(abs(a) - 0.55, max(-0.25 - b, b - hem)));
-      // Umriss Erwachsenenmodus: schmaler Kopf, weiter Umhang, zerfetzter Saum, leichtes Wabern
       float aw = a + 0.035 * sin(b * 5.0 + uTime * 4.0);
       float headA = length(vec2(aw * 1.15, (b + 0.3) * 0.9)) - 0.48;
       float hemA = 1.15 - 0.45 * abs(fract(aw * 3.2 + uTime * 0.4) - 0.5) * 2.0 - 0.1 * sin(aw * 5.0 + uTime * 2.0);
       float sdA = min(headA, max(abs(aw) - (0.42 + 0.22 * max(b, 0.0)), max(-0.3 - b, b - hemA)));
-      float sd = mix(sdK, sdA, sm);
-      float shape = 1.0 - smoothstep(-0.02, 0.02, sd);
+      float sdg = mix(sdK, sdA, sm);
+      float shape = 1.0 - smoothstep(-0.02, 0.02, sdg);
       shape *= mix(1.0, 0.75 + 0.25 * sin(b * 9.0 - uTime * 3.0) * sin(a * 7.0 + uTime), sm);
       shape *= mix(1.0, 1.0 - 0.6 * smoothstep(0.5, 1.1, b), sm);
       vec3 gc = mix(vec3(0.93, 0.96, 1.0), vec3(0.72, 0.8, 0.74), uScary) * (0.8 + 0.2 * cos(b * 2.0));
-      // Kindergesicht: runde Augen mit Glanzpunkt, Bäckchen, Lächeln
       float ke = length(vec2(abs(a) - 0.2, b + 0.33)) - 0.11;
       float kh = length(vec2(abs(a) - 0.165, b + 0.37)) - 0.035;
       float smile = max(abs(length(vec2(a, b + 0.05)) - 0.2) - 0.03, 0.03 - b);
@@ -283,7 +690,6 @@ void main() {
       vec3 kidC = mix(gc, vec3(1.0, 0.62, 0.72), 1.0 - smoothstep(-0.01, 0.01, cheek));
       kidC = mix(kidC, vec3(0.05, 0.03, 0.08), 1.0 - smoothstep(-0.01, 0.01, min(ke, smile)));
       kidC = mix(kidC, vec3(1.0), 1.0 - smoothstep(-0.005, 0.005, kh));
-      // Erwachsenengesicht: hohle, hängende Augen, langer offener Mund
       float aeye = length(vec2((abs(a) - 0.18) * 1.5, (b + 0.36 - 0.12 * abs(a)) * 0.8)) - 0.1;
       float apup = length(vec2(abs(a) - 0.18, b + 0.34)) - 0.025;
       float amouth = length(vec2(a * 2.4 * (1.0 + 0.12 * sin(uTime * 9.0)), (b - 0.12) * 0.5)) - 0.2;
@@ -297,19 +703,51 @@ void main() {
     }
   }
 
-  // Augen in der Dunkelheit
+  // Augen
   vec3 eyeC = mix(vec3(1.0, 0.85, 0.15), vec3(1.0, 0.08, 0.03), uScary);
   float eyeR = mix(0.06, 0.035, uScary);
+  vec3 eg = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     vec4 e = uEyes[i];
-    if (e.w > 0.001) {
-      glows += e.w * eyeC * (2.5 * glow(e.xyz, c, d, T + 0.3, eyeR) + 0.35 * glow(e.xyz, c, d, T + 0.3, eyeR * 3.5));
-    }
+    if (e.w > 0.001) eg += e.w * eyeC * (2.5 * glow(e.xyz, c, d, T + 0.3, eyeR) + 0.35 * glow(e.xyz, c, d, T + 0.3, eyeR * 3.5));
   }
-  col += glows * exp(-fogD * 0.5 * dist);
+  col += eg;
 
   col = 1.0 - exp(-col * 1.4);
   col = pow(clamp(col, 0.0, 1.0), vec3(0.85));
+
+  // Spritzer auf der "Linse" (Blut / Schleim)
+  vec2 sp2 = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
+  vec3 splC = mix(vec3(0.3, 0.85, 0.15), vec3(0.42, 0.0, 0.01), uScary);
+  for (int i = 0; i < 6; i++) {
+    vec4 S = uSplat[i];
+    if (S.w < 0.001) continue;
+    vec2 q = (sp2 - S.xy) / S.z;
+    if (length(q) > 2.2) continue;
+    float seed = uSplatB[i].x, age = uSplatB[i].y;
+    float ang = atan(q.y, q.x), rr = length(q);
+    float edge = 0.42 + 0.08 * sin(ang * 5.0 + seed) + 0.06 * sin(ang * 11.0 + seed * 2.0) + 0.04 * sin(ang * 23.0 + seed * 3.0);
+    float m = 1.0 - smoothstep(edge - 0.015, edge + 0.015, rr);
+    for (int j = 0; j < 7; j++) {
+      float fj = float(j);
+      float aj = seed * 3.0 + fj * 0.9 + hash(vec2(fj, seed)) * 0.6;
+      vec2 cj = vec2(cos(aj), sin(aj)) * (0.6 + 0.5 * hash(vec2(seed, fj)));
+      float rj = 0.03 + 0.06 * hash(vec2(fj + 3.0, seed));
+      m = max(m, 1.0 - smoothstep(rj - 0.015, rj + 0.015, length(q - cj)));
+    }
+    for (int j = 0; j < 3; j++) {
+      float fj = float(j);
+      float xj = (hash(vec2(seed, fj + 10.0)) - 0.5) * 0.6;
+      float len = min(age * 0.12, 0.9) * (0.5 + hash(vec2(fj, seed + 5.0)));
+      float dsd = sdCap(q, vec2(xj, -0.2), vec2(xj, -0.25 - len), 0.03);
+      dsd = min(dsd, length(q - vec2(xj, -0.25 - len)) - 0.05);
+      m = max(m, 1.0 - smoothstep(-0.015, 0.015, dsd));
+    }
+    vec3 sc = splC * (0.7 + 0.5 * smoothstep(0.6, 0.0, rr));
+    sc += vec3(0.6) * (1.0 - smoothstep(0.0, 0.06, length(q - vec2(-0.13, 0.13)) - 0.03));
+    col = mix(col, sc, m * S.w * 0.93);
+  }
+
   vec2 sq = gl_FragCoord.xy / uRes - 0.5;
   col *= clamp(1.15 - 0.55 * (sq.x * sq.x * 3.2 + sq.y * sq.y * 3.2), 0.0, 1.0);
   col += (hash(gl_FragCoord.xy * 0.37 + fract(uTime * 7.0) * 91.0) - 0.5) * 0.035;
@@ -319,66 +757,96 @@ void main() {
 
 <script>
 "use strict";
-const PERIOD = 63, HW = 1.2;
+const PERIOD = 63, HW = 1.2, FL = -1, RR = 0.9, ARC = RR * Math.PI / 2, HD = 2.2, LP = 1.6;
 const smooth = x => { x = Math.min(Math.max(x, 0), 1); return x * x * x * (x * (6 * x - 15) + 10); };
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp = (x, a, b) => Math.min(Math.max(x, a), b);
 const h1 = (a, b) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); };
 const rnd = (a = 0, b = 1) => a + Math.random() * (b - a);
+const pick = () => (Math.random() < 0.5 ? -1 : 1);
 
 // ------------------------------------------------------------ Zustand
 const S = {
-  started: false, t: 0, cz: 0, speed: 0, cruise: 1.6, halted: true,
+  started: false, t: 0, s: 0, speed: 0, cruise: 1.6, halted: true,
   scary: 0, scaryTarget: 0,
-  roll: 0, rollAnim: null, rollDir: 1, rollQueue: 0,
-  door: null, flick: null, darkT: 0, dark: 0,
+  roll: 0, rollAnim: null, rollQueue: 0,
+  door: null, feature: null, fallY: 0, fallV: 0,
+  flick: null, darkT: 0, dark: 0,
   eyes: [], ghost: null, ghostDir: 1, finale: null,
+  acts: [], scene: null, stopAt: null, splats: [], text: null,
+  bumpT: -99, shakeHeld: false, shake: 0, flashT: -99,
   fade: 0, fadeTarget: 0, fadeRate: 0.7, ended: false, pending: null,
   lastSleeper: 0, nextBeat: 0, bpm: 70, nextAmbient: 12, muted: false,
   lightMul: 1, buzz: 0,
 };
+const kidNow = () => S.scary < 0.5;
 
 function newDoorAhead(dist, phase) {
-  S.door = { z: S.cz + dist, phase, pt: 0, angL: 0, angR: 0, fade: phase === "approach" ? 0 : 1 };
+  S.door = { z: S.s + dist, phase, pt: 0, angL: 0, angR: 0, fade: phase === "approach" ? 0 : 1 };
 }
-
 function resetRide() {
-  S.cz = 0; S.speed = 0; S.halted = true; S.roll = 0; S.rollAnim = null; S.rollQueue = 0;
+  S.s = 0; S.speed = 0; S.halted = true; S.roll = 0; S.rollAnim = null; S.rollQueue = 0;
   S.darkT = 0; S.dark = 0; S.eyes = []; S.ghost = null; S.finale = null; S.flick = null;
-  S.ended = false; S.lastSleeper = 0;
+  S.feature = null; S.fallY = 0; S.fallV = 0; S.acts = []; S.scene = null; S.stopAt = null;
+  S.splats = []; S.text = null; S.ended = false; S.lastSleeper = 0;
   newDoorAhead(2.0, "closed");
   S.fadeTarget = 1; S.fadeRate = 0.6;
 }
 resetRide();
 S.fade = 0;
 
+// Strecke -> Raum (gleiche Formeln wie im Shader)
+function sMod() { return ((S.s % PERIOD) + PERIOD) % PERIOD; }
+function rel(sv) { return sv - S.s + sMod(); }
+function sig() { return S.feature && S.feature.type === "corner" ? S.feature.sig : 1; }
+function Lpos(sv, l, y) {
+  const f = S.feature, s = rel(sv), lp = sig() * l;
+  if (f && f.type === "corner") {
+    const s0 = rel(f.s0);
+    if (s > s0) {
+      if (s <= s0 + ARC) { const th = (s - s0) / RR, r = RR + lp; return [-RR + r * Math.cos(th), y, s0 + r * Math.sin(th)]; }
+      return [-RR - (s - s0 - ARC), y, s0 + RR + lp];
+    }
+  }
+  return [lp, y, s];
+}
+function heading(sv) {
+  const a = Lpos(sv - 0.05, 0, 0), b = Lpos(sv + 0.05, 0, 0);
+  const dx = b[0] - a[0], dz = b[2] - a[2], n = Math.hypot(dx, dz) || 1;
+  return [dx / n, dz / n];
+}
+const busy = () => !!(S.feature || (S.door && S.door.phase !== "done") || S.scene || S.finale || S.ended);
+
 // ------------------------------------------------------------ Aktionen
 function actDoor() {
-  if (S.ended || S.finale) return;
+  if (S.ended || S.finale || S.feature || S.scene) return;
   if (!S.door) { newDoorAhead(Math.max(16, S.speed * 6 + 11), "approach"); S.halted = false; return; }
   if (S.door.phase === "closed") { S.door.phase = "rattle"; S.door.pt = 0; Snd.rattle(); }
 }
 function actRoll() {
   if (S.ended) return;
   if (S.rollAnim) { S.rollQueue = Math.min(S.rollQueue + 1, 2); return; }
-  startRoll();
+  S.rollAnim = { t0: S.t, dur: lerp(4.6, 3.0, S.scary) };
 }
-function startRoll() {
-  const dur = lerp(4.6, 3.0, S.scary);
-  S.rollAnim = { t0: S.t, dur, dir: S.rollDir };
-  S.rollDir *= -1;
+function actTurn(dir) {
+  if (busy()) return;
+  S.halted = false;
+  S.feature = { type: "corner", sig: dir, s0: S.s + Math.max(5, S.speed * 2 + 3), mix: 0, screech: false };
 }
-function actFlicker() {
-  if (S.ended) return;
-  S.flick = { t0: S.t, dur: lerp(1.6, 1.9, S.scary) };
+function actDrop() {
+  if (busy()) return;
+  S.halted = false;
+  S.feature = { type: "drop", s0: S.s + Math.max(4.5, S.speed * 1.8 + 2.5), mix: 0, phase: "wait" };
+  Snd.trapdoor();
 }
+function actBump() { if (!S.ended) { S.bumpT = S.t; Snd.bump(); } }
+function actFlicker() { if (!S.ended) S.flick = { t0: S.t, dur: lerp(1.6, 1.9, S.scary) }; }
 function actDark() { if (!S.ended && !S.finale) S.darkT = S.darkT > 0.5 ? 0 : 1; }
 function actEyes() {
   if (S.ended) return;
   const n = Math.round(lerp(3, 6, S.scary));
   for (let i = 0; i < n; i++) {
-    const side = Math.random() < 0.5 ? -1 : 1;
-    S.eyes.push({ side, y: rnd(-0.6, 0.9), z: S.cz + 6 + i * 2.2 + rnd(0, 2), born: S.t + i * rnd(0.2, 0.6), life: lerp(7, 9, S.scary), seed: Math.random() * 100 });
+    S.eyes.push({ side: pick(), y: rnd(-0.6, 0.9), z: S.s + 6 + i * 2.2 + rnd(0, 2), born: S.t + i * rnd(0.2, 0.6), life: lerp(7, 9, S.scary), seed: Math.random() * 100 });
   }
   while (S.eyes.length > 8) S.eyes.shift();
   if (S.scary > 0.5) Snd.growl(); else Snd.pling();
@@ -403,39 +871,206 @@ function actNew() {
 function actHalt() {
   if (S.ended) { actNew(); return; }
   if (S.door && S.door.phase === "closed") return;
+  if (S.feature) return;
   S.halted = !S.halted;
 }
+function actSplat() { if (!S.ended) { addSplat(); if (kidNow()) Snd.bloop(); else Snd.splat(); } }
+function actText() {
+  if (S.ended || S.finale || S.text) return;
+  S.text = { s: S.s + Math.max(5.5, S.speed * 2.5 + 3), side: pick(), t0: S.t, kid: kidNow() };
+  Snd.scratch();
+}
+function actZombie() { if (!S.ended && !S.finale && S.acts.length < 2) S.acts.push(kidNow() ? zombieKid() : zombieAdult()); }
+function actMummy() { if (!S.ended && !S.finale && S.acts.length < 2) S.acts.push(kidNow() ? mummyKid() : mummyAdult()); }
+function actAxe() {
+  if (busy()) return;
+  S.halted = false;
+  S.scene = axeScene(kidNow());
+}
 function setMode(scary) { S.scaryTarget = scary; }
+
+function addSplat(x, y, size) {
+  const asp = innerWidth / innerHeight;
+  S.splats.push({ x: x ?? rnd(-0.45, 0.45) * asp, y: y ?? rnd(-0.3, 0.3), size: size ?? rnd(0.18, 0.32), born: S.t, seed: rnd(0, 100) });
+  while (S.splats.length > 6) S.splats.shift();
+}
+function flash() { S.flashT = S.t; Snd.hit(); }
+
+// ------------------------------------------------------------ Figuren-Auftritte
+// Jeder Auftritt liefert pro Bild eine Liste von Figuren: {type, s, l, y, a, sc, p:[6]}
+function fig(type, s, l, y, a, sc, p) { return { type, s, l, y, a, sc, p }; }
+
+function zombieAdult() {
+  const t0 = S.t, side = pick(), s0 = S.s + 6.5;
+  let roared = false, flashed = false;
+  Snd.growl();
+  return {
+    step() {
+      const tau = S.t - t0;
+      let s = s0, l = side * 0.75, reach = 0.25, mouth = 0.3, y = FL;
+      if (tau < 0.6) l = side * lerp(1.45, 0.75, smooth(tau / 0.6));
+      else if (tau < 1.2) { mouth = lerp(0.3, 0.8, (tau - 0.6) / 0.6); reach = 0.45; }
+      else {
+        const p = Math.min((tau - 1.2) / 0.7, 1), e = p * p;
+        s = lerp(s0, S.s + 0.5, e); l = lerp(side * 0.75, 0, e); reach = lerp(0.45, 1, p); mouth = 1; y = FL + 0.25 * Math.sin(Math.PI * p);
+        if (!roared) { roared = true; Snd.roar(); }
+      }
+      if (tau >= 1.9 && !flashed) { flashed = true; flash(); addSplat(rnd(-0.3, 0.3), rnd(-0.1, 0.2), 0.36); }
+      this.figs = flashed ? [] : [fig(1, s, l, y, 1, 1, [reach, mouth, 0.08 * Math.sin(S.t * 2.3), -9, 1, 0])];
+      return !flashed;
+    },
+  };
+}
+function zombieKid() {
+  const t0 = S.t, side = pick(), dur = 4.4;
+  Snd.bwah();
+  return {
+    step() {
+      const p = (S.t - t0) / dur;
+      const hop = Math.abs(Math.sin(p * Math.PI * 6)) * 0.18;
+      this.figs = [fig(1, S.s + 4.3, side * (1.6 - 3.2 * p), FL + hop, 1, 1, [0.1, 0.3, 0.12 * Math.sin(S.t * 8), -9, 0.6, 1])];
+      return p < 1;
+    },
+  };
+}
+function mummyAdult() {
+  const t0 = S.t, side = pick(), s0 = S.s + 4.2;
+  let flashed = false, lunge = false;
+  Snd.raspy();
+  return {
+    step() {
+      const tau = S.t - t0;
+      let s = s0, l = side * 0.55, y = FL, lean = 0;
+      if (tau < 0.3) l = side * lerp(1.45, 0.55, smooth(tau / 0.3));
+      else if (tau < 1.0) lean = -side * 0.12 * Math.sin((tau - 0.3) * 18) * (1 - (tau - 0.3) / 0.7);
+      else {
+        const p = Math.min((tau - 1.0) / 0.55, 1), e = p * p;
+        s = lerp(s0, S.s + 0.5, e); l = lerp(side * 0.55, 0, e); y = FL + 0.3 * Math.sin(Math.PI * p);
+        if (!lunge) { lunge = true; Snd.scream(0.9, 1.0); }
+      }
+      if (tau >= 1.6 && !flashed) { flashed = true; flash(); }
+      this.figs = flashed ? [] : [fig(2, s, l, y, 1, 1, [1, 1, lean, -9, 1, 0])];
+      return !flashed;
+    },
+  };
+}
+function mummyKid() {
+  const t0 = S.t, side = pick(), dur = 4.6;
+  Snd.huu();
+  return {
+    step() {
+      const tau = S.t - t0;
+      const out = smooth(Math.min(tau / 1.0, (dur - tau) / 1.0));
+      this.figs = [fig(2, S.s + 4.0, side * lerp(1.5, 0.6, out), FL, 1, 1, [0.3, 0.2, 0.1 * Math.sin(S.t * 4), -9, 0.2, 1])];
+      return tau < dur;
+    },
+  };
+}
+
+function axeScene(kid) {
+  const s0 = S.s + Math.max(7.5, S.speed * 2.5 + 4.5);
+  S.stopAt = s0 - 3.0;
+  let t0 = null, chopped = false, arm = null, growled = false, lunging = false, flashed = false, released = false;
+  const st = { kid, figs: [] };
+  st.step = function (dt) {
+    if (t0 === null && (S.stopAt - S.s < 0.08 || (S.speed < 0.02 && S.stopAt - S.s < 0.6))) t0 = S.t;
+    const tau = t0 === null ? -1 : S.t - t0;
+    let axe = 0.5, mouthZ = 0.3, reachM = 0.6, cut = 0, leanM = 0.05 * Math.sin(S.t * 9), eyeG = 0.3, zl = kid ? -0.6 : -0.45, zs = s0, zy = FL, zreach = 0.2;
+    if (tau >= 0) {
+      if (tau < 1.0) axe = lerp(0.5, -0.5, smooth(tau));
+      else if (tau < 1.15) axe = lerp(-0.5, 2.1, (tau - 1.0) / 0.15);
+      else axe = lerp(2.1, kid ? 0.4 : 1.2, smooth((tau - 1.15) / 0.8));
+      if (tau >= 1.12 && !chopped) {
+        chopped = true;
+        Snd.chop();
+        if (kid) { Snd.bloop(); Snd.bwah(1.3, 0.5); }
+        else {
+          Snd.scream(1.6, 1.15); Snd.splat();
+          addSplat(rnd(-0.6, -0.1), rnd(0.0, 0.25), 0.26); addSplat(rnd(0.1, 0.6), rnd(-0.2, 0.15), 0.2);
+          arm = { l: 0.45 - 0.33, y: FL + 1.05, vl: -1.1, vy: 2.4, rot: 0, vr: 9, landed: false };
+        }
+      }
+      if (chopped && !kid) { cut = 2; reachM = 0.6; leanM = 0.15 * Math.sin((tau - 1.12) * 7) * Math.exp(-(tau - 1.12)); }
+      if (!kid && tau > 2.6) { eyeG = 1; mouthZ = 1; if (!growled) { growled = true; Snd.roar(); } }
+      if (!kid && tau > 3.4) {
+        const p = Math.min((tau - 3.4) / 0.6, 1), e = p * p;
+        zs = lerp(s0, S.s + 0.5, e); zl = lerp(-0.45, 0, e); zy = FL + 0.25 * Math.sin(Math.PI * p); axe = -0.3; zreach = 1;
+        if (!lunging) { lunging = true; Snd.scream(0.6, 0.7); }
+      }
+      if (!kid && tau >= 4.0 && !flashed) {
+        flashed = true; flash(); addSplat(rnd(-0.2, 0.2), rnd(-0.1, 0.2), 0.4);
+        S.stopAt = null; S.halted = false;
+      }
+      if (kid && tau > 3.2 && !released) { released = true; S.stopAt = null; S.halted = false; }
+    }
+    if (arm) {
+      arm.vy -= 9.8 * dt; arm.l += arm.vl * dt; arm.y += arm.vy * dt; arm.rot += arm.vr * dt;
+      if (arm.y < FL + 0.06) { arm.y = FL + 0.06; arm.vy = 0; arm.vl *= 0.9; arm.vr *= 0.85; }
+    }
+    const figs = [];
+    if (!flashed) {
+      const zp = kid ? [zreach, mouthZ, 0.05 * Math.sin(S.t * 2), axe, eyeG, tau > 1.6 ? 1 : 0] : [zreach, mouthZ, 0.04 * Math.sin(S.t * 2), axe, eyeG, 0];
+      figs.push(fig(1, zs, zl, kid && tau > 1.4 ? zy + Math.abs(Math.sin(S.t * 9)) * 0.12 : zy, 1, 1, zp));
+      if (kid) figs.push(fig(3, s0, 0.05, FL, 1, 1, [chopped ? smooth((tau - 1.12) / 0.5) : 0, 0, 0, 0, 0, 0]));
+      else figs.push(fig(2, s0, 0.45, FL, 1, 1, [reachM, chopped ? 1 : 0.3, leanM, -9, eyeG, cut]));
+      if (arm) figs.push(fig(4, s0 - 0.05, arm.l, arm.y, 1, 1, [arm.rot, 0, 0, 0, 0, 0]));
+      if (chopped && tau - 1.12 < (kid ? 1.6 : 3.2)) {
+        figs.push(kid
+          ? fig(5, s0 - 0.05, 0.05, FL + 0.25, 1, 1, [tau - 1.12, 3.7, 1, 0, -0.25, 0])
+          : fig(5, s0 - 0.05, 0.45 - 0.33, FL + 1.12, 1, 1, [tau - 1.12, 7.3, 0, -0.6, -1.12, 0]));
+      }
+    }
+    st.figs = figs;
+    const behind = s0 < S.s - 0.3;
+    return !(flashed || (kid && released && behind));
+  };
+  return st;
+}
 
 // ------------------------------------------------------------ Simulation
 function update(dt) {
   S.t += dt;
   const t = S.t;
   S.scary += (S.scaryTarget - S.scary) * Math.min(1, dt / 1.1);
-
   if (S.pending && t >= S.pending.at) { const f = S.pending.fn; S.pending = null; f(); }
 
   // Tempo
   let target = S.halted ? 0 : S.cruise;
+  const F = S.feature;
   if (S.door && S.door.phase === "approach") target = Math.max(target, 1.8);
+  if (F && F.type === "corner" && S.s < F.s0 + ARC) target = Math.max(target, 2.3);
   if (S.finale) target = Math.min(target, S.finale.kid === true && t - S.finale.rushT0 > 2.6 ? 0 : 0.7);
   if (S.ended) target = 0;
-  S.speed += clamp(target - S.speed, -0.75 * dt, 0.6 * dt);
+  S.speed += clamp(target - S.speed, -0.75 * dt, 0.7 * dt);
+  let stopS = null;
   const d = S.door;
-  if (d) {
-    const blocking = ["approach", "pause", "closed", "rattle"].includes(d.phase) || (d.phase === "open" && d.pt < 1.2);
-    if (blocking) {
-      const rem = d.z - 2.0 - S.cz;
-      S.speed = Math.min(S.speed, Math.sqrt(2 * 0.55 * Math.max(rem, 0)));
+  if (d && (["approach", "pause", "closed", "rattle"].includes(d.phase) || (d.phase === "open" && d.pt < 1.2))) stopS = d.z - 2.0;
+  if (S.stopAt !== null) stopS = stopS === null ? S.stopAt : Math.min(stopS, S.stopAt);
+  if (stopS !== null) S.speed = Math.min(S.speed, Math.sqrt(2 * 0.55 * Math.max(stopS - S.s, 0)));
+  if (F && F.type === "drop" && F.phase === "fall") S.speed = Math.min(S.speed, 1.0);
+  S.s += S.speed * dt;
+
+  // Kurve / Falltür
+  if (F) {
+    F.mix = Math.min(1, F.mix + dt / 0.6);
+    if (F.type === "corner") {
+      if (!F.screech && S.s > F.s0 - 0.4) { F.screech = true; Snd.screech(); }
+      if (S.s > F.s0 + ARC + 3) S.feature = null;
+    } else {
+      if (F.phase === "wait" && S.s > F.s0 + 0.3) { F.phase = "fall"; S.fallV = 0; Snd.fall(); }
+      if (F.phase === "fall") {
+        S.fallV += 9.5 * dt; S.fallY -= S.fallV * dt;
+        if (S.fallY <= -HD) { S.fallY = -HD; F.phase = "land"; F.landT = t; Snd.land(); }
+      }
+      if (F.phase === "land" && S.s > F.s0 + LP + 3) { S.feature = null; S.fallY += HD; }
     }
   }
-  S.cz += S.speed * dt;
 
   // Tür
   if (d) {
     d.pt += dt;
     d.fade = Math.min(1, d.fade + dt / 2.5);
-    if (d.phase === "approach" && d.z - 2.0 - S.cz < 0.03 && S.speed < 0.05) { d.phase = "pause"; d.pt = 0; }
+    if (d.phase === "approach" && d.z - 2.0 - S.s < 0.03 && S.speed < 0.05) { d.phase = "pause"; d.pt = 0; }
     if (d.phase === "pause" && d.pt > 0.8) { d.phase = "rattle"; d.pt = 0; Snd.rattle(); }
     if (d.phase === "rattle") {
       d.angL = 0.035 * Math.abs(Math.sin(t * 70)) * h1(Math.floor(t * 30), 3);
@@ -447,21 +1082,22 @@ function update(dt) {
       d.angL = a; d.angR = a * 0.97;
       if (d.pt > 0.9 && S.halted) S.halted = false;
       if (p >= 1) { d.phase = "done"; Snd.thud(); }
-    } else if (d.phase !== "done") {
-      d.angL = d.angR = 0;
-    }
-    if (d.phase === "done" && S.cz > d.z + 3) S.door = null;
+    } else if (d.phase !== "done") d.angL = d.angR = 0;
+    if (d.phase === "done" && S.s > d.z + 3) S.door = null;
   }
 
-  // Drehung
+  // Drehung (immer nach links)
   if (S.rollAnim) {
     const p = (t - S.rollAnim.t0) / S.rollAnim.dur;
-    S.roll = S.rollAnim.dir * 2 * Math.PI * smooth(p);
+    S.roll = 2 * Math.PI * smooth(p);
     if (p >= 1) {
       S.roll = 0; S.rollAnim = null;
-      if (S.rollQueue > 0) { S.rollQueue--; startRoll(); }
+      if (S.rollQueue > 0) { S.rollQueue--; S.rollAnim = { t0: t, dur: lerp(4.6, 3.0, S.scary) }; }
     }
   }
+
+  // Schütteln
+  S.shake += ((S.shakeHeld ? 1 : 0) - S.shake) * Math.min(1, dt / (S.shakeHeld ? 0.15 : 0.35));
 
   // Flackern
   let lm = 1, buzz = 0;
@@ -470,28 +1106,26 @@ function update(dt) {
     if (p >= 1) S.flick = null;
     else {
       const edge = Math.min(1, p * 12, (1 - p) * 12);
-      const kidV = 0.45 + 0.55 * h1(Math.floor(t * 9), 11);
-      const adV = h1(Math.floor(t * 22), 7) > 0.55 ? 1 : 0.03;
-      const v = lerp(kidV, adV, S.scary);
-      lm = lerp(1, v, edge);
-      buzz = edge;
+      const v = lerp(0.45 + 0.55 * h1(Math.floor(t * 9), 11), h1(Math.floor(t * 22), 7) > 0.55 ? 1 : 0.03, S.scary);
+      lm = lerp(1, v, edge); buzz = edge;
     }
   }
   S.lightMul = lm; S.buzz = buzz;
   S.dark += (S.darkT - S.dark) * Math.min(1, dt / 0.7);
 
-  // Augen
-  S.eyes = S.eyes.filter(e => t - e.born < e.life && e.z > S.cz + 0.5);
-
-  // Gespenst vorbei
+  S.eyes = S.eyes.filter(e => t - e.born < e.life && e.z > S.s + 0.5);
   if (S.ghost && S.ghost.type === "cross" && t - S.ghost.t0 > S.ghost.dur) S.ghost = null;
+  S.acts = S.acts.filter(a => a.step(dt));
+  if (S.scene && !S.scene.step(dt)) { S.scene = null; S.stopAt = null; }
+  S.splats = S.splats.filter(sp => t - sp.born < 9);
+  if (S.text && S.text.s + 3 < S.s) S.text = null;
 
   // Finale
   const f = S.finale;
   if (f) {
     const ft = t - f.t0;
     if (f.kid === null && ft > 2.6) {
-      f.kid = S.scary < 0.5; f.rushT0 = t;
+      f.kid = kidNow(); f.rushT0 = t;
       S.ghost = { type: f.kid ? "kid" : "rush", t0: t, dur: f.kid ? 3.0 : 1.6 };
       if (f.kid) Snd.huu(); else Snd.shriek(1.6);
     }
@@ -500,21 +1134,17 @@ function update(dt) {
       if (gt > 3.0 && !f.buh) { f.buh = true; Snd.buh(); }
       if (gt > 4.6 && !f.out) { f.out = true; S.fadeTarget = 0; S.fadeRate = 0.5; }
       if (gt > 6.8) endRide();
-    } else if (f.kid === false) {
-      if (t - f.rushT0 >= 1.6) { S.fade = 0; S.fadeTarget = 0; Snd.boom(); endRide(); }
+    } else if (f.kid === false && t - f.rushT0 >= 1.6) {
+      S.fade = 0; S.fadeTarget = 0; Snd.boom(); addSplat(0, 0, 0.5); endRide();
     }
   }
 
-  // Ausblenden / Einblenden
   if (S.fade < S.fadeTarget) S.fade = Math.min(S.fadeTarget, S.fade + dt * S.fadeRate);
   else S.fade = Math.max(S.fadeTarget, S.fade - dt * S.fadeRate);
-
-  // Geräusche, die vom Zustand abhängen
   Snd.tick(dt);
 }
-
 function endRide() {
-  S.ended = true; S.finale = null; S.ghost = null; S.halted = true; S.eyes = [];
+  S.ended = true; S.finale = null; S.ghost = null; S.halted = true; S.eyes = []; S.acts = []; S.scene = null; S.stopAt = null;
   S.fadeTarget = 0;
   Snd.ambient(false);
 }
@@ -534,18 +1164,19 @@ gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, document.getElementById("fs").
 gl.linkProgram(prog);
 if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
 gl.useProgram(prog);
-const buf = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
 const aPos = gl.getAttribLocation(prog, "aPos");
 gl.enableVertexAttribArray(aPos);
 gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 const U = {};
-["uRes", "uTime", "uCamZ", "uCamX", "uCamY", "uRoll", "uYaw", "uScary", "uLight", "uLampsOff", "uCart", "uFade",
- "uDoor", "uDoorA", "uEyes", "uGhost", "uGhostP"].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+["uRes", "uTime", "uCamS", "uScary", "uLight", "uLampsOff", "uCart", "uFade", "uSig", "uRoll", "uYaw", "uPitch", "uFigLight",
+ "uCam", "uRight", "uFwd", "uFeat", "uDoor", "uDoorA", "uEyes", "uGhost", "uGhostP", "uFigA", "uFigB", "uFigC",
+ "uSplat", "uSplatB", "uText", "uTextAge"].forEach(n => U[n] = gl.getUniformLocation(prog, n));
 
+let renderScale = 1;
 function resize() {
-  const maxW = 1600;
+  const maxW = 1600 * renderScale;
   const dpr = window.devicePixelRatio || 1;
   let w = innerWidth * dpr, h = innerHeight * dpr;
   if (w > maxW) { h = h * maxW / w; w = maxW; }
@@ -556,50 +1187,76 @@ addEventListener("resize", resize);
 resize();
 
 const eyeArr = new Float32Array(64);
+const figA = new Float32Array(16), figB = new Float32Array(16), figC = new Float32Array(16);
+const splA = new Float32Array(24), splB = new Float32Array(24);
 function draw() {
   const t = S.t;
-  const czm = ((S.cz % PERIOD) + PERIOD) % PERIOD;
-  const rel = z => z - S.cz + czm;
+  const F = S.feature;
+  const sg = sig();
   const moving = Math.min(S.speed / 1.6, 1);
-  const shake = S.finale && S.scary > 0.5 ? 0.012 * smooth((t - S.finale.t0) / 3) : 0;
-  const camX = 0.05 * Math.sin(t * 0.7) * moving + shake * (Math.random() - 0.5);
-  const camY = 0.035 * Math.sin(S.cz * 2 * Math.PI * 0.875) * moving + shake * (Math.random() - 0.5);
-  const roll = S.roll + 0.02 * Math.sin(t * 1.9) * moving;
-  const yaw = 0.05 * Math.sin(t * 0.45) * moving;
+
+  // Kamera: Schaukeln, Ruckler, Schütteln, Kurvenneigung, Fallen
+  const bt = t - S.bumpT;
+  const bump = bt < 1.5 ? Math.exp(-bt * 4.5) * Math.sin(bt * 13) : 0;
+  const shk = S.shake * lerp(0.8, 1.2, S.scary);
+  const n1 = Math.sin(t * 37.1) * 0.6 + Math.sin(t * 23.3 + 1) * 0.4, n2 = Math.sin(t * 41.7 + 2) * 0.6 + Math.sin(t * 19.9) * 0.4, n3 = Math.sin(t * 29.3 + 4);
+  let camL = 0.05 * Math.sin(t * 0.7) * moving + shk * 0.06 * n1;
+  let camY = 0.035 * Math.sin(S.s * 2 * Math.PI * 0.875) * moving + 0.24 * bump + shk * 0.05 * n2 + S.fallY;
+  let pitch = 0.12 * (bt < 1.5 ? Math.exp(-bt * 4.5) * Math.sin(bt * 13 + 0.5) : 0) + shk * 0.02 * n3;
+  let roll = S.roll + 0.02 * Math.sin(t * 1.9) * moving + shk * 0.05 * n3;
+  if (S.finale && S.scary > 0.5) { const k = 0.012 * smooth((t - S.finale.t0) / 3); camL += k * (Math.random() - 0.5); camY += k * (Math.random() - 0.5); }
+  if (F && F.type === "corner") {
+    const p = clamp((S.s - F.s0 + 0.3) / (ARC + 0.6), 0, 1);
+    roll += -sg * 0.13 * Math.sin(Math.PI * p);
+    if (p > 0 && p < 0.25) { camY += 0.03 * (Math.random() - 0.5); camL += 0.03 * (Math.random() - 0.5); }
+  }
+  if (F && F.type === "drop") {
+    if (F.phase === "fall") pitch -= 0.35 * smooth(-S.fallY / HD * 1.5);
+    if (F.phase === "land") {
+      const lt = t - F.landT;
+      pitch -= 0.35 * (1 - smooth(lt / 0.7));
+      camY += -0.15 * Math.exp(-lt * 6) * Math.sin(lt * 16 + 0.3);
+    }
+  }
+  const hd = heading(S.s + 0.3);
+  const yaw = Math.atan2(sg * hd[0], hd[1]) + 0.05 * Math.sin(t * 0.45) * moving + shk * 0.03 * n2;
+  const cam = Lpos(S.s, camL, camY);
 
   gl.uniform2f(U.uRes, canvas.width, canvas.height);
   gl.uniform1f(U.uTime, t % 1000);
-  gl.uniform1f(U.uCamZ, czm);
-  gl.uniform1f(U.uCamX, camX);
-  gl.uniform1f(U.uCamY, camY);
+  gl.uniform1f(U.uCamS, sMod());
+  gl.uniform3f(U.uCam, cam[0], cam[1], cam[2]);
+  gl.uniform1f(U.uSig, sg);
   gl.uniform1f(U.uRoll, roll);
   gl.uniform1f(U.uYaw, yaw);
+  gl.uniform1f(U.uPitch, pitch);
+  gl.uniform3f(U.uRight, sg * Math.cos(yaw), 0, -Math.sin(yaw));
+  gl.uniform3f(U.uFwd, sg * Math.sin(yaw), 0, Math.cos(yaw));
+  gl.uniform4f(U.uFeat, F ? (F.type === "corner" ? 1 : 2) : 0, F ? rel(F.s0) : 0, F ? F.mix : 0, 0);
   gl.uniform1f(U.uScary, S.scary);
   gl.uniform1f(U.uLight, S.lightMul);
-  const off = S.dark * lerp(0.75, 1.0, S.scary);
-  gl.uniform1f(U.uLampsOff, off);
+  gl.uniform1f(U.uLampsOff, S.dark * lerp(0.75, 1.0, S.scary));
   let cart = 1 - S.dark * lerp(0.35, 0.6, S.scary);
   if (S.dark > 0.5 && S.scary > 0.5 && h1(Math.floor(t * 15), 5) < 0.15) cart *= 0.25;
   gl.uniform1f(U.uCart, cart * Math.max(S.lightMul, 0.3));
-  gl.uniform1f(U.uFade, smooth(S.fade));
+  gl.uniform1f(U.uFigLight, lerp(1.0, 0.75, S.scary) * Math.max(S.lightMul, 0.15) * (1 - 0.6 * S.dark));
+  const ft = t - S.flashT;
+  const flashMul = ft < 0 ? 1 : ft < 0.14 ? 0 : smooth((ft - 0.14) / 0.4);
+  gl.uniform1f(U.uFade, smooth(S.fade) * flashMul);
+
   const d = S.door;
-  if (d) {
-    gl.uniform4f(U.uDoor, rel(d.z), 0, d.fade, 1);
-    gl.uniform2f(U.uDoorA, d.angL, d.angR);
-  } else {
-    gl.uniform4f(U.uDoor, 0, 0, 0, 0);
-    gl.uniform2f(U.uDoorA, 0, 0);
-  }
+  if (d) { gl.uniform4f(U.uDoor, rel(d.z), 0, d.fade, 1); gl.uniform2f(U.uDoorA, d.angL, d.angR); }
+  else { gl.uniform4f(U.uDoor, 0, 0, 0, 0); gl.uniform2f(U.uDoorA, 0, 0); }
+
   eyeArr.fill(0);
   S.eyes.slice(0, 8).forEach((e, i) => {
     const age = t - e.born;
     let a = age < 0 ? 0 : smooth(age / 1.0) * smooth((e.life - age) / 1.0);
     if (h1(Math.floor(t * 2.5), e.seed) < 0.12) a = 0;
     a *= Math.max(S.lightMul, 0.6);
-    const x = e.side * (HW - 0.06);
     for (let k = 0; k < 2; k++) {
-      const o = (i * 2 + k) * 4;
-      eyeArr[o] = x; eyeArr[o + 1] = e.y; eyeArr[o + 2] = rel(e.z + (k ? 0.08 : -0.08)); eyeArr[o + 3] = a;
+      const P = Lpos(e.z + (k ? 0.08 : -0.08), e.side * (HW - 0.06), e.y), o = (i * 2 + k) * 4;
+      eyeArr[o] = P[0]; eyeArr[o + 1] = P[1]; eyeArr[o + 2] = P[2]; eyeArr[o + 3] = a;
     }
   });
   gl.uniform4fv(U.uEyes, eyeArr);
@@ -607,58 +1264,96 @@ function draw() {
   const g = S.ghost;
   if (g) {
     const p = (t - g.t0) / g.dur;
-    if (g.type === "cross") {
-      const x = g.dir * (1.7 - 3.4 * p);
-      gl.uniform4f(U.uGhost, x, 0.25 + 0.15 * Math.sin(p * 9), rel(S.cz + 3.5), Math.min(1, p * 5, (1 - p) * 5) * 0.9);
-      gl.uniform2f(U.uGhostP, 0.55, 0);
-    } else if (g.type === "rush") {
-      const zr = 14 * Math.pow(1 - Math.min(p, 1), 2.2) + 0.25;
-      gl.uniform4f(U.uGhost, 0.15 * Math.sin(p * 13), 0.15, rel(S.cz + zr), Math.min(1, p * 4) * 0.9);
-      gl.uniform2f(U.uGhostP, 0.5, 0);
-    } else {
+    let P, a, size;
+    if (g.type === "cross") { P = Lpos(S.s + 3.5, g.dir * (1.7 - 3.4 * p), 0.25 + 0.15 * Math.sin(p * 9)); a = Math.min(1, p * 5, (1 - p) * 5) * 0.9; size = 0.55; }
+    else if (g.type === "rush") { P = Lpos(S.s + 14 * Math.pow(1 - Math.min(p, 1), 2.2) + 0.25, 0.15 * Math.sin(p * 13), 0.15); a = Math.min(1, p * 4) * 0.9; size = 0.5; }
+    else {
       const gt = t - g.t0;
-      const zr = 1.4 + 9 * (1 - smooth(gt / 3.0));
-      const bump = gt > 3.0 ? 1 + 0.18 * Math.sin(Math.min((gt - 3.0) / 0.5, 1) * Math.PI) : 1;
-      gl.uniform4f(U.uGhost, 0.06 * Math.sin(gt * 2.2), 0.05 + 0.06 * Math.sin(gt * 3.1), rel(S.cz + zr), Math.min(1, gt * 1.5) * 0.95);
-      gl.uniform2f(U.uGhostP, 0.45 * bump, 0);
+      const bump2 = gt > 3.0 ? 1 + 0.18 * Math.sin(Math.min((gt - 3.0) / 0.5, 1) * Math.PI) : 1;
+      P = Lpos(S.s + 1.4 + 9 * (1 - smooth(gt / 3.0)), 0.06 * Math.sin(gt * 2.2), 0.05 + 0.06 * Math.sin(gt * 3.1));
+      a = Math.min(1, gt * 1.5) * 0.95; size = 0.45 * bump2;
     }
-  } else {
-    gl.uniform4f(U.uGhost, 0, 0, 0, 0);
-  }
+    gl.uniform4f(U.uGhost, P[0], P[1], P[2], a);
+    gl.uniform2f(U.uGhostP, size, 0);
+  } else gl.uniform4f(U.uGhost, 0, 0, 0, 0);
+
+  figA.fill(0); figB.fill(0); figC.fill(0);
+  const figs = [];
+  if (S.scene) figs.push(...S.scene.figs);
+  S.acts.forEach(a => a.figs && figs.push(...a.figs));
+  figs.slice(0, 4).forEach((f, i) => {
+    const P = Lpos(f.s, f.l, f.y), o = i * 4;
+    figA[o] = P[0]; figA[o + 1] = P[1]; figA[o + 2] = P[2]; figA[o + 3] = f.a;
+    figB[o] = f.type; figB[o + 1] = f.sc; figB[o + 2] = f.p[0]; figB[o + 3] = f.p[1];
+    figC[o] = f.p[2]; figC[o + 1] = f.p[3]; figC[o + 2] = f.p[4]; figC[o + 3] = f.p[5];
+  });
+  gl.uniform4fv(U.uFigA, figA); gl.uniform4fv(U.uFigB, figB); gl.uniform4fv(U.uFigC, figC);
+
+  splA.fill(0); splB.fill(0);
+  S.splats.forEach((sp, i) => {
+    const age = t - sp.born, o = i * 4;
+    const grow = smooth(age / 0.08);
+    splA[o] = sp.x; splA[o + 1] = sp.y; splA[o + 2] = sp.size * (0.6 + 0.4 * grow); splA[o + 3] = grow * smooth((9 - age) / 2.5);
+    splB[o] = sp.seed; splB[o + 1] = age;
+  });
+  gl.uniform4fv(U.uSplat, splA); gl.uniform4fv(U.uSplatB, splB);
+
+  if (S.text) {
+    gl.uniform4f(U.uText, rel(S.text.s), S.text.side, clamp((t - S.text.t0) / 2.2, 0.001, 1), S.text.kid ? 1 : 0);
+    gl.uniform1f(U.uTextAge, Math.max(0, t - S.text.t0 - 1.0));
+  } else gl.uniform4f(U.uText, 0, 0, 0, 0);
+
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
 
 // ------------------------------------------------------------ Ton (alles live synthetisiert)
 const Snd = (() => {
   let AC = null, master, bus, noise;
-  const B = {};
-  const L = {};
+  const B = {}, L = {};
   let ambientOn = 1;
 
-  function bufFrom(arr) { const b = AC.createBuffer(1, arr.length, AC.sampleRate); b.copyToChannel(arr, 0); return b; }
+  const bufFrom = arr => { const b = AC.createBuffer(1, arr.length, AC.sampleRate); b.copyToChannel(arr, 0); return b; };
   function norm(x, peak) { let m = 0; for (const v of x) m = Math.max(m, Math.abs(v)); if (m > 0) for (let i = 0; i < x.length; i++) x[i] *= peak / m; return x; }
-  function gen(sec, fn) { const sr = AC.sampleRate, n = Math.floor(sec * sr), x = new Float32Array(n); fn(x, sr, n); return x; }
+  function gen(sec, fn, peak = 0.9) { const sr = AC.sampleRate, n = Math.floor(sec * sr), x = new Float32Array(n); fn(x, sr, n); return bufFrom(norm(x, peak)); }
+  const N = () => Math.random() * 2 - 1;
+
+  // Stimme: Pulse durch Formantfilter
+  function voice(sec, f0fn, formants, envfn) {
+    return gen(sec, (x, sr, n) => {
+      const src = new Float32Array(n);
+      let ph = 0;
+      for (let i = 0; i < n; i++) {
+        const k = i / sr;
+        ph += f0fn(k) / sr;
+        if (ph >= 1) { ph -= 1; src[i] = 1; }
+        src[i] = (src[i] + N() * 0.08) * envfn(k);
+      }
+      for (const [F, bw, gn] of formants) {
+        const r = Math.exp(-Math.PI * bw / sr), w = 2 * Math.PI * F / sr, a1 = 2 * r * Math.cos(w), a2 = -r * r;
+        let y1 = 0, y2 = 0;
+        for (let i = 0; i < n; i++) { const y = src[i] + a1 * y1 + a2 * y2; y2 = y1; y1 = y; x[i] += y * gn; }
+      }
+    });
+  }
 
   function makeBuffers() {
     const sr = AC.sampleRate;
     noise = AC.createBuffer(1, sr * 3, sr);
     const nd = noise.getChannelData(0);
-    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < nd.length; i++) nd[i] = N();
 
-    B.rattle = bufFrom(norm(gen(1.45, (x, sr, n) => {
+    B.rattle = gen(1.45, (x, sr, n) => {
       let t0 = 0.02;
       while (t0 < 1.35) {
-        const f = 160 + 200 * Math.random(), f2 = 2400 + 1500 * Math.random(), a = 0.5 + 0.5 * Math.random();
-        const s = Math.floor(t0 * sr);
+        const f = 160 + 200 * Math.random(), f2 = 2400 + 1500 * Math.random(), a = 0.5 + 0.5 * Math.random(), s = Math.floor(t0 * sr);
         for (let i = 0; i < 0.05 * sr && s + i < n; i++) {
           const k = i / sr;
-          x[s + i] += a * (Math.sin(2 * Math.PI * f * k) * Math.exp(-k * 90) + (Math.random() * 2 - 1) * Math.exp(-k * 400) * 0.6 + Math.sin(2 * Math.PI * f2 * k) * Math.exp(-k * 160) * 0.25);
+          x[s + i] += a * (Math.sin(2 * Math.PI * f * k) * Math.exp(-k * 90) + N() * Math.exp(-k * 400) * 0.6 + Math.sin(2 * Math.PI * f2 * k) * Math.exp(-k * 160) * 0.25);
         }
         t0 += 0.025 + 0.04 * Math.random();
       }
-    }), 0.9));
-
-    B.creak = bufFrom(norm(gen(2.4, (x, sr, n) => {
+    });
+    B.creak = gen(2.4, (x, sr, n) => {
       const kl = Math.floor(0.03 * sr), ker = new Float32Array(kl);
       for (let i = 0; i < kl; i++) { const k = i / sr; ker[i] = (Math.sin(2 * Math.PI * 420 * k) + 0.7 * Math.sin(2 * Math.PI * 870 * k) + 0.4 * Math.sin(2 * Math.PI * 1530 * k)) * Math.exp(-k * 160); }
       let ph = 0;
@@ -671,81 +1366,49 @@ const Snd = (() => {
           for (let j = 0; j < kl && i + j < n; j++) x[i + j] += a * ker[j];
         }
       }
-    }), 0.8));
-
-    B.thud = bufFrom(norm(gen(1.2, (x, sr, n) => {
+    }, 0.8);
+    B.thud = gen(1.2, (x, sr, n) => { let lp = 0; for (let i = 0; i < n; i++) { const k = i / sr; lp += 0.05 * (N() - lp); x[i] = Math.sin(2 * Math.PI * 62 * k) * Math.exp(-k * 7) + lp * Math.exp(-k * 12) * 3; } });
+    B.boom = gen(2.5, (x, sr, n) => { for (let i = 0; i < n; i++) { const k = i / sr; x[i] = (Math.sin(2 * Math.PI * 45 * k) * 1.2 + Math.sin(2 * Math.PI * 233 * k) * 0.3 + Math.sin(2 * Math.PI * 311 * k) * 0.3) * Math.exp(-k * 2.2) + N() * Math.exp(-k * 18) * 0.6; } }, 1.0);
+    B.clack = gen(0.08, (x, sr, n) => { for (let i = 0; i < n; i++) { const k = i / sr; x[i] = (Math.sin(2 * Math.PI * 900 * k) * 0.4 + N() * 0.6) * Math.exp(-k * 120); } }, 0.8);
+    B.heart = gen(0.3, (x, sr, n) => { for (let i = 0; i < n; i++) { const k = i / sr; x[i] = Math.sin(2 * Math.PI * 48 * k) * Math.exp(-k * 22) + Math.sin(2 * Math.PI * 90 * k) * Math.exp(-k * 40) * 0.4; } }, 1.0);
+    B.click = gen(0.02, (x, sr, n) => { for (let i = 0; i < n; i++) x[i] = N() * Math.exp(-i / sr * 300); }, 1.0);
+    B.clang = gen(1.6, (x, sr, n) => {
+      for (let i = 0; i < n; i++) { const k = i / sr; x[i] = [[420, 3], [1130, 5], [1870, 7], [2650, 9], [3300, 12]].reduce((a, [f, dcy]) => a + Math.sin(2 * Math.PI * f * k) * Math.exp(-k * dcy), 0) + N() * Math.exp(-k * 60); }
+    });
+    B.chop = gen(0.8, (x, sr, n) => {
       let lp = 0;
-      for (let i = 0; i < n; i++) { const k = i / sr; lp += 0.05 * ((Math.random() * 2 - 1) - lp); x[i] = Math.sin(2 * Math.PI * 62 * k) * Math.exp(-k * 7) + lp * Math.exp(-k * 12) * 3; }
-    }), 0.9));
-
-    B.boom = bufFrom(norm(gen(2.5, (x, sr, n) => {
-      for (let i = 0; i < n; i++) { const k = i / sr; x[i] = (Math.sin(2 * Math.PI * 45 * k) * 1.2 + Math.sin(2 * Math.PI * 233 * k) * 0.3 + Math.sin(2 * Math.PI * 311 * k) * 0.3) * Math.exp(-k * 2.2) + (Math.random() * 2 - 1) * Math.exp(-k * 18) * 0.6; }
-    }), 1.0));
-
-    B.clack = bufFrom(norm(gen(0.08, (x, sr, n) => {
-      for (let i = 0; i < n; i++) { const k = i / sr; x[i] = (Math.sin(2 * Math.PI * 900 * k) * 0.4 + (Math.random() * 2 - 1) * 0.6) * Math.exp(-k * 120); }
-    }), 0.8));
-
-    B.heart = bufFrom(norm(gen(0.3, (x, sr, n) => {
-      for (let i = 0; i < n; i++) { const k = i / sr; x[i] = Math.sin(2 * Math.PI * 48 * k) * Math.exp(-k * 22) + Math.sin(2 * Math.PI * 90 * k) * Math.exp(-k * 40) * 0.4; }
-    }), 1.0));
-
-    B.click = bufFrom(norm(gen(0.02, (x, sr, n) => { for (let i = 0; i < n; i++) x[i] = (Math.random() * 2 - 1) * Math.exp(-i / sr * 300); }), 1.0));
-
-    // „Buh!“: Stimmpulse durch Formantfilter (Vokal u)
-    B.buh = bufFrom(norm(gen(0.9, (x, sr, n) => {
-      const src = new Float32Array(n);
-      let ph = 0;
-      for (let i = 0; i < n; i++) {
-        const k = i / sr;
-        const f0 = 300 - 90 * Math.min(k / 0.7, 1);
-        ph += f0 / sr;
-        if (ph >= 1) { ph -= 1; src[i] = 1; }
-        const env = Math.min(1, k / 0.03) * Math.max(0, 1 - Math.max(0, k - 0.45) / 0.4);
-        src[i] *= env;
-        if (k < 0.012) src[i] += (Math.random() * 2 - 1) * 0.6 * (1 - k / 0.012);
+      for (let i = 0; i < n; i++) { const k = i / sr; lp += 0.15 * (N() - lp); x[i] = Math.sin(2 * Math.PI * 85 * k) * Math.exp(-k * 14) * 1.2 + lp * Math.exp(-k * 20) * 4 + N() * Math.exp(-k * 90) * 0.8 + (Math.random() < 0.02 ? N() : 0) * Math.exp(-k * 8); }
+    });
+    B.splat = gen(0.7, (x, sr, n) => {
+      let lp = 0;
+      for (let i = 0; i < n; i++) { const k = i / sr; lp += 0.25 * (N() - lp); const flut = 0.5 + 0.5 * Math.sin(k * 180 + Math.sin(k * 40) * 3); x[i] = lp * 3 * Math.exp(-k * 9) * flut + Math.sin(2 * Math.PI * 95 * k) * Math.exp(-k * 25); }
+    });
+    B.bloop = gen(0.45, (x, sr, n) => { let ph = 0; for (let i = 0; i < n; i++) { const k = i / sr; ph += (320 * Math.exp(-k * 9) + 70) / sr; x[i] = Math.sin(2 * Math.PI * ph) * Math.min(1, k / 0.01) * Math.exp(-k * 7); } });
+    B.boing = gen(0.9, (x, sr, n) => { let ph = 0; for (let i = 0; i < n; i++) { const k = i / sr; ph += (160 + 380 * (1 - Math.exp(-k * 8)) + 40 * Math.sin(k * 60) * Math.exp(-k * 4)) / sr; x[i] = Math.sin(2 * Math.PI * ph) * Math.exp(-k * 4); } });
+    B.buh = voice(0.9, k => 300 - 90 * Math.min(k / 0.7, 1), [[350, 80, 1], [800, 100, 0.5], [2300, 150, 0.15]], k => Math.min(1, k / 0.03) * Math.max(0, 1 - Math.max(0, k - 0.45) / 0.4));
+    B.bwah = voice(1.0, k => 170 - 60 * k + 15 * Math.sin(k * 30), [[750, 90, 1], [1200, 110, 0.6], [2600, 160, 0.15]], k => Math.min(1, k / 0.05) * Math.max(0, 1 - Math.max(0, k - 0.6) / 0.4));
+    B.hoot = gen(1.6, (x, sr, n) => {
+      for (const [s0, len] of [[0, 0.45], [0.7, 0.2], [0.95, 0.5]]) {
+        for (let i = Math.floor(s0 * sr); i < Math.floor((s0 + len) * sr) && i < n; i++) { const k = i / sr - s0, env = Math.sin(Math.PI * k / len); x[i] += Math.sin(2 * Math.PI * (390 - 40 * k / len) * k) * env * env; }
       }
-      for (const [F, bw, g] of [[350, 80, 1], [800, 100, 0.5], [2300, 150, 0.15]]) {
-        const r = Math.exp(-Math.PI * bw / sr), w = 2 * Math.PI * F / sr;
-        const a1 = 2 * r * Math.cos(w), a2 = -r * r;
-        let y1 = 0, y2 = 0;
-        for (let i = 0; i < n; i++) { const y = src[i] + a1 * y1 + a2 * y2; y2 = y1; y1 = y; x[i] += y * g; }
-      }
-    }), 0.9));
-
-    B.hoot = bufFrom(norm(gen(1.6, (x, sr, n) => {
-      const hoots = [[0, 0.45], [0.7, 0.2], [0.95, 0.5]];
-      for (const [s0, len] of hoots) {
-        for (let i = Math.floor(s0 * sr); i < Math.floor((s0 + len) * sr) && i < n; i++) {
-          const k = i / sr - s0;
-          const env = Math.sin(Math.PI * k / len);
-          x[i] += Math.sin(2 * Math.PI * (390 - 40 * k / len) * k) * env * env;
-        }
-      }
-    }), 0.6));
+    }, 0.6);
+    B.rumble = gen(2.5, (x, sr, n) => {
+      let a = 0, b = 0;
+      for (let i = 0; i < n; i++) { a += 0.01 * (N() - a); b += 0.002 * (N() - b); x[i] = a * 6 + b * 14 + (Math.random() < 0.0008 ? N() * 0.8 : 0); }
+    });
   }
 
   function makeIR() {
     const sr = AC.sampleRate, n = Math.floor(1.6 * sr), b = AC.createBuffer(2, n, sr);
-    for (let c = 0; c < 2; c++) {
-      const d = b.getChannelData(c);
-      for (let i = Math.floor(0.02 * sr); i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / sr * 4);
-    }
+    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = Math.floor(0.02 * sr); i < n; i++) d[i] = N() * Math.exp(-i / sr * 4); }
     return b;
   }
-
-  function out(node, pan = 0) {
-    const p = AC.createStereoPanner();
-    p.pan.value = pan;
-    node.connect(p); p.connect(bus);
-    return p;
-  }
+  function out(node, pan = 0) { const p = AC.createStereoPanner(); p.pan.value = pan; node.connect(p); p.connect(bus); return p; }
   function play(buf, { gain = 1, pan = 0, when = 0, rate = 1 } = {}) {
     if (!AC) return;
     const s = AC.createBufferSource(); s.buffer = buf; s.playbackRate.value = rate;
     const g = AC.createGain(); g.gain.value = gain;
-    s.connect(g); out(g, pan);
-    s.start(AC.currentTime + when);
+    s.connect(g); out(g, pan); s.start(AC.currentTime + when);
   }
   function noiseSrc() { const s = AC.createBufferSource(); s.buffer = noise; s.loop = true; s.loopStart = Math.random(); s.start(); return s; }
   function osc(type, f) { const o = AC.createOscillator(); o.type = type; o.frequency.value = f; o.start(); return o; }
@@ -766,7 +1429,6 @@ const Snd = (() => {
     bus.connect(master); bus.connect(rev); rev.connect(wet); wet.connect(master);
     makeBuffers();
 
-    // Dauerklänge
     L.drone = gainNode();
     [41.2, 55, 58.3, 87.3].forEach((f, i) => { const g = gainNode([1, 0.7, 0.5, 0.25][i]); osc("sine", f).connect(g); g.connect(L.drone); });
     out(L.drone);
@@ -789,6 +1451,14 @@ const Snd = (() => {
     L.whooshP = out(L.whoosh);
     L.whooshT = osc("sine", 140);
     L.whooshTG = gainNode(0); L.whooshT.connect(L.whooshTG); L.whooshTG.connect(L.whoosh);
+    // Schütteln: Erdbeben-Grollen + Gerappel
+    L.quake = gainNode();
+    const qs = AC.createBufferSource(); qs.buffer = B.rumble; qs.loop = true; qs.start();
+    qs.connect(L.quake); out(L.quake);
+    L.quakeR = gainNode();
+    const qn = noiseSrc(), qf = filt("bandpass", 1800, 3), qam = gainNode(0), qlfo = osc("square", 17), qlg = gainNode(0.5);
+    qlfo.connect(qlg); qlg.connect(qam.gain); qam.gain.value = 0.5;
+    qn.connect(qf); qf.connect(qam); qam.connect(L.quakeR); out(L.quakeR, 0.2);
   }
 
   function tick(dt) {
@@ -800,9 +1470,10 @@ const Snd = (() => {
     set(L.wind.gain, amb * lerp(0.07, 0.11, sc), 0.5);
     set(L.rumble.gain, amb * 0.7 * Math.min(S.speed / 1.6, 1.5), 0.1);
     set(L.buzz.gain, S.buzz * (0.06 + 0.2 * (1 - S.lightMul)) * lerp(0.5, 1, sc), 0.01);
+    set(L.quake.gain, S.shake * 0.7, 0.05);
+    set(L.quakeR.gain, S.shake * 0.12, 0.05);
     if (S.buzz > 0 && Math.random() < dt * lerp(8, 25, sc)) play(B.click, { gain: rnd(0.2, 0.6), pan: rnd(-0.5, 0.5) });
 
-    // Drehung: Wusch kreist im Stereobild
     if (S.rollAnim) {
       const p = (S.t - S.rollAnim.t0) / S.rollAnim.dur;
       const vel = Math.max(0, Math.sin(Math.PI * clamp(p, 0, 1)));
@@ -811,21 +1482,14 @@ const Snd = (() => {
       set(L.whooshT.frequency, 120 + 200 * vel, 0.05);
       set(L.whooshTG.gain, 0.25 * vel, 0.05);
       set(L.whooshP.pan, Math.sin(S.roll) * 0.9, 0.03);
-    } else {
-      set(L.whoosh.gain, 0, 0.1); set(L.whooshTG.gain, 0, 0.1);
-    }
+    } else { set(L.whoosh.gain, 0, 0.1); set(L.whooshTG.gain, 0, 0.1); }
 
-    // Schienenstösse
-    const sl = Math.floor(S.cz / 0.6);
+    const sl = Math.floor(S.s / 0.6);
     if (sl !== S.lastSleeper) {
       S.lastSleeper = sl;
-      if (S.speed > 0.15) {
-        const g = 0.22 * Math.min(S.speed / 1.6, 1.3);
-        play(B.clack, { gain: g }); play(B.clack, { gain: g * 0.7, when: 0.11 });
-      }
+      if (S.speed > 0.15) { const g = 0.22 * Math.min(S.speed / 1.6, 1.3); play(B.clack, { gain: g }); play(B.clack, { gain: g * 0.7, when: 0.11 }); }
     }
 
-    // Herzschlag in der Dunkelheit
     const heart = (S.dark > 0.5 || S.finale) && !S.ended;
     if (heart) {
       if (S.t >= S.nextBeat) {
@@ -836,7 +1500,6 @@ const Snd = (() => {
       }
     } else { S.bpm = 70; S.nextBeat = S.t + 0.4; }
 
-    // Zufällige Hintergrundgeräusche
     if (S.started && !S.ended && S.fade > 0.5 && S.t > S.nextAmbient) {
       S.nextAmbient = S.t + rnd(14, 26);
       if (sc > 0.5) whisper(); else play(B.hoot, { gain: 0.25, pan: rnd(-0.8, 0.8) });
@@ -851,6 +1514,7 @@ const Snd = (() => {
     g.gain.setTargetAtTime(0, now + dur, 0.05);
     s.stop(now + dur + 0.5);
   }
+  function env(g, now, pts) { g.gain.setValueAtTime(0, now); pts.forEach(([tt, v]) => g.gain.linearRampToValueAtTime(v, now + tt)); }
 
   return {
     init, tick,
@@ -860,7 +1524,37 @@ const Snd = (() => {
     creak() { play(B.creak, { gain: 0.65 }); },
     thud() { play(B.thud, { gain: 0.45, pan: -0.4 }); play(B.thud, { gain: 0.45, pan: 0.4, when: 0.1 }); },
     boom() { play(B.boom, { gain: 1.0 }); },
+    hit() { play(B.boom, { gain: 0.9 }); play(B.chop, { gain: 0.6 }); },
     buh() { play(B.buh, { gain: 0.9, rate: 1.1 }); },
+    bwah(rate = 1, gain = 0.8) { play(B.bwah, { gain, rate }); },
+    bloop() { play(B.bloop, { gain: 0.7 }); play(B.bloop, { gain: 0.4, rate: 1.4, when: 0.12 }); },
+    splat() { play(B.splat, { gain: 0.9, pan: rnd(-0.3, 0.3) }); },
+    chop() { play(B.chop, { gain: 0.9, pan: -0.2 }); },
+    bump() { const sc = S.scary; play(B.boing, { gain: 0.6 * (1 - sc) }); play(B.clang, { gain: 0.6 * sc }); play(B.thud, { gain: 0.5, rate: 1.4 }); },
+    trapdoor() { play(B.creak, { gain: 0.35, rate: 1.5 }); play(B.clang, { gain: 0.25 * S.scary + 0.1, rate: 0.7, when: 0.3 }); },
+    land() { play(B.thud, { gain: 0.9 }); play(B.rattle, { gain: 0.35, rate: 1.2 }); play(B.boing, { gain: 0.4 * (1 - S.scary), rate: 0.8 }); },
+    screech() {
+      if (!AC) return;
+      const now = AC.currentTime, dur = 1.1;
+      const s = noiseSrc(), bp = filt("bandpass", 2900, 9), o = osc("sawtooth", 2600), og = gainNode(0.15), g = gainNode(0);
+      for (let k = 0; k < dur; k += 0.05) o.frequency.setValueAtTime(2500 + rnd(-150, 250), now + k);
+      s.connect(bp); bp.connect(g); o.connect(og); og.connect(bp);
+      out(g, rnd(-0.3, 0.3));
+      env(g, now, [[0.05, 0.5], [dur * 0.7, 0.35], [dur, 0]]);
+      s.stop(now + dur + 0.1); o.stop(now + dur + 0.1);
+      play(B.clack, { gain: 0.5 }); play(B.thud, { gain: 0.35, rate: 1.6, when: 0.15 });
+    },
+    fall() {
+      if (!AC) return;
+      const now = AC.currentTime, sc = S.scary;
+      const o = osc("triangle", 1500), g = gainNode(0);
+      o.frequency.setValueAtTime(1500, now); o.frequency.exponentialRampToValueAtTime(260, now + 0.9);
+      o.connect(g); out(g); env(g, now, [[0.05, 0.25 * (1 - sc)], [0.9, 0]]); o.stop(now + 1);
+      const s = noiseSrc(), bp = filt("bandpass", 1500, 1), ng = gainNode(0);
+      bp.frequency.setValueAtTime(1800, now); bp.frequency.exponentialRampToValueAtTime(250, now + 0.9);
+      s.connect(bp); bp.connect(ng); out(ng); env(ng, now, [[0.1, 0.7], [0.9, 0]]); s.stop(now + 1);
+      if (sc > 0.5) this.scream(0.9, 0.8);
+    },
     pling() {
       if (!AC) return;
       const now = AC.currentTime;
@@ -874,16 +1568,59 @@ const Snd = (() => {
     growl() {
       if (!AC) return;
       const now = AC.currentTime, dur = 2.4;
-      const s = noiseSrc(), lp = filt("lowpass", 260, 2), am = gainNode(0), g = gainNode(0);
-      const mod = osc("sine", 28), mg = gainNode(0.5); mod.connect(mg); mg.connect(am.gain); am.gain.value = 0.6;
+      const s = noiseSrc(), lp = filt("lowpass", 260, 2), am = gainNode(0.6), g = gainNode(0);
+      const mod = osc("sine", 28), mg = gainNode(0.5); mod.connect(mg); mg.connect(am.gain);
       s.connect(lp); lp.connect(am); am.connect(g); out(g, rnd(-0.7, 0.7));
-      g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(0.7, now + 0.6); g.gain.linearRampToValueAtTime(0, now + dur);
+      env(g, now, [[0.6, 0.7], [dur, 0]]);
       s.stop(now + dur + 0.1); mod.stop(now + dur + 0.1);
+    },
+    roar() {
+      if (!AC) return;
+      const now = AC.currentTime, dur = 1.4;
+      const o = osc("sawtooth", 115), o2 = osc("sawtooth", 118), s = noiseSrc();
+      o.frequency.exponentialRampToValueAtTime(70, now + dur); o2.frequency.exponentialRampToValueAtTime(66, now + dur);
+      const am = gainNode(0.6), mod = osc("sine", 32), mg = gainNode(0.4); mod.connect(mg); mg.connect(am.gain);
+      const f1 = filt("bandpass", 450, 2), f2 = filt("lowpass", 1400, 0.7), g = gainNode(0), ng = gainNode(0.6);
+      o.connect(f1); o2.connect(f1); s.connect(ng); ng.connect(f2); f1.connect(am); f2.connect(am); am.connect(g); out(g);
+      env(g, now, [[0.08, 1.0], [dur * 0.7, 0.8], [dur, 0]]);
+      [o, o2, s, mod].forEach(n => n.stop(now + dur + 0.1));
+    },
+    raspy() {
+      if (!AC) return;
+      const now = AC.currentTime, dur = 1.6;
+      const s = noiseSrc(), bp = filt("bandpass", 1200, 1.5), am = gainNode(0.5), mod = osc("sine", 12), mg = gainNode(0.5);
+      mod.connect(mg); mg.connect(am.gain);
+      const o = osc("sawtooth", 72), og = gainNode(0.3), lp = filt("lowpass", 500, 1);
+      const g = gainNode(0);
+      s.connect(bp); bp.connect(am); o.connect(lp); lp.connect(og); og.connect(am); am.connect(g); out(g, rnd(-0.5, 0.5));
+      env(g, now, [[0.15, 0.8], [dur, 0]]);
+      [s, mod, o].forEach(n => n.stop(now + dur + 0.1));
+    },
+    scream(dur = 1.4, pitch = 1) {
+      if (!AC) return;
+      const now = AC.currentTime;
+      const o = osc("sawtooth", 480 * pitch), vib = osc("sine", 7), vg = gainNode(25 * pitch);
+      vib.connect(vg); vg.connect(o.frequency);
+      o.frequency.setValueAtTime(420 * pitch, now); o.frequency.linearRampToValueAtTime(640 * pitch, now + 0.25); o.frequency.linearRampToValueAtTime(520 * pitch, now + dur);
+      const g = gainNode(0);
+      [[850, 6, 1], [1250, 8, 0.7], [2900, 10, 0.35]].forEach(([f, q, gn]) => { const b = filt("bandpass", f, q), bg = gainNode(gn); o.connect(b); b.connect(bg); bg.connect(g); });
+      const s = noiseSrc(), sb = filt("highpass", 2500, 0.7), sg2 = gainNode(0.12); s.connect(sb); sb.connect(sg2); sg2.connect(g);
+      out(g, rnd(-0.3, 0.3));
+      env(g, now, [[0.05, 0.9], [dur * 0.8, 0.7], [dur, 0]]);
+      [o, vib, s].forEach(n => n.stop(now + dur + 0.1));
+    },
+    scratch() {
+      if (!AC) return;
+      const now = AC.currentTime, dur = 2.2;
+      const s = noiseSrc(), hp = filt("bandpass", 3500, 1.2), g = gainNode(0);
+      s.connect(hp); hp.connect(g); out(g, rnd(-0.6, 0.6));
+      for (let k = 0; k < dur; k += 0.07) g.gain.setValueAtTime(Math.random() < 0.7 ? rnd(0.08, 0.25) : 0.0, now + k);
+      g.gain.setValueAtTime(0, now + dur);
+      s.stop(now + dur + 0.1);
     },
     moan(dir, dur) {
       if (!AC) return;
-      const now = AC.currentTime, sc = S.scary;
-      const f0 = lerp(470, 220, sc);
+      const now = AC.currentTime, sc = S.scary, f0 = lerp(470, 220, sc);
       const o1 = osc("sawtooth", f0), o2 = osc("sawtooth", f0 * lerp(1.0, 1.03, sc));
       const vib = osc("sine", lerp(6, 4.5, sc)), vg = gainNode(f0 * 0.04);
       vib.connect(vg); vg.connect(o1.frequency); vg.connect(o2.frequency);
@@ -895,9 +1632,8 @@ const Snd = (() => {
       const curve = new Float32Array(64);
       for (let i = 0; i < 64; i++) {
         const x = i / 63;
-        const kid = Math.pow(Math.sin(Math.PI * Math.min(x * 2, 1)), 2) * (x < 0.5 ? 1 : 0) + Math.pow(Math.sin(Math.PI * Math.max(x * 2 - 1, 0)), 2) * (x >= 0.5 ? 1 : 0);
-        const ad = Math.pow(Math.sin(Math.PI * x), 1.5);
-        curve[i] = lerp(kid, ad, sc) * 0.18;
+        const kid = x < 0.5 ? Math.pow(Math.sin(Math.PI * x * 2), 2) : Math.pow(Math.sin(Math.PI * (x * 2 - 1)), 2);
+        curve[i] = lerp(kid, Math.pow(Math.sin(Math.PI * x), 1.5), sc) * 0.18;
       }
       g.gain.setValueCurveAtTime(curve, now, dur);
       [o1, o2, vib].forEach(o => o.stop(now + dur + 0.05));
@@ -909,7 +1645,7 @@ const Snd = (() => {
       vib.connect(vg); vg.connect(o.frequency);
       o.frequency.setValueAtTime(330, now); o.frequency.linearRampToValueAtTime(420, now + dur * 0.5); o.frequency.linearRampToValueAtTime(300, now + dur);
       const g = gainNode(0); o.connect(g); out(g);
-      g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(0.2, now + 0.8); g.gain.linearRampToValueAtTime(0, now + dur);
+      env(g, now, [[0.8, 0.2], [dur, 0]]);
       o.stop(now + dur + 0.05); vib.stop(now + dur + 0.05);
     },
     shriek(dur) {
@@ -924,8 +1660,7 @@ const Snd = (() => {
       const s = noiseSrc(), ng = gainNode(0);
       s.connect(ng); ng.connect(bp); ng.gain.setValueAtTime(0, now); ng.gain.linearRampToValueAtTime(0.5, now + dur); s.stop(now + dur);
       bp.connect(g); out(g);
-      g.gain.setValueAtTime(0.01, now); g.gain.exponentialRampToValueAtTime(0.5, now + dur);
-      g.gain.setValueAtTime(0, now + dur);
+      g.gain.setValueAtTime(0.01, now); g.gain.exponentialRampToValueAtTime(0.5, now + dur); g.gain.setValueAtTime(0, now + dur);
     },
   };
 })();
@@ -933,8 +1668,7 @@ const Snd = (() => {
 // ------------------------------------------------------------ Bedienung
 const help = document.getElementById("help");
 function toggleHelp(show) {
-  const hidden = help.classList.contains("hidden");
-  const want = show === undefined ? hidden : show;
+  const want = show === undefined ? help.classList.contains("hidden") : show;
   help.classList.toggle("hidden", !want);
 }
 function toggleFS() {
@@ -958,30 +1692,52 @@ function handleKey(k) {
     case " ": actHalt(); break;
     case "t": actDoor(); break;
     case "d": actRoll(); break;
+    case "arrowleft": actTurn(1); break;
+    case "arrowright": actTurn(-1); break;
+    case "arrowup": actBump(); break;
+    case "arrowdown": actDrop(); break;
+    case "s": S.shakeHeld = true; break;
     case "f": actFlicker(); break;
     case "l": actDark(); break;
     case "a": actEyes(); break;
     case "g": actGhost(); break;
-    case "s": actFinale(); break;
+    case "z": actZombie(); break;
+    case "u": actMummy(); break;
+    case "x": actAxe(); break;
+    case "b": actSplat(); break;
+    case "r": actText(); break;
+    case "q": actFinale(); break;
     case "n": actNew(); break;
     case "k": setMode(0); break;
     case "e": setMode(1); break;
-    case "arrowup": S.cruise = Math.min(S.cruise + 0.4, 3.2); break;
-    case "arrowdown": S.cruise = Math.max(S.cruise - 0.4, 0.4); break;
+    case "+": S.cruise = Math.min(S.cruise + 0.4, 3.2); break;
+    case "-": S.cruise = Math.max(S.cruise - 0.4, 0.4); break;
     case "m": S.muted = !S.muted; Snd.mute(S.muted); break;
   }
 }
 addEventListener("keydown", e => {
-  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
   const k = e.key.toLowerCase();
   if (k === " " || k.startsWith("arrow")) e.preventDefault();
+  if (e.repeat) return;
   handleKey(k);
 });
+addEventListener("keyup", e => { if (e.key.toLowerCase() === "s") S.shakeHeld = false; });
+addEventListener("blur", () => { S.shakeHeld = false; });
 
-let last = performance.now();
+// Bildrate überwachen: wenn der Laptop nicht mitkommt, Auflösung leicht senken
+let last = performance.now(), slowAcc = 0, slowN = 0;
 function frame(now) {
-  const dt = Math.min((now - last) / 1000, 0.05);
+  const raw = (now - last) / 1000;
+  const dt = Math.min(raw, 0.05);
   last = now;
+  if (S.started) {
+    slowAcc += raw; slowN++;
+    if (slowN >= 90) {
+      if (slowAcc / slowN > 0.026 && renderScale > 0.5) { renderScale = Math.max(0.5, renderScale * 0.85); resize(); }
+      slowAcc = 0; slowN = 0;
+    }
+  }
   update(dt);
   draw();
   requestAnimationFrame(frame);

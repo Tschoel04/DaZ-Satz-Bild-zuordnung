@@ -53,13 +53,13 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 
 /* Raster */
 #main{min-height:0;display:flex;flex-direction:column}
-.grid{flex:1;display:grid;gap:10px;min-height:0;grid-template-columns:repeat(var(--cols),minmax(0,1fr));grid-template-rows:repeat(var(--rows),minmax(0,1fr))}
-.card{position:relative;border:2px solid rgba(0,0,0,.2);border-radius:16px;background:var(--c,var(--t-misc));color:var(--card-fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;font-weight:700;font-size:clamp(16px,2.3vw,30px);min-width:0;min-height:0;overflow:hidden;transition:transform .08s}
+.grid{flex:1;display:grid;gap:6px;min-height:0;grid-template-columns:repeat(var(--cols),minmax(0,1fr));grid-template-rows:repeat(var(--rows),minmax(0,1fr))}
+.card{position:relative;border:2px solid rgba(0,0,0,.2);border-radius:10px;background:var(--c,var(--t-misc));color:var(--card-fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px;font-weight:700;font-size:clamp(12px,1.35vw,19px);min-width:0;min-height:0;overflow:hidden;transition:transform .08s}
 .card:active{transform:scale(.97)}
 .card img,.card .ph{flex:1;min-height:0;width:100%;object-fit:contain}
-.card .lbl{line-height:1.1;text-align:center;overflow-wrap:anywhere}
-.card.folder{border-width:5px;border-style:double;border-color:rgba(40,30,90,.45)}
-.card.folder::after{content:"";position:absolute;top:10px;right:10px;width:26px;height:18px;border-radius:3px 3px 4px 4px;background:rgba(40,30,90,.35);clip-path:polygon(0 0,45% 0,55% 22%,100% 22%,100% 100%,0 100%)}
+.card .lbl{line-height:1.1;text-align:center;overflow-wrap:anywhere;hyphens:auto}
+.card.folder{border-width:4px;border-style:double;border-color:rgba(40,30,90,.45)}
+.card.folder::after{content:"";position:absolute;top:5px;right:5px;width:16px;height:12px;border-radius:3px 3px 4px 4px;background:rgba(40,30,90,.35);clip-path:polygon(0 0,45% 0,55% 22%,100% 22%,100% 100%,0 100%)}
 .ph{display:grid;place-items:center;font-size:2.2em;opacity:.35}
 .card.add{background:transparent;border:3px dashed var(--line);color:var(--muted)}
 .editing .card:not(.add){outline:3px dashed var(--accent);outline-offset:-6px}
@@ -136,49 +136,90 @@ const TYPES = {
   misc:   {name:'Sonstiges',       v:'--t-misc'},
   folder: {name:'Ordner',          v:'--t-folder'}
 };
-const KEY = 'talker-prototyp-v1', CACHE_KEY = 'talker-arasaac-cache-v1';
+const KEY = 'talker-prototyp-v2', CACHE_KEY = 'talker-arasaac-cache-v1';
 const API = 'https://api.arasaac.org/v1/pictograms';
 const IMG = id => `https://static.arasaac.org/pictograms/${id}/${id}_300.png`;
 let uidN = 0;
 const uid = () => Date.now().toString(36) + (uidN++).toString(36);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-function W(label, type, q, target){
-  const w = {id:uid(), label, type, q:(q || label).toLowerCase()};
-  if (target) w.target = target;
+// opts: q (Suchwort), target (Ordnerziel), say, pers (Subjekt-Person 0–5), sep (trennbare Vorsilbe), forms
+function W(label, type, opts){
+  const o = opts || {};
+  const w = {id:uid(), label, type, q:(o.q || label).toLowerCase()};
+  for (const k of ['target','say','pers','sep','forms']) if (o[k] != null && o[k] !== '') w[k] = o[k];
   return w;
 }
+// Kurzschreibweise: "Label", "Label=Suchwort", "Mama^2" (Person), "anziehen/an" (trennbar)
+function L(type, str){
+  return str.split(',').map(s => s.trim()).filter(Boolean).map(s => {
+    const o = {}; let m;
+    if ((m = s.match(/\^(\d)$/))){ o.pers = +m[1]; s = s.slice(0, -2); }
+    if ((m = s.match(/\/(\p{L}+)$/u))){ o.sep = m[1]; s = s.slice(0, -m[0].length); }
+    const [label, q] = s.split('=');
+    o.q = q && q.trim();
+    return W(label.trim(), type, o);
+  });
+}
+const F = (label, target, q) => W(label, 'folder', {target, q});
+const P = (title, ...lists) => ({title, items:lists.flat()});
+
+const PRONOUNS = () => [...L('pron', 'ich^0, du^1, er^2, sie^2, es^2, wir^3, ihr^4'), W('sie (viele)', 'pron', {say:'sie', pers:5, q:'Leute'})];
+const VERBS = 'sein, haben, werden, wollen, möchten, können, müssen, dürfen, mögen, gehen, kommen, machen, tun, helfen, essen, trinken, spielen, schlafen, sehen, schauen, hören, sagen, sprechen, lesen, schreiben, malen, basteln, singen, tanzen, laufen, rennen, springen, fahren, sitzen, stehen, liegen, warten, waschen, putzen, kochen, backen, kaufen, geben, nehmen, holen, bringen, tragen, suchen, finden, brauchen, lieben, lachen, weinen, umarmen, wissen, denken, vergessen, arbeiten, lernen, zeigen, öffnen, werfen, fangen, bauen, schwimmen, klettern, duschen, baden, anziehen/an, ausziehen/aus, aufräumen/auf, aufhören/auf, anfangen/an, mitkommen/mit, aufmachen/auf, zumachen/zu, aufstehen/auf, fernsehen/fern';
+
 function seed(){
   return {
     pages: {
-      home: {title:'Start', items:[
-        W('ich','pron'), W('du','pron'), W('wollen','verb'), W('nicht','neg'),
-        W('mehr','social'), W('fertig','social'), W('helfen','verb'), W('ja','social'),
-        W('nein','neg'), W('Essen & Trinken','folder','essen','essen'),
-        W('Gefühle','folder','gefühl','gefuehle'), W('Spielen','folder','spielen','spielen')
-      ]},
-      essen: {title:'Essen & Trinken', items:[
-        W('essen','verb'), W('trinken','verb'), W('Wasser','noun'), W('Saft','noun'),
-        W('Milch','noun'), W('Brot','noun'), W('Apfel','noun'), W('Banane','noun'),
-        W('Nudeln','noun'), W('Pizza','noun'), W('Kekse','noun','Keks'), W('Joghurt','noun')
-      ]},
-      gefuehle: {title:'Gefühle', items:[
-        W('froh','adj','glücklich'), W('traurig','adj'), W('wütend','adj'), W('Angst','noun'),
-        W('müde','adj'), W('krank','adj'), W('Schmerzen','noun','Schmerz'), W('Hunger','noun'),
-        W('Durst','noun'), W('gut','adj'), W('schlecht','adj'), W('langweilig','adj')
-      ]},
-      spielen: {title:'Spielen', items:[
-        W('spielen','verb'), W('Ball','noun'), W('Puzzle','noun'), W('Bausteine','noun','Bauklötze'),
-        W('malen','verb'), W('Buch','noun'), W('Musik','noun'), W('Tablet','noun'),
-        W('Schaukel','noun'), W('draussen','misc','draußen'), W('Auto','noun'), W('Puppe','noun')
-      ]}
+      home: P('Start',
+        PRONOUNS(),
+        L('verb', 'sein, haben, wollen, möchten, können, müssen, mögen, machen, gehen, kommen, essen, trinken, spielen, helfen, sehen, geben'),
+        L('social', 'ja'), L('neg', 'nein, nicht'), L('social', 'mehr, fertig, bitte, danke'), L('misc', 'und'),
+        F('Leute', 'leute', 'Familie'), F('Tun-Wörter', 'verben', 'tun'), F('Wie-Wörter', 'adjektive', 'groß'), F('Fragen & Wörter', 'fragen', 'Frage'),
+        F('Essen', 'essen', 'essen'), F('Trinken', 'trinken', 'trinken'), F('Tiere', 'tiere', 'Tiere'), F('Gefühle', 'gefuehle', 'Gefühl'),
+        F('Körper', 'koerper', 'Körper'), F('Kleidung', 'kleidung', 'Kleidung'), F('Spielen', 'spielen', 'Spielzeug'), F('Orte', 'orte', 'Stadt'),
+        F('Fahrzeuge', 'fahrzeuge', 'Verkehrsmittel'), F('Natur & Wetter', 'natur', 'Natur'), F('Schule', 'schule', 'Schule'), F('Mehr Themen', 'mehr', 'Ordner')),
+      leute: P('Leute', PRONOUNS(),
+        L('pron', 'Mama^2, Papa^2, Bruder^2, Schwester^2, Baby^2, Oma^2, Opa^2, Tante^2, Onkel^2, Familie^2, Freund^2, Freundin^2, Lehrer^2, Lehrerin^2, Kind^2, Kinder^5, Junge^2, Mädchen^2, Mann^2, Frau^2, Arzt^2, Ärztin^2, Polizist^2, Nachbar^2, man=Leute^2, alle^5'),
+        L('pron', 'mich, mir, dich, dir, ihn, ihm, uns, euch, mein, dein, unser')),
+      verben: P('Tun-Wörter', L('verb', VERBS)),
+      adjektive: P('Wie-Wörter', L('adj', 'gross=groß, klein, heiss=heiß, kalt, warm, schnell, langsam, laut, leise, schön, lecker, eklig, gut, schlecht, neu, alt, sauber, schmutzig, nass, trocken, hell, dunkel, schwer, leicht, viel, wenig, leer, voll, offen, zu=geschlossen, richtig, falsch, lustig, toll, kaputt, weich, hart, lang, kurz, gleich')),
+      fragen: P('Fragen & Wörter',
+        L('social', 'wer, was, wo, wann, wie, warum, welche, wie viel'),
+        L('misc', '?=Fragezeichen, .=Punkt, !=Ausrufezeichen'),
+        L('social', 'Hallo, Tschüss, Entschuldigung, Stopp, OK=einverstanden, gerne, vielleicht, nochmal=wiederholen'),
+        L('misc', 'und, oder, aber, mit, ohne, für, in, auf, unter, neben, hier, da, auch, nur, sehr, noch, schon')),
+      essen: P('Essen', L('noun', 'Brot, Brötchen, Butter, Konfitüre=Marmelade, Käse, Wurst, Schinken, Ei, Müesli=Müsli, Joghurt, Apfel, Banane, Birne, Orange, Erdbeere, Trauben, Kirsche, Melone, Tomate, Gurke, Rüebli=Karotte, Salat, Kartoffel, Pommes, Reis, Nudeln, Pizza, Suppe, Fleisch, Fisch, Poulet=Hähnchen, Hamburger, Sandwich, Kuchen, Kekse=Keks, Schokolade, Glace=Eis, Bonbon, Chips, Popcorn, Honig')),
+      trinken: P('Trinken', L('noun', 'Wasser, Sirup, Saft, Apfelsaft, Orangensaft, Milch, Kakao, Tee, Kaffee, Cola, Limonade, Glas, Becher, Flasche, Tasse, Teller, Schüssel, Löffel, Gabel, Messer, Strohhalm, Serviette')),
+      tiere: P('Tiere', L('noun', 'Hund, Katze, Pferd, Kuh, Schwein, Schaf, Ziege, Huhn, Hase, Maus, Meerschweinchen, Vogel, Ente, Fisch, Frosch, Schildkröte, Schlange, Löwe, Tiger, Elefant, Giraffe, Affe, Bär, Zebra, Krokodil, Pinguin, Delfin, Wal, Hai, Fuchs, Wolf, Reh, Eichhörnchen, Igel, Eule, Schmetterling, Biene, Käfer, Spinne, Schnecke')),
+      gefuehle: P('Gefühle',
+        L('adj', 'froh=glücklich, traurig, wütend, müde, krank, gut, schlecht, langweilig, aufgeregt, nervös, ruhig, stolz, überrascht, verliebt, ängstlich, einsam, satt, hungrig, durstig, verletzt, eifersüchtig, enttäuscht, zufrieden, mutig'),
+        L('noun', 'Angst, Schmerzen=Schmerz, Hunger, Durst, Kopfweh=Kopfschmerzen, Bauchweh=Bauchschmerzen')),
+      koerper: P('Körper', L('noun', 'Kopf, Haare, Gesicht, Auge, Ohr, Nase, Mund, Zähne, Zunge, Hals, Bauch, Rücken, Arm, Hand, Finger, Bein, Knie, Fuss=Fuß, Po, Haut, Toilette, Pipi=urinieren, Windel, Zahnbürste, Zahnpasta, Seife, Shampoo, Handtuch, Taschentuch, Pflaster, Medizin=Medikament, Fieber, Brille, Hörgerät, Rollstuhl')),
+      kleidung: P('Kleidung', L('noun', 'Jacke, Mantel, Pullover, T-Shirt, Hemd, Hose, Rock, Kleid, Socken, Schuhe, Stiefel, Finken=Hausschuhe, Mütze, Kappe, Schal, Handschuhe, Unterhose, Pyjama=Schlafanzug, Badehose, Badeanzug, Regenjacke, Sonnenbrille, Gurt=Gürtel, Tasche, Rucksack')),
+      spielen: P('Spielen', L('noun', 'Ball, Puzzle, Bauklötze, Lego, Puppe, Teddy=Teddybär, Spielzeugauto, Eisenbahn, Buch, Farbstifte=Buntstift, Papier, Schere, Leim=Klebstoff, Knete, Musik, Tablet, Fernseher, Video, Brettspiel, Karten=Spielkarten, Würfel, Springseil, Velo=Fahrrad, Trottinett=Roller, Rutschbahn=Rutsche, Schaukel, Sandkasten, Trampolin, Ballon=Luftballon, Seifenblasen, Trommel, Gitarre, Klavier, Handy, Computer, Versteckis=verstecken, Fangis=fangen')),
+      orte: P('Orte',
+        L('noun', 'Haus, Zimmer, Küche, Bad=Badezimmer, Schlafzimmer, Wohnzimmer, Garten, Schule, Schulzimmer=Klassenzimmer, Turnhalle, Pausenplatz=Schulhof, Spielplatz, Kindergarten, Park, Wald, See, Schwimmbad, Strand, Berg, Laden=Supermarkt, Restaurant, Spital=Krankenhaus, Arztpraxis, Kirche, Bahnhof, Bushaltestelle, Zoo, Bauernhof, Bibliothek, Kino, Stadt'),
+        L('misc', 'draussen=draußen, drinnen, zu Hause=Zuhause')),
+      fahrzeuge: P('Fahrzeuge', L('noun', 'Auto, Bus, Postauto, Zug, Tram=Straßenbahn, Velo=Fahrrad, Motorrad, Lastwagen, Traktor, Flugzeug, Helikopter=Hubschrauber, Schiff, Boot, Rakete, Feuerwehrauto, Polizeiauto, Krankenwagen, Taxi, Bagger, Kinderwagen')),
+      natur: P('Natur & Wetter',
+        L('noun', 'Sonne, Mond, Stern, Himmel, Wolke, Regen, Schnee, Wind, Gewitter, Regenbogen, Baum, Blume, Gras, Blatt, Stein, Wasser, Feuer, Frühling, Sommer, Herbst, Winter'),
+        L('adj', 'sonnig, regnerisch, windig, neblig=Nebel')),
+      schule: P('Schule', L('noun', 'Heft, Buch, Bleistift, Farbstift=Buntstift, Radiergummi, Spitzer=Anspitzer, Lineal, Schere, Leim=Klebstoff, Papier, Wandtafel=Tafel, Pult=Schreibtisch, Stuhl, Etui=Federmäppchen, Rechnen=Mathematik, Deutsch, Turnen=Sport, Musik, Zeichnen=Kunst, Pause, Hausaufgaben, Znüni=Pausenbrot, Thek=Schulranzen, Computer')),
+      mehr: P('Mehr Themen', F('Farben & Zahlen', 'farben', 'Farben'), F('Zeit', 'zeit', 'Uhr'), F('Zuhause & Dinge', 'zuhause', 'Haus')),
+      farben: P('Farben & Zahlen',
+        L('adj', 'rot, blau, gelb, grün, orange, lila, rosa, braun, schwarz, weiss=weiß, grau, bunt'),
+        L('misc', 'null, eins, zwei, drei, vier, fünf, sechs, sieben, acht, neun, zehn, viele')),
+      zeit: P('Zeit',
+        L('misc', 'heute, morgen, gestern, jetzt, später, bald, zuerst, dann, immer, nie'),
+        L('noun', 'Tag, Nacht, Mittag, Abend, Woche, Montag, Dienstag, Mittwoch, Donnerstag, Freitag, Samstag, Sonntag, Wochenende, Geburtstag, Ferien, Weihnachten, Ostern, Uhr')),
+      zuhause: P('Zuhause & Dinge', L('noun', 'Tisch, Stuhl, Bett, Sofa, Lampe, Fenster, Türe=Tür, Schlüssel, Fernseher, Kühlschrank, Telefon, Uhr, Kissen, Decke, Spiegel, Dusche, Badewanne, Lavabo=Waschbecken, Abfall=Mülleimer, Geld, Geschenk, Brief, Foto, Licht, Batterie, Ladekabel'))
     },
     quick: [
       ['Ich muss auf die Toilette.','Toilette'], ['Hilf mir bitte.','helfen'], ['Ich brauche eine Pause.','Pause'],
       ['Hallo!','hallo'], ['Tschüss!','tschüss'], ['Danke!','danke'],
-      ['Stopp!','stopp'], ['Noch einmal!','wiederholen'], ['Ich weiss es nicht.','nicht wissen']
+      ['Stopp!','stopp'], ['Noch einmal!','wiederholen'], ['Ich weiss es nicht.','nicht wissen'], ['Ich habe Schmerzen.','Schmerz'], ['Lass mich in Ruhe.','Ruhe'], ['Ich bin fertig.','fertig']
     ].map(([text,q]) => ({id:uid(), label:text, q:q.toLowerCase()})),
-    settings: {rows:3, cols:4, speakOnTap:true, autoHome:true, colors:true, rate:0.9, voice:''}
+    settings: {rows:6, cols:8, speakOnTap:true, autoHome:true, colors:true, rate:0.9, voice:''}
   };
 }
 
@@ -252,14 +293,88 @@ function speak(text){
   speechSynthesis.speak(u);
 }
 
+// ---------- Grammatik: Verben ans Subjekt anpassen ----------
+// Personen: 0 ich, 1 du, 2 er/sie/es, 3 wir, 4 ihr, 5 sie (viele)
+const IRR = {
+  sein:'bin|bist|ist|sind|seid|sind', haben:'habe|hast|hat|haben|habt|haben', werden:'werde|wirst|wird|werden|werdet|werden',
+  wollen:'will|willst|will|wollen|wollt|wollen', können:'kann|kannst|kann|können|könnt|können', müssen:'muss|musst|muss|müssen|müsst|müssen',
+  dürfen:'darf|darfst|darf|dürfen|dürft|dürfen', sollen:'soll|sollst|soll|sollen|sollt|sollen', mögen:'mag|magst|mag|mögen|mögt|mögen',
+  möchten:'möchte|möchtest|möchte|möchten|möchtet|möchten', wissen:'weiss|weisst|weiss|wissen|wisst|wissen', tun:'tue|tust|tut|tun|tut|tun'
+};
+// Vokalwechsel nur bei du / er-sie-es
+const STEMCH = {
+  essen:'isst|isst', sehen:'siehst|sieht', lesen:'liest|liest', geben:'gibst|gibt', nehmen:'nimmst|nimmt', sprechen:'sprichst|spricht',
+  helfen:'hilfst|hilft', schlafen:'schläfst|schläft', fahren:'fährst|fährt', laufen:'läufst|läuft', tragen:'trägst|trägt',
+  waschen:'wäschst|wäscht', fallen:'fällst|fällt', halten:'hältst|hält', werfen:'wirfst|wirft', treffen:'triffst|trifft',
+  vergessen:'vergisst|vergisst', fangen:'fängst|fängt', backen:'bäckst|bäckt', schlagen:'schlägst|schlägt', lassen:'lässt|lässt'
+};
+function conj(inf, p, forms){
+  if (forms){ const f = forms.split('|').map(x => x.trim()); if (f[p]) return f[p]; }
+  if (IRR[inf]) return IRR[inf].split('|')[p];
+  if ((p === 1 || p === 2) && STEMCH[inf]) return STEMCH[inf].split('|')[p - 1];
+  if (p === 3 || p === 5) return inf;
+  if (/[^e]e[lr]n$/.test(inf)){            // basteln, klettern
+    const stem = inf.slice(0, -1);
+    if (p === 0) return /eln$/.test(inf) ? stem.slice(0, -2) + 'le' : stem + 'e';
+    return stem + (p === 1 ? 'st' : 't');
+  }
+  const stem = inf.endsWith('en') ? inf.slice(0, -2) : inf.slice(0, -1);
+  const e = /[td]$/.test(stem) || /[^aeiouäöülrhmn][mn]$/.test(stem);   // arbeitest, öffnest
+  if (p === 0) return stem + 'e';
+  if (p === 1) return stem + (e ? 'est' : /[sßzx]$/.test(stem) ? 't' : 'st');
+  return stem + (e ? 'et' : 't');
+}
+const CONJ = new Set(['und', 'oder', 'aber']);
+const isPunct = s => /^[?.!]$/.test(s);
+function token(it){
+  const say = it.say || it.label;
+  return {label:it.label, say, src:picSrc(it), type:it.type, pers:it.pers ?? null,
+    verb: it.type === 'verb' ? {inf:say.toLowerCase(), sep:it.sep || '', forms:it.forms || ''} : null,
+    conj: CONJ.has(say.toLowerCase())};
+}
+// Teilsätze (an und/oder/aber, sobald schon ein Verb da ist), Subjekt suchen, erstes Verb konjugieren
+function grammar(sentence){
+  const tokens = sentence.map(t => ({...t, shown:t.say, particle:null}));
+  const segs = []; let seg = [];
+  for (const t of tokens){
+    if (t.conj && seg.some(x => x.verb)){ segs.push(seg, [t]); seg = []; continue; }
+    seg.push(t);
+  }
+  segs.push(seg);
+  for (const s of segs){
+    const vi = s.findIndex(t => t.verb);
+    if (vi < 0) continue;
+    const subj = s.find(t => t.pers != null);
+    const before = s.slice(0, vi).filter(t => t.pers != null || t.type === 'noun');
+    let p = null;
+    if (before.length > 1) p = 5;                 // Mama und Papa spielen
+    else if (subj) p = subj.pers;                 // auch Fragen: willst du …
+    else if (before.length) p = 2;                // Hund bellt
+    if (p == null) continue;
+    const v = s[vi].verb;
+    const base = v.sep && v.inf.startsWith(v.sep) ? v.inf.slice(v.sep.length) : v.inf;
+    s[vi].shown = conj(base, p, v.forms);
+    if (v.sep) s[vi].particle = v.sep;
+  }
+  const words = [];
+  for (const s of segs){
+    const parts = s.map(t => t.shown);
+    const particles = s.filter(t => t.particle).map(t => t.particle);
+    let k = parts.length;
+    while (k > 0 && isPunct(parts[k - 1])) k--;
+    parts.splice(k, 0, ...particles);
+    words.push(...parts);
+  }
+  return {tokens, text: words.join(' ').replace(/\s+([?.!,])/g, '$1')};
+}
+
 // ---------- Aktionen ----------
 function addToSentence(it){
-  ui.sentence.push({label:it.label, say:it.say || it.label, src:picSrc(it)});
-  if (S.settings.speakOnTap) speak(it.say || it.label);
+  ui.sentence.push(token(it));
+  if (S.settings.speakOnTap){ const g = grammar(ui.sentence).tokens; speak(g[g.length - 1].shown); }
 }
 function speakSentence(){
-  const t = ui.sentence.map(w => w.say).join(' ');
-  speak(t);
+  speak(grammar(ui.sentence).text);
   const bar = document.getElementById('bar');
   bar.classList.add('flash'); setTimeout(() => bar.classList.remove('flash'), 600);
 }
@@ -295,10 +410,11 @@ function renderBar(){
   bar.replaceChildren();
   const chips = h('div', {class:'chips', 'aria-label':'Satzleiste'});
   if (!ui.sentence.length) chips.append(h('div', {class:'empty'}, 'Felder antippen, um einen Satz zu bauen.'));
-  ui.sentence.forEach(w => {
+  grammar(ui.sentence).tokens.forEach(w => {
+    const shown = w.particle ? `${w.shown} … ${w.particle}` : w.shown;
     const chip = w.src
-      ? h('button', {class:'chip', title:'Wort vorlesen', onclick:() => speak(w.say)}, picEl({img:w.src, label:w.label}), w.label)
-      : h('button', {class:'chip text', title:'Wort vorlesen', onclick:() => speak(w.say)}, w.label);
+      ? h('button', {class:'chip', title:'Wort vorlesen', onclick:() => speak(w.shown)}, picEl({img:w.src, label:shown}), shown)
+      : h('button', {class:'chip text', title:'Wort vorlesen', onclick:() => speak(w.shown)}, shown);
     chips.append(chip);
   });
   bar.append(chips,
@@ -336,7 +452,6 @@ function renderTools(){
       `${ui.pageIdx + 1} / ${g.pages}`,
       h('button', {class:'tbtn', disabled:ui.pageIdx >= g.pages - 1, onclick:() => { ui.pageIdx++; render(); }, 'aria-label':'Nächste Seite'}, '›')));
   }
-  if (ui.edit) t.append(h('span', {class:'hint'}, 'Bearbeiten: Feld antippen'));
   t.append(h('span', {class:'sp'}),
     h('button', {class:'tbtn', 'aria-pressed':String(ui.view === 'quick'), onclick:() => { ui.view = ui.view === 'quick' ? 'grid' : 'quick'; render(); }}, '💬 Schnellsätze'),
     h('button', {class:'tbtn', 'aria-pressed':String(ui.view === 'keys'), onclick:() => { ui.view = ui.view === 'keys' ? 'grid' : 'keys'; render(); }}, '⌨ Tastatur'),
@@ -380,7 +495,7 @@ function renderQuick(){
   return box;
 }
 
-const KEYROWS = ['1234567890ß', 'qwertzuiopü', 'asdfghjklöä', 'yxcvbnm,.?!'];
+const KEYROWS = ['1234567890-', 'qwertzuiopü', 'asdfghjklöä', 'yxcvbnm,.?!'];
 function typeChar(c){
   if (ui.shift && /\p{L}/u.test(c)){ c = c.toUpperCase(); ui.shift = false; }
   ui.typed += c;
@@ -390,7 +505,7 @@ function typeChar(c){
 function commitTyped(){
   const t = ui.typed.trim();
   if (!t) return;
-  ui.sentence.push({label:t, say:t, src:null});
+  ui.sentence.push({label:t, say:t, src:null, type:'misc', pers:null, verb:null, conj:CONJ.has(t.toLowerCase())});
   ui.typed = ''; ui.shift = true;
   render();
 }
@@ -463,7 +578,10 @@ function openEditor(mode, pageId, itemId){
     ${isGrid ? `<div class="row2">
       <label class="field"><span>WORTART / FARBE</span><select id="ed-type">${Object.entries(TYPES).map(([k, t]) => `<option value="${k}"${k === d.type ? ' selected' : ''}>${t.name}${k === 'folder' ? ' (öffnet eine Seite)' : ''}</option>`).join('')}</select></label>
       <label class="field" id="ed-target-wrap"><span>ORDNER ÖFFNET</span><select id="ed-target">${Object.entries(S.pages).filter(([k]) => k !== pageId).map(([k, p]) => `<option value="${k}"${k === d.target ? ' selected' : ''}>${esc(p.title)}</option>`).join('')}<option value="__new"${d.target ? '' : ' selected'}>Neue leere Seite</option></select></label>
-    </div>` : ''}
+      <label class="field" id="ed-pers-wrap"><span>ALS SUBJEKT WIE</span><select id="ed-pers">${['kein Subjekt (mich, dir …)', 'ich', 'du', 'er / sie / es (eine Person)', 'wir', 'ihr', 'sie (mehrere)'].map((n, i) => `<option value="${i - 1}"${(d.pers ?? -1) === i - 1 ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+      <label class="field" id="ed-sep-wrap"><span>TRENNBARE VORSILBE (z. B. an bei anziehen)</span><input type="text" id="ed-sep" value="${esc(d.sep || '')}"></label>
+    </div>
+    <div class="field" id="ed-forms-wrap"><span>FORMEN ich | du | er | wir | ihr | sie (leer = automatisch)</span><input type="text" id="ed-forms" value="${esc(d.forms || '')}"><div class="status" id="ed-conj"></div></div>` : ''}
     <div class="field"><span>PIKTOGRAMM</span>
       <div class="picrow">
         <div class="picprev" id="ed-prev"></div>
@@ -488,9 +606,24 @@ function openEditor(mode, pageId, itemId){
   const $ = s => m.querySelector(s);
 
   const updPrev = () => { $('#ed-prev').replaceChildren(picEl({...d, label:$('#ed-label').value || d.label})); };
-  const updTarget = () => { if (isGrid) $('#ed-target-wrap').hidden = $('#ed-type').value !== 'folder'; };
+  const updConj = () => {
+    const inf = ($('#ed-say').value.trim() || $('#ed-label').value.trim()).toLowerCase(), sep = $('#ed-sep').value.trim();
+    const base = sep && inf.startsWith(sep) ? inf.slice(sep.length) : inf;
+    $('#ed-conj').textContent = inf ? ['ich','du','er','wir','ihr','sie'].map((pr, i) => `${pr} ${conj(base, i, $('#ed-forms').value)}${sep ? ' ' + sep : ''}`).join(' · ') : '';
+  };
+  const updTarget = () => {
+    if (!isGrid) return;
+    const t = $('#ed-type').value;
+    $('#ed-target-wrap').hidden = t !== 'folder';
+    $('#ed-pers-wrap').hidden = t !== 'pron';
+    $('#ed-sep-wrap').hidden = $('#ed-forms-wrap').hidden = t !== 'verb';
+    if (t === 'verb') updConj();
+  };
   updPrev(); updTarget();
-  if (isGrid) $('#ed-type').onchange = updTarget;
+  if (isGrid){
+    $('#ed-type').onchange = updTarget;
+    ['#ed-label', '#ed-say', '#ed-sep', '#ed-forms'].forEach(sel => $(sel).addEventListener('input', () => { if ($('#ed-type').value === 'verb') updConj(); }));
+  }
 
   async function doSearch(){
     const q = $('#ed-q').value.trim();
@@ -550,6 +683,11 @@ function openEditor(mode, pageId, itemId){
         if (target === '__new'){ target = 'p_' + uid(); S.pages[target] = {title:label, items:[]}; }
         d.target = target;
       } else delete d.target;
+      const pers = +$('#ed-pers').value;
+      if (d.type === 'pron' && pers >= 0) d.pers = pers; else delete d.pers;
+      const sep = $('#ed-sep').value.trim().toLowerCase(), forms = $('#ed-forms').value.trim();
+      if (d.type === 'verb' && sep) d.sep = sep; else delete d.sep;
+      if (d.type === 'verb' && forms) d.forms = forms; else delete d.forms;
     }
     if (orig) Object.keys(orig).forEach(k => delete orig[k]);
     if (orig) Object.assign(orig, d); else list.push(d);
@@ -565,8 +703,8 @@ function openSettings(){
   m.innerHTML = `
     <h2>Einstellungen</h2>
     <div class="row2">
-      <label class="field"><span>ZEILEN</span><select id="st-rows">${[2,3,4,5,6].map(n => opt(n, st.rows)).join('')}</select></label>
-      <label class="field"><span>SPALTEN</span><select id="st-cols">${[2,3,4,5,6,7,8].map(n => opt(n, st.cols)).join('')}</select></label>
+      <label class="field"><span>ZEILEN</span><select id="st-rows">${[2,3,4,5,6,7,8].map(n => opt(n, st.rows)).join('')}</select></label>
+      <label class="field"><span>SPALTEN</span><select id="st-cols">${[2,3,4,5,6,7,8,9,10].map(n => opt(n, st.cols)).join('')}</select></label>
     </div>
     <label class="check"><input type="checkbox" id="st-tap"${st.speakOnTap ? ' checked' : ''}> Wort beim Antippen sofort vorlesen</label>
     <label class="check"><input type="checkbox" id="st-home"${st.autoHome ? ' checked' : ''}> Nach einem Wort im Ordner zurück zur Startseite</label>

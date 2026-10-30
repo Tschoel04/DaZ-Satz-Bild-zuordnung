@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Talker Prototyp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: Bildschirm-App ohne Scrollen – Satzleiste oben, Werkzeugleiste, darunter füllt das Raster den Rest */
+:root{
+  --bg:#EEF1F4; --panel:#FFFFFF; --fg:#1B2430; --muted:#5B6675; --line:#CBD3DD;
+  --accent:#2F6FDB; --accent-fg:#FFFFFF; --danger:#C2412D; --card-fg:#1B2430; --pic-bg:#FFFFFF;
+  /* Wortarten-Farben (Karten bleiben in beiden Themes hell, damit Piktos gut lesbar sind) */
+  --t-pron:#FFE58A; --t-verb:#BFE6B0; --t-adj:#B9D7F5; --t-noun:#FFD3A6;
+  --t-social:#F5C6DF; --t-neg:#F6B0A8; --t-misc:#FFFFFF; --t-folder:#DAD5EE;
+  --font:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#121820; --panel:#1C2430; --fg:#E8EDF3; --muted:#9AA6B5; --line:#33404F; --accent:#6EA0F5; --accent-fg:#0B1220; --danger:#F08A78; color-scheme:dark }
+}
+:root[data-theme="dark"]{ --bg:#121820; --panel:#1C2430; --fg:#E8EDF3; --muted:#9AA6B5; --line:#33404F; --accent:#6EA0F5; --accent-fg:#0B1220; --danger:#F08A78; color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#app{height:100%;display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:10px;padding-block:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Satzleiste */
+.bar{display:flex;gap:8px;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:8px;min-height:116px}
+.bar.flash{border-color:var(--accent)}
+.chips{flex:1;display:flex;gap:6px;overflow-x:auto;align-items:center;min-width:0}
+.chips .empty{color:var(--muted);padding:0 8px;font-size:18px}
+.chip{flex:0 0 auto;width:88px;height:96px;border-radius:10px;border:1px solid rgba(0,0,0,.15);background:var(--pic-bg);color:var(--card-fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px;font-size:14px;font-weight:700}
+.chip img{width:64px;height:64px;object-fit:contain}
+.chip.text{width:auto;padding:4px 16px;font-size:24px}
+.bar-btn{flex:0 0 auto;width:96px;border-radius:12px;border:2px solid var(--line);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-weight:700;font-size:14px}
+.bar-btn .ic{font-size:30px;line-height:1}
+.bar-btn.speak{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);width:120px}
+
+/* Werkzeugleiste */
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tools .sp{flex:1}
+.tbtn{border:2px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 14px;font-weight:700;font-size:16px;min-height:46px}
+.tbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.tbtn:disabled{opacity:.4;cursor:default}
+.ptitle{font-size:22px;font-weight:700;padding:0 6px}
+.pager{display:flex;align-items:center;gap:6px;font-weight:700;font-variant-numeric:tabular-nums}
+.hint{color:var(--accent);font-weight:700}
+
+/* Raster */
+#main{min-height:0;display:flex;flex-direction:column}
+.grid{flex:1;display:grid;gap:10px;min-height:0;grid-template-columns:repeat(var(--cols),minmax(0,1fr));grid-template-rows:repeat(var(--rows),minmax(0,1fr))}
+.card{position:relative;border:2px solid rgba(0,0,0,.2);border-radius:16px;background:var(--c,var(--t-misc));color:var(--card-fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;font-weight:700;font-size:clamp(16px,2.3vw,30px);min-width:0;min-height:0;overflow:hidden;transition:transform .08s}
+.card:active{transform:scale(.97)}
+.card img,.card .ph{flex:1;min-height:0;width:100%;object-fit:contain}
+.card .lbl{line-height:1.1;text-align:center;overflow-wrap:anywhere}
+.card.folder{border-width:5px;border-style:double;border-color:rgba(40,30,90,.45)}
+.card.folder::after{content:"";position:absolute;top:10px;right:10px;width:26px;height:18px;border-radius:3px 3px 4px 4px;background:rgba(40,30,90,.35);clip-path:polygon(0 0,45% 0,55% 22%,100% 22%,100% 100%,0 100%)}
+.ph{display:grid;place-items:center;font-size:2.2em;opacity:.35}
+.card.add{background:transparent;border:3px dashed var(--line);color:var(--muted)}
+.editing .card:not(.add){outline:3px dashed var(--accent);outline-offset:-6px}
+.nocolor .card:not(.add){--c:var(--t-misc)!important}
+
+/* Schnellsätze */
+.quick{flex:1;display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));align-content:start;overflow:auto;min-height:0}
+.qbtn{display:flex;align-items:center;gap:14px;text-align:left;border:2px solid rgba(0,0,0,.2);background:var(--t-social);color:var(--card-fg);border-radius:14px;padding:10px 14px;font-weight:700;font-size:22px;min-height:96px}
+.qbtn img,.qbtn .ph{width:72px;height:72px;flex:0 0 auto;object-fit:contain;font-size:32px}
+.qbtn.add{background:transparent;border:3px dashed var(--line);color:var(--muted);justify-content:center}
+
+/* Tastatur */
+.keys{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0}
+.typed{background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:10px 16px;font-size:34px;min-height:66px;white-space:pre-wrap;overflow-wrap:anywhere}
+.typed .cur{display:inline-block;width:3px;height:1em;background:var(--accent);vertical-align:-0.12em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion: reduce){.typed .cur{animation:none}.card{transition:none}}
+.krow{flex:1;display:flex;gap:6px;min-height:0}
+.key{flex:1;min-width:0;border:2px solid var(--line);background:var(--panel);border-radius:10px;font-size:clamp(18px,2.6vw,30px);font-weight:700}
+.key.wide{flex:3}.key.mid{flex:1.6}
+.key.go{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+
+/* Dialoge */
+.back{position:fixed;inset:0;background:rgba(10,15,25,.55);display:grid;place-items:center;padding:16px;z-index:20}
+.modal{background:var(--panel);color:var(--fg);border-radius:16px;width:100%;max-width:760px;max-height:100%;overflow:auto;padding:20px;display:grid;gap:14px}
+.modal h2{margin:0;font-size:24px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.row2{grid-template-columns:1fr}}
+.field{display:grid;gap:6px;min-width:0}
+.field>span{font-size:14px;color:var(--muted);font-weight:700;letter-spacing:.02em}
+input[type=text],input[type=search],select{font:inherit;font-size:18px;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--fg);width:100%}
+.picrow{display:flex;gap:12px;align-items:flex-start}
+.picprev{flex:0 0 auto;width:120px;height:120px;border-radius:12px;border:2px solid var(--line);background:var(--pic-bg);color:var(--card-fg);display:grid;place-items:center;overflow:hidden}
+.picprev img{width:100%;height:100%;object-fit:contain}
+.picctl{flex:1;display:grid;gap:8px;min-width:0}
+.inline{display:flex;gap:8px;flex-wrap:wrap}
+.inline input{flex:1;min-width:140px}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px;max-height:280px;overflow:auto}
+.results button{background:var(--pic-bg);border:2px solid var(--line);border-radius:10px;padding:4px;aspect-ratio:1}
+.results button img{width:100%;height:100%;object-fit:contain}
+.results button.sel{border-color:var(--accent);outline:3px solid var(--accent)}
+.status{color:var(--muted);font-size:14px}
+.err{color:var(--danger);font-weight:700}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn{border:2px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 16px;font-weight:700}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.danger{color:var(--danger);border-color:var(--danger)}
+.check{display:flex;gap:10px;align-items:center;font-size:17px}
+.check input{width:22px;height:22px}
+.legend{display:flex;flex-wrap:wrap;gap:6px}
+.legend span{padding:4px 10px;border-radius:8px;color:var(--card-fg);border:1px solid rgba(0,0,0,.15);font-size:14px;font-weight:700}
+.note{font-size:13px;color:var(--muted)}
+.note a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="bar" id="bar"></div>
+  <div class="tools" id="tools"></div>
+  <div id="main"></div>
+</div>
+<div id="modalRoot"></div>
+
+<script>
+'use strict';
+// ---------- Grunddaten ----------
+const TYPES = {
+  pron:   {name:'Personen',        v:'--t-pron'},
+  verb:   {name:'Tun-Wörter',      v:'--t-verb'},
+  adj:    {name:'Wie-Wörter',      v:'--t-adj'},
+  noun:   {name:'Dinge',           v:'--t-noun'},
+  social: {name:'Soziale Wörter',  v:'--t-social'},
+  neg:    {name:'Verneinung',      v:'--t-neg'},
+  misc:   {name:'Sonstiges',       v:'--t-misc'},
+  folder: {name:'Ordner',          v:'--t-folder'}
+};
+const KEY = 'talker-prototyp-v1', CACHE_KEY = 'talker-arasaac-cache-v1';
+const API = 'https://api.arasaac.org/v1/pictograms';
+const IMG = id => `https://static.arasaac.org/pictograms/${id}/${id}_300.png`;
+let uidN = 0;
+const uid = () => Date.now().toString(36) + (uidN++).toString(36);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function W(label, type, q, target){
+  const w = {id:uid(), label, type, q:(q || label).toLowerCase()};
+  if (target) w.target = target;
+  return w;
+}
+function seed(){
+  return {
+    pages: {
+      home: {title:'Start', items:[
+        W('ich','pron'), W('du','pron'), W('wollen','verb'), W('nicht','neg'),
+        W('mehr','social'), W('fertig','social'), W('helfen','verb'), W('ja','social'),
+        W('nein','neg'), W('Essen & Trinken','folder','essen','essen'),
+        W('Gefühle','folder','gefühl','gefuehle'), W('Spielen','folder','spielen','spielen')
+      ]},
+      essen: {title:'Essen & Trinken', items:[
+        W('essen','verb'), W('trinken','verb'), W('Wasser','noun'), W('Saft','noun'),
+        W('Milch','noun'), W('Brot','noun'), W('Apfel','noun'), W('Banane','noun'),
+        W('Nudeln','noun'), W('Pizza','noun'), W('Kekse','noun','Keks'), W('Joghurt','noun')
+      ]},
+      gefuehle: {title:'Gefühle', items:[
+        W('froh','adj','glücklich'), W('traurig','adj'), W('wütend','adj'), W('Angst','noun'),
+        W('müde','adj'), W('krank','adj'), W('Schmerzen','noun','Schmerz'), W('Hunger','noun'),
+        W('Durst','noun'), W('gut','adj'), W('schlecht','adj'), W('langweilig','adj')
+      ]},
+      spielen: {title:'Spielen', items:[
+        W('spielen','verb'), W('Ball','noun'), W('Puzzle','noun'), W('Bausteine','noun','Bauklötze'),
+        W('malen','verb'), W('Buch','noun'), W('Musik','noun'), W('Tablet','noun'),
+        W('Schaukel','noun'), W('draussen','misc','draußen'), W('Auto','noun'), W('Puppe','noun')
+      ]}
+    },
+    quick: [
+      ['Ich muss auf die Toilette.','Toilette'], ['Hilf mir bitte.','helfen'], ['Ich brauche eine Pause.','Pause'],
+      ['Hallo!','hallo'], ['Tschüss!','tschüss'], ['Danke!','danke'],
+      ['Stopp!','stopp'], ['Noch einmal!','wiederholen'], ['Ich weiss es nicht.','nicht wissen']
+    ].map(([text,q]) => ({id:uid(), label:text, q:q.toLowerCase()})),
+    settings: {rows:3, cols:4, speakOnTap:true, autoHome:true, colors:true, rate:0.9, voice:''}
+  };
+}
+
+// ---------- Speicher ----------
+function readJSON(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
+function writeJSON(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+let S = readJSON(KEY);
+if (!S || !S.pages || !S.pages.home) S = seed();
+S.settings = Object.assign(seed().settings, S.settings || {});
+S.quick = S.quick || [];
+const save = () => writeJSON(KEY, S);
+const cache = readJSON(CACHE_KEY) || {};
+const saveCache = () => writeJSON(CACHE_KEY, cache);
+
+// ---------- Zustand der Oberfläche ----------
+const ui = {view:'grid', page:'home', stack:[], pageIdx:0, edit:false, sentence:[], typed:'', shift:true};
+
+// ---------- ARASAAC ----------
+const pending = {};
+let renderQueued = false;
+function queueRender(){ if (!renderQueued){ renderQueued = true; requestAnimationFrame(() => { renderQueued = false; render(); }); } }
+
+function resolve(q){
+  if (!q || q in cache || pending[q]) return;
+  pending[q] = (async () => {
+    try {
+      let r = await fetch(`${API}/de/bestsearch/${encodeURIComponent(q)}`);
+      if (!r.ok) r = await fetch(`${API}/de/search/${encodeURIComponent(q)}`);
+      if (r.ok){ const j = await r.json(); cache[q] = (j && j[0] && j[0]._id) || 0; }
+      else if (r.status === 404){ cache[q] = 0; }
+      saveCache(); queueRender();
+    } catch(e){ /* offline: später erneut versuchen */ }
+    finally { delete pending[q]; }
+  })();
+}
+async function searchArasaac(q){
+  const r = await fetch(`${API}/de/search/${encodeURIComponent(q)}`);
+  if (r.status === 404) return [];
+  if (!r.ok) throw new Error('http ' + r.status);
+  const j = await r.json();
+  return j.slice(0, 48).map(p => p._id);
+}
+function picSrc(it){
+  if (it.img) return it.img;
+  if (it.aid) return IMG(it.aid);
+  if (it.q){ if (cache[it.q]) return IMG(cache[it.q]); resolve(it.q); }
+  return null;
+}
+function picEl(it, cls){
+  const src = picSrc(it);
+  const ph = () => { const d = document.createElement('div'); d.className = 'ph' + (cls ? ' '+cls : ''); d.textContent = (it.label || '?').trim().charAt(0).toUpperCase(); return d; };
+  if (!src) return ph();
+  const im = document.createElement('img');
+  im.src = src; im.alt = ''; im.draggable = false;
+  if (cls) im.className = cls;
+  im.onerror = () => im.replaceWith(ph());
+  return im;
+}
+
+// ---------- Sprache ----------
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices().filter(v => (v.lang||'').toLowerCase().startsWith('de')); } catch(e){ voices = []; } }
+if ('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function speak(text){
+  if (!text || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'de-DE'; u.rate = +S.settings.rate || 0.9;
+  const v = voices.find(v => v.voiceURI === S.settings.voice) || voices.find(v => /de-?DE|de_DE/i.test(v.lang)) || voices[0];
+  if (v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+
+// ---------- Aktionen ----------
+function addToSentence(it){
+  ui.sentence.push({label:it.label, say:it.say || it.label, src:picSrc(it)});
+  if (S.settings.speakOnTap) speak(it.say || it.label);
+}
+function speakSentence(){
+  const t = ui.sentence.map(w => w.say).join(' ');
+  speak(t);
+  const bar = document.getElementById('bar');
+  bar.classList.add('flash'); setTimeout(() => bar.classList.remove('flash'), 600);
+}
+function goHome(){ ui.view = 'grid'; ui.page = 'home'; ui.stack = []; ui.pageIdx = 0; render(); }
+function openPage(id){ if (!S.pages[id]) return; ui.stack.push(ui.page); ui.page = id; ui.pageIdx = 0; render(); }
+function goBack(){
+  if (ui.view !== 'grid'){ ui.view = 'grid'; render(); return; }
+  ui.page = ui.stack.pop() || 'home'; ui.pageIdx = 0; render();
+}
+
+// ---------- Rendering ----------
+function h(tag, attrs, ...kids){
+  const e = document.createElement(tag);
+  for (const k in (attrs||{})){
+    const v = attrs[k];
+    if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'class') e.className = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (v !== false && v != null) e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()) if (c != null) e.append(c);
+  return e;
+}
+
+function render(){
+  document.body.classList.toggle('nocolor', !S.settings.colors);
+  document.body.classList.toggle('editing', ui.edit);
+  renderBar(); renderTools(); renderMain();
+}
+
+function renderBar(){
+  const bar = document.getElementById('bar');
+  bar.replaceChildren();
+  const chips = h('div', {class:'chips', 'aria-label':'Satzleiste'});
+  if (!ui.sentence.length) chips.append(h('div', {class:'empty'}, 'Felder antippen, um einen Satz zu bauen.'));
+  ui.sentence.forEach(w => {
+    const chip = w.src
+      ? h('button', {class:'chip', title:'Wort vorlesen', onclick:() => speak(w.say)}, picEl({img:w.src, label:w.label}), w.label)
+      : h('button', {class:'chip text', title:'Wort vorlesen', onclick:() => speak(w.say)}, w.label);
+    chips.append(chip);
+  });
+  bar.append(chips,
+    h('button', {class:'bar-btn', onclick:() => { ui.sentence.pop(); renderBar(); }, title:'Letztes Wort löschen'}, h('span',{class:'ic'},'⌫'), 'Zurück'),
+    h('button', {class:'bar-btn', onclick:() => { ui.sentence = []; renderBar(); }, title:'Satz leeren'}, h('span',{class:'ic'},'✕'), 'Alles weg'),
+    h('button', {class:'bar-btn speak', onclick:speakSentence, title:'Satz vorlesen'}, h('span',{class:'ic'},'🔊'), 'Sprechen'));
+  chips.scrollLeft = chips.scrollWidth;
+}
+
+function gridInfo(){
+  const page = S.pages[ui.page] || S.pages.home;
+  const cells = S.settings.rows * S.settings.cols;
+  const list = ui.edit ? [...page.items, 'ADD'] : page.items;
+  const pages = Math.max(1, Math.ceil(list.length / cells));
+  ui.pageIdx = Math.min(ui.pageIdx, pages - 1);
+  return {page, cells, list, pages};
+}
+
+function renderTools(){
+  const t = document.getElementById('tools');
+  t.replaceChildren();
+  const atHome = ui.view === 'grid' && ui.page === 'home';
+  t.append(
+    h('button', {class:'tbtn', onclick:goHome, disabled:atHome}, '⌂ Start'),
+    h('button', {class:'tbtn', onclick:goBack, disabled:atHome}, '← Zurück')
+  );
+  let title = 'Schnellsätze';
+  if (ui.view === 'keys') title = 'Tastatur';
+  if (ui.view === 'grid') title = (S.pages[ui.page] || S.pages.home).title;
+  t.append(h('span', {class:'ptitle'}, title));
+  if (ui.view === 'grid'){
+    const g = gridInfo();
+    if (g.pages > 1) t.append(h('span', {class:'pager'},
+      h('button', {class:'tbtn', disabled:ui.pageIdx === 0, onclick:() => { ui.pageIdx--; render(); }, 'aria-label':'Vorherige Seite'}, '‹'),
+      `${ui.pageIdx + 1} / ${g.pages}`,
+      h('button', {class:'tbtn', disabled:ui.pageIdx >= g.pages - 1, onclick:() => { ui.pageIdx++; render(); }, 'aria-label':'Nächste Seite'}, '›')));
+  }
+  if (ui.edit) t.append(h('span', {class:'hint'}, 'Bearbeiten: Feld antippen'));
+  t.append(h('span', {class:'sp'}),
+    h('button', {class:'tbtn', 'aria-pressed':String(ui.view === 'quick'), onclick:() => { ui.view = ui.view === 'quick' ? 'grid' : 'quick'; render(); }}, '💬 Schnellsätze'),
+    h('button', {class:'tbtn', 'aria-pressed':String(ui.view === 'keys'), onclick:() => { ui.view = ui.view === 'keys' ? 'grid' : 'keys'; render(); }}, '⌨ Tastatur'),
+    h('button', {class:'tbtn', 'aria-pressed':String(ui.edit), onclick:() => { ui.edit = !ui.edit; render(); }}, '✎ Bearbeiten'),
+    h('button', {class:'tbtn', onclick:openSettings}, '⚙ Einstellungen'));
+}
+
+function renderMain(){
+  const m = document.getElementById('main');
+  m.replaceChildren();
+  if (ui.view === 'quick') return m.append(renderQuick());
+  if (ui.view === 'keys') return m.append(renderKeys());
+  const g = gridInfo();
+  const grid = h('div', {class:'grid', style:`--rows:${S.settings.rows};--cols:${S.settings.cols}`});
+  g.list.slice(ui.pageIdx * g.cells, (ui.pageIdx + 1) * g.cells).forEach(it => {
+    if (it === 'ADD'){
+      grid.append(h('button', {class:'card add', onclick:() => openEditor('grid', ui.page, null)}, h('div',{class:'ph'},'+'), h('span',{class:'lbl'},'Neues Feld')));
+      return;
+    }
+    const type = TYPES[it.type] ? it.type : 'misc';
+    grid.append(h('button', {
+      class:'card' + (type === 'folder' ? ' folder' : ''),
+      style:`--c:var(${TYPES[type].v})`,
+      title: type === 'folder' ? 'Ordner öffnen' : 'Wort hinzufügen',
+      onclick:() => {
+        if (ui.edit) return openEditor('grid', ui.page, it.id);
+        if (type === 'folder') return openPage(it.target);
+        addToSentence(it);
+        if (S.settings.autoHome && ui.page !== 'home'){ ui.page = 'home'; ui.stack = []; ui.pageIdx = 0; render(); }
+        else renderBar();
+      }
+    }, picEl(it), h('span', {class:'lbl'}, it.label)));
+  });
+  m.append(grid);
+}
+
+function renderQuick(){
+  const box = h('div', {class:'quick'});
+  S.quick.forEach(it => box.append(h('button', {class:'qbtn', onclick:() => ui.edit ? openEditor('quick', null, it.id) : speak(it.label)}, picEl(it), h('span', null, it.label))));
+  if (ui.edit) box.append(h('button', {class:'qbtn add', onclick:() => openEditor('quick', null, null)}, '+ Neuer Satz'));
+  return box;
+}
+
+const KEYROWS = ['1234567890ß', 'qwertzuiopü', 'asdfghjklöä', 'yxcvbnm,.?!'];
+function typeChar(c){
+  if (ui.shift && /\p{L}/u.test(c)){ c = c.toUpperCase(); ui.shift = false; }
+  ui.typed += c;
+  if (/[.?!]/.test(c)) ui.shift = true;
+  renderMain();
+}
+function commitTyped(){
+  const t = ui.typed.trim();
+  if (!t) return;
+  ui.sentence.push({label:t, say:t, src:null});
+  ui.typed = ''; ui.shift = true;
+  render();
+}
+function renderKeys(){
+  const wrap = h('div', {class:'keys'});
+  wrap.append(h('div', {class:'typed', 'aria-live':'polite'}, ui.typed, h('span', {class:'cur'})));
+  KEYROWS.forEach(row => {
+    const r = h('div', {class:'krow'});
+    [...row].forEach(c => r.append(h('button', {class:'key', onclick:() => typeChar(c)}, ui.shift && /\p{L}/u.test(c) ? c.toUpperCase() : c)));
+    wrap.append(r);
+  });
+  wrap.append(h('div', {class:'krow'},
+    h('button', {class:'key mid', 'aria-pressed':String(ui.shift), onclick:() => { ui.shift = !ui.shift; renderMain(); }}, '⇧'),
+    h('button', {class:'key wide', onclick:() => typeChar(' ')}, 'Leertaste'),
+    h('button', {class:'key mid', onclick:() => { ui.typed = ui.typed.slice(0, -1); renderMain(); }}, '⌫'),
+    h('button', {class:'key mid', onclick:() => speak(ui.typed)}, '🔊 Vorlesen'),
+    h('button', {class:'key mid go', onclick:commitTyped}, '→ In Satzleiste')));
+  return wrap;
+}
+document.addEventListener('keydown', e => {
+  if (ui.view !== 'keys' || document.getElementById('modalRoot').childElementCount || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === 'Backspace'){ ui.typed = ui.typed.slice(0, -1); renderMain(); e.preventDefault(); }
+  else if (e.key === 'Enter'){ commitTyped(); e.preventDefault(); }
+  else if (e.key.length === 1){ ui.shift = false; ui.typed += e.key; renderMain(); e.preventDefault(); }
+});
+
+// ---------- Dialoge ----------
+function closeModal(){ document.getElementById('modalRoot').replaceChildren(); }
+function showModal(node){
+  const back = h('div', {class:'back', onclick:e => { if (e.target === back) closeModal(); }}, node);
+  document.getElementById('modalRoot').replaceChildren(back);
+  const first = node.querySelector('input,select');
+  if (first) first.focus();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function fileToData(file){
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => {
+      const im = new Image();
+      im.onload = () => {
+        const sc = Math.min(1, 400 / Math.max(im.width || 400, im.height || 400));
+        const c = document.createElement('canvas');
+        c.width = Math.round((im.width || 400) * sc); c.height = Math.round((im.height || 400) * sc);
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+        res(c.toDataURL('image/png'));
+      };
+      im.onerror = rej; im.src = r.result;
+    };
+    r.onerror = rej; r.readAsDataURL(file);
+  });
+}
+
+// mode: 'grid' (Feld auf einer Seite) oder 'quick' (Schnellsatz)
+function openEditor(mode, pageId, itemId){
+  const list = mode === 'grid' ? S.pages[pageId].items : S.quick;
+  const orig = itemId ? list.find(i => i.id === itemId) : null;
+  const d = orig ? {...orig} : {id:uid(), label:'', type:'noun', q:''};
+  let picTouched = false;
+  const isGrid = mode === 'grid';
+
+  const m = h('div', {class:'modal', role:'dialog', 'aria-modal':'true'});
+  m.innerHTML = `
+    <h2>${orig ? (isGrid ? 'Feld bearbeiten' : 'Schnellsatz bearbeiten') : (isGrid ? 'Neues Feld' : 'Neuer Schnellsatz')}</h2>
+    <div class="row2">
+      <label class="field"><span>${isGrid ? 'BESCHRIFTUNG' : 'SATZ'}</span><input type="text" id="ed-label" value="${esc(d.label)}"></label>
+      ${isGrid ? `<label class="field"><span>GESPROCHEN (OPTIONAL)</span><input type="text" id="ed-say" value="${esc(d.say || '')}" placeholder="wie Beschriftung"></label>` : ''}
+    </div>
+    ${isGrid ? `<div class="row2">
+      <label class="field"><span>WORTART / FARBE</span><select id="ed-type">${Object.entries(TYPES).map(([k, t]) => `<option value="${k}"${k === d.type ? ' selected' : ''}>${t.name}${k === 'folder' ? ' (öffnet eine Seite)' : ''}</option>`).join('')}</select></label>
+      <label class="field" id="ed-target-wrap"><span>ORDNER ÖFFNET</span><select id="ed-target">${Object.entries(S.pages).filter(([k]) => k !== pageId).map(([k, p]) => `<option value="${k}"${k === d.target ? ' selected' : ''}>${esc(p.title)}</option>`).join('')}<option value="__new"${d.target ? '' : ' selected'}>Neue leere Seite</option></select></label>
+    </div>` : ''}
+    <div class="field"><span>PIKTOGRAMM</span>
+      <div class="picrow">
+        <div class="picprev" id="ed-prev"></div>
+        <div class="picctl">
+          <div class="inline"><input type="search" id="ed-q" placeholder="Suchwort für ARASAAC" value="${esc(d.q || d.label)}"><button class="btn" id="ed-search">Suchen</button></div>
+          <div class="inline">
+            <label class="btn" style="display:inline-flex;align-items:center">Eigenes Bild …<input type="file" id="ed-file" accept="image/*" hidden></label>
+            <button class="btn" id="ed-nopic">Kein Bild</button>
+          </div>
+          <div class="status" id="ed-status"></div>
+        </div>
+      </div>
+      <div class="results" id="ed-results"></div>
+    </div>
+    <div class="err" id="ed-err"></div>
+    <div class="actions">
+      ${orig ? `${isGrid ? '<button class="btn" id="ed-left">◀ Nach vorne</button><button class="btn" id="ed-right">Nach hinten ▶</button>' : ''}<button class="btn danger" id="ed-del">Löschen</button>` : ''}
+      <span style="flex:1"></span>
+      <button class="btn" id="ed-cancel">Abbrechen</button>
+      <button class="btn primary" id="ed-save">Speichern</button>
+    </div>`;
+  const $ = s => m.querySelector(s);
+
+  const updPrev = () => { $('#ed-prev').replaceChildren(picEl({...d, label:$('#ed-label').value || d.label})); };
+  const updTarget = () => { if (isGrid) $('#ed-target-wrap').hidden = $('#ed-type').value !== 'folder'; };
+  updPrev(); updTarget();
+  if (isGrid) $('#ed-type').onchange = updTarget;
+
+  async function doSearch(){
+    const q = $('#ed-q').value.trim();
+    if (!q) return;
+    $('#ed-status').textContent = 'Suche …';
+    $('#ed-results').replaceChildren();
+    try {
+      const ids = await searchArasaac(q);
+      $('#ed-status').textContent = ids.length ? `${ids.length} Treffer – Bild antippen zum Auswählen` : 'Keine Treffer. Anderes Wort versuchen (z. B. Grundform).';
+      ids.forEach(id => {
+        const b = h('button', {class:'' + (d.aid === id ? 'sel' : ''), title:'Auswählen', onclick:() => {
+          d.aid = id; d.img = null; d.q = q.toLowerCase(); picTouched = true;
+          $('#ed-results').querySelectorAll('.sel').forEach(x => x.classList.remove('sel'));
+          b.classList.add('sel'); updPrev();
+        }}, h('img', {src:IMG(id), alt:'', loading:'lazy'}));
+        $('#ed-results').append(b);
+      });
+    } catch(e){
+      $('#ed-status').textContent = 'ARASAAC ist nicht erreichbar. Ohne Internet kannst du ein eigenes Bild hochladen.';
+    }
+  }
+  $('#ed-search').onclick = doSearch;
+  $('#ed-q').onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); doSearch(); } };
+  $('#ed-file').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try { d.img = await fileToData(f); d.aid = null; picTouched = true; updPrev(); $('#ed-status').textContent = 'Eigenes Bild übernommen.'; }
+    catch(err){ $('#ed-status').textContent = 'Dieses Bild konnte nicht gelesen werden.'; }
+  };
+  $('#ed-nopic').onclick = () => { d.img = null; d.aid = null; d.q = ''; picTouched = true; updPrev(); };
+  $('#ed-cancel').onclick = closeModal;
+
+  if (orig){
+    const del = $('#ed-del');
+    del.onclick = () => {
+      if (del.dataset.armed){ list.splice(list.indexOf(orig), 1); save(); closeModal(); render(); }
+      else { del.dataset.armed = '1'; del.textContent = 'Wirklich löschen?'; }
+    };
+    if (isGrid){
+      const move = dir => { const i = list.indexOf(orig), j = i + dir; if (j < 0 || j >= list.length) return; [list[i], list[j]] = [list[j], list[i]]; save(); render(); };
+      $('#ed-left').onclick = () => move(-1);
+      $('#ed-right').onclick = () => move(1);
+    }
+  }
+
+  $('#ed-save').onclick = () => {
+    const label = $('#ed-label').value.trim();
+    if (!label){ $('#ed-err').textContent = isGrid ? 'Bitte eine Beschriftung eingeben.' : 'Bitte einen Satz eingeben.'; return; }
+    // Ohne gewähltes Bild sucht die App das Pikto automatisch über die Beschriftung
+    if (!picTouched && !d.img && !d.aid && (!orig || label !== orig.label || !d.q)) d.q = label.toLowerCase();
+    d.label = label;
+    if (isGrid){
+      const say = $('#ed-say').value.trim();
+      if (say) d.say = say; else delete d.say;
+      d.type = $('#ed-type').value;
+      if (d.type === 'folder'){
+        let target = $('#ed-target').value;
+        if (target === '__new'){ target = 'p_' + uid(); S.pages[target] = {title:label, items:[]}; }
+        d.target = target;
+      } else delete d.target;
+    }
+    if (orig) Object.keys(orig).forEach(k => delete orig[k]);
+    if (orig) Object.assign(orig, d); else list.push(d);
+    save(); closeModal(); render();
+  };
+  showModal(m);
+}
+
+function openSettings(){
+  const st = S.settings;
+  const m = h('div', {class:'modal', role:'dialog', 'aria-modal':'true'});
+  const opt = (n, v) => `<option value="${n}"${n === v ? ' selected' : ''}>${n}</option>`;
+  m.innerHTML = `
+    <h2>Einstellungen</h2>
+    <div class="row2">
+      <label class="field"><span>ZEILEN</span><select id="st-rows">${[2,3,4,5,6].map(n => opt(n, st.rows)).join('')}</select></label>
+      <label class="field"><span>SPALTEN</span><select id="st-cols">${[2,3,4,5,6,7,8].map(n => opt(n, st.cols)).join('')}</select></label>
+    </div>
+    <label class="check"><input type="checkbox" id="st-tap"${st.speakOnTap ? ' checked' : ''}> Wort beim Antippen sofort vorlesen</label>
+    <label class="check"><input type="checkbox" id="st-home"${st.autoHome ? ' checked' : ''}> Nach einem Wort im Ordner zurück zur Startseite</label>
+    <label class="check"><input type="checkbox" id="st-col"${st.colors ? ' checked' : ''}> Farben nach Wortart</label>
+    <div class="legend">${Object.values(TYPES).map(t => `<span style="background:var(${t.v})">${t.name}</span>`).join('')}</div>
+    <div class="row2">
+      <label class="field"><span>STIMME</span><select id="st-voice"><option value="">Automatisch (Deutsch)</option>${voices.map(v => `<option value="${esc(v.voiceURI)}"${v.voiceURI === st.voice ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
+      <label class="field"><span>TEMPO: <b id="st-rate-v">${st.rate}</b></span><input type="range" id="st-rate" min="0.5" max="1.5" step="0.1" value="${st.rate}"></label>
+    </div>
+    ${voices.length ? '' : '<p class="note">Keine deutsche Stimme gefunden. In Windows unter Einstellungen → Zeit und Sprache → Sprache eine deutsche Sprachausgabe installieren, oder Chrome/Edge verwenden.</p>'}
+    <div class="actions" style="justify-content:flex-start">
+      <button class="btn" id="st-test">🔊 Stimme testen</button>
+      <button class="btn" id="st-export">Vokabular sichern (JSON)</button>
+      <label class="btn" style="display:inline-flex;align-items:center">Vokabular laden …<input type="file" id="st-import" accept="application/json,.json" hidden></label>
+      <button class="btn danger" id="st-reset">Auf Beispiel zurücksetzen</button>
+    </div>
+    <div class="status" id="st-status"></div>
+    <p class="note">Piktogramme: Sergio Palao. Herkunft: ARASAAC (<a href="https://arasaac.org" target="_blank" rel="noopener">arasaac.org</a>). Lizenz: CC BY-NC-SA. Eigentum: Regierung von Aragón (Spanien).</p>
+    <div class="actions"><button class="btn primary" id="st-close">Fertig</button></div>`;
+  const $ = s => m.querySelector(s);
+  const apply = () => { save(); render(); };
+  $('#st-rows').onchange = e => { st.rows = +e.target.value; ui.pageIdx = 0; apply(); };
+  $('#st-cols').onchange = e => { st.cols = +e.target.value; ui.pageIdx = 0; apply(); };
+  $('#st-tap').onchange = e => { st.speakOnTap = e.target.checked; apply(); };
+  $('#st-home').onchange = e => { st.autoHome = e.target.checked; apply(); };
+  $('#st-col').onchange = e => { st.colors = e.target.checked; apply(); };
+  $('#st-voice').onchange = e => { st.voice = e.target.value; save(); };
+  $('#st-rate').oninput = e => { st.rate = +e.target.value; $('#st-rate-v').textContent = st.rate; save(); };
+  $('#st-test').onclick = () => speak('Hallo, ich bin deine Stimme.');
+  $('#st-export').onclick = () => {
+    const blob = new Blob([JSON.stringify(S, null, 2)], {type:'application/json'});
+    const a = h('a', {href:URL.createObjectURL(blob), download:'talker-vokabular.json'});
+    document.body.append(a); a.click(); a.remove();
+    $('#st-status').textContent = 'Datei talker-vokabular.json wurde heruntergeladen.';
+  };
+  $('#st-import').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const data = JSON.parse(r.result);
+        if (!data.pages || !data.pages.home) throw new Error();
+        S = data; S.settings = Object.assign(seed().settings, S.settings || {}); S.quick = S.quick || [];
+        save(); goHome(); closeModal();
+      } catch(err){ $('#st-status').textContent = 'Diese Datei ist kein gültiges Talker-Vokabular.'; }
+    };
+    r.readAsText(f);
+  };
+  const reset = $('#st-reset');
+  reset.onclick = () => {
+    if (reset.dataset.armed){ S = seed(); save(); goHome(); closeModal(); }
+    else { reset.dataset.armed = '1'; reset.textContent = 'Wirklich alles zurücksetzen?'; }
+  };
+  $('#st-close').onclick = closeModal;
+  showModal(m);
+}
+
+render();
+</script>
+</body>
+</html>

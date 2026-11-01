@@ -163,7 +163,18 @@ button:active { transform: scale(.96); }
 button.soft { background: var(--hi-soft); color: var(--hi); }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--hi); outline-offset: 2px; }
 input[type="range"] { width: 100%; accent-color: var(--hi); }
-#today[hidden] { display: none; }
+[hidden] { display: none !important; }
+.stack { display: flex; flex-direction: column; gap: 18px; }
+
+/* start screen */
+.start { align-items: center; text-align: center; padding-block: 24px; }
+.start .bubble { --size: min(200px, 52vw); }
+.start .critter { font-size: calc(var(--size) * .45); }
+.start h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.7rem, 7vw, 2.2rem); line-height: 1.1; letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.start p { margin: 0; color: var(--muted); max-width: 32ch; }
+.start form { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 12px; text-align: left; }
+.start .error { color: var(--hi); font-size: .85rem; font-weight: 700; min-height: 1.3em; margin: 0; }
+button.link { background: none; color: var(--hi); padding: 6px; text-decoration: underline; text-underline-offset: 3px; font-weight: 700; }
 
 footer { font-size: .78rem; color: var(--muted); text-align: center; }
 
@@ -179,6 +190,20 @@ footer { font-size: .78rem; color: var(--muted); text-align: center; }
     <div class="tag">Die ehrliche Schwangerschafts-App</div>
   </header>
 
+  <section class="stack start" id="start">
+    <div class="bubble"><div class="critter" aria-hidden="true">🤰</div></div>
+    <h2>Wie fühlst du dich diese Woche?</h2>
+    <p>Gib zuerst deinen errechneten Geburtstermin ein. Dann verraten wir dir, welches Tier du gerade bist.</p>
+    <form id="start-form" novalidate>
+      <label for="et"><span class="label">Errechneter Termin (ET)</span>
+        <input type="date" id="et" required>
+      </label>
+      <p class="error" id="et-error" aria-live="polite"></p>
+      <button type="submit">Weiter</button>
+    </form>
+  </section>
+
+  <main class="stack" id="app" hidden>
   <section class="hero" aria-live="polite">
     <div class="chips">
       <span class="chip" id="ssw">SSW 38+2</span>
@@ -213,18 +238,15 @@ footer { font-size: .78rem; color: var(--muted); text-align: center; }
   </section>
 
   <section class="panel controls" aria-label="Einstellungen">
-    <div class="row">
-      <label for="et"><span class="label">Errechneter Termin (ET)</span>
-        <input type="date" id="et">
-      </label>
-    </div>
     <div class="stepper">
       <button class="soft" id="prev" aria-label="Eine Woche zurück">‹</button>
       <input type="range" id="slider" min="1" max="42" value="38" aria-label="Woche wählen">
       <button class="soft" id="next" aria-label="Eine Woche vor">›</button>
     </div>
     <button id="today" hidden>Zurück zu meiner Woche</button>
+    <button class="link" id="change">Termin ändern (<span id="et-show"></span>)</button>
   </section>
+  </main>
 
   <footer>Keine medizinische App. Nur zum Lachen. Wale sind wunderschön, und du auch.</footer>
 </div>
@@ -350,18 +372,38 @@ function setET(d) {
   render();
 }
 
+function showStart() {
+  $("app").hidden = true;
+  $("start").hidden = false;
+  document.body.classList.remove("whale");
+  window.scrollTo(0, 0);
+}
+
 function init() {
   let saved = null;
   try { saved = localStorage.getItem("wochenwal-et"); } catch (e) {}
-  // Beispiel: ET in 12 Tagen → mitten in der Wal-Zone
-  const d = saved ? new Date(saved + "T00:00:00") : new Date(todayMidnight().getTime() + 12 * DAY);
-  $("et").value = fmt(d);
-  setET(isNaN(d) ? new Date(todayMidnight().getTime() + 12 * DAY) : d);
+  if (saved) $("et").value = saved; // vorausgefüllt, aber man muss trotzdem auf «Weiter»
 
-  $("et").addEventListener("change", e => {
-    if (!e.target.value) return;
-    setET(new Date(e.target.value + "T00:00:00"));
+  $("start-form").addEventListener("submit", e => {
+    e.preventDefault();
+    const v = $("et").value;
+    const d = v ? new Date(v + "T00:00:00") : null;
+    let err = "";
+    if (!d || isNaN(d)) err = "Bitte gib zuerst deinen errechneten Termin ein.";
+    else {
+      const daysLeft = Math.round((d - todayMidnight()) / DAY);
+      if (daysLeft > 280) err = "So weit in der Zukunft? Dann bist du noch gar nicht schwanger.";
+      else if (daysLeft < -14) err = "Mehr als zwei Wochen über ET? Das schafft nicht mal ein Wal.";
+    }
+    $("et-error").textContent = err;
+    if (err) return;
+    setET(d);
+    $("et-show").textContent = d.toLocaleDateString("de-CH");
+    $("start").hidden = true;
+    $("app").hidden = false;
+    window.scrollTo(0, 0);
   });
+  $("change").addEventListener("click", showStart);
   $("slider").addEventListener("input", e => { viewWeek = +e.target.value; render(); });
   $("prev").addEventListener("click", () => { viewWeek = Math.max(1, viewWeek - 1); render(); });
   $("next").addEventListener("click", () => { viewWeek = Math.min(42, viewWeek + 1); render(); });

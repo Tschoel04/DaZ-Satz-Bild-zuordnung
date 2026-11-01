@@ -1,0 +1,371 @@
+<title>Wochen-Wal</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito:wght@400;600;800&display=swap">
+<style>
+/* Layout: one phone-shaped column; the "animal bubble" grows each week until the whale no longer fits and the page turns into ocean. */
+:root {
+  --paper: #FBF0F3;
+  --card: #FFFFFF;
+  --ink: #2A1F3D;
+  --muted: #7A6888;
+  --line: #EED9E1;
+  --accent: #D9466F;
+  --accent-soft: #F9D6E0;
+  --sea: #D6EAF5;
+  --sea-card: #F3FAFE;
+  --sea-line: #BBD8EA;
+  --sea-accent: #1B6CA8;
+  --sea-soft: #C4E1F2;
+  --bg: var(--paper);
+  --surface: var(--card);
+  --rule: var(--line);
+  --hi: var(--accent);
+  --hi-soft: var(--accent-soft);
+  --font-display: "Bricolage Grotesque", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --font-body: "Nunito", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1C1524; --card: #271D31; --ink: #F4E9F1; --muted: #AE9BBA; --line: #3B2D47;
+    --accent: #FF7FA2; --accent-soft: #4A2438;
+    --sea: #0A2133; --sea-card: #10304A; --sea-line: #1D4766; --sea-accent: #72C6F2; --sea-soft: #173F5E;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1C1524; --card: #271D31; --ink: #F4E9F1; --muted: #AE9BBA; --line: #3B2D47;
+  --accent: #FF7FA2; --accent-soft: #4A2438;
+  --sea: #0A2133; --sea-card: #10304A; --sea-line: #1D4766; --sea-accent: #72C6F2; --sea-soft: #173F5E;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  transition: background-color .8s ease;
+}
+body.whale {
+  --bg: var(--sea); --surface: var(--sea-card); --rule: var(--sea-line);
+  --hi: var(--sea-accent); --hi-soft: var(--sea-soft);
+}
+.wrap {
+  max-width: 460px;
+  margin: 0 auto;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; letter-spacing: -.02em; margin: 0; }
+.brand span { color: var(--hi); }
+.tag { font-size: .8rem; color: var(--muted); }
+
+/* hero */
+.hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.chip {
+  font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px; background: var(--hi-soft); color: var(--hi);
+  font-variant-numeric: tabular-nums;
+}
+.chip.ghost { background: transparent; border: 1.5px dashed var(--rule); color: var(--muted); }
+
+.bubble {
+  --size: min(240px, 62vw);
+  width: var(--size); height: var(--size);
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--rule);
+  display: grid; place-items: center;
+  position: relative;
+  margin-block: 6px;
+}
+.critter {
+  font-size: calc(var(--size) * var(--scale, .3));
+  line-height: 1;
+  transition: font-size .6s cubic-bezier(.3,1.4,.5,1);
+  animation: bob 3.2s ease-in-out infinite;
+  user-select: none;
+}
+body.whale .critter { animation: swim 4s ease-in-out infinite; }
+@keyframes bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+@keyframes swim { 0%,100% { transform: translate(0,0) rotate(-3deg) } 50% { transform: translate(6px,-8px) rotate(3deg) } }
+.waves {
+  position: absolute; left: -12%; right: -12%; bottom: -14px; height: 28px;
+  display: none;
+}
+body.whale .waves { display: block; }
+.waves svg { width: 100%; height: 100%; display: block; }
+.waves path { fill: var(--sea-accent); opacity: .35; }
+
+.lead { margin: 0; color: var(--muted); font-weight: 600; }
+.animal {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: clamp(1.9rem, 8vw, 2.5rem); line-height: 1.05; letter-spacing: -.025em;
+  margin: 0; text-wrap: balance;
+}
+.feel { margin: 0; max-width: 34ch; font-size: 1.05rem; text-wrap: pretty; }
+
+/* stats */
+.panel {
+  background: var(--surface); border: 1.5px solid var(--rule); border-radius: 18px;
+  padding: 16px; display: flex; flex-direction: column; gap: 12px;
+}
+.weight { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.label { font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.weight strong { font-family: var(--font-display); font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+.meter { display: grid; grid-template-columns: 7.5rem 1fr 2.8rem; align-items: center; gap: 10px; font-size: .9rem; }
+.meter .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); font-size: .85rem; }
+.track { height: 10px; border-radius: 999px; background: var(--hi-soft); overflow: hidden; }
+.fill { height: 100%; border-radius: inherit; background: var(--hi); transition: width .6s ease; }
+
+/* timeline */
+.timeline { display: flex; flex-direction: column; gap: 8px; }
+.timeline-top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: .9rem; }
+.timeline-top b { font-variant-numeric: tabular-nums; }
+.bar { position: relative; height: 14px; border-radius: 999px; background: var(--hi-soft); }
+.bar .fill { position: absolute; inset: 0 auto 0 0; }
+.tick { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--bg); }
+.tri { display: grid; grid-template-columns: 13fr 14fr 13fr; font-size: .7rem; color: var(--muted); text-align: center; letter-spacing: .04em; }
+.tri span:last-child { text-align: right; }
+.tri span:first-child { text-align: left; }
+
+/* controls */
+.controls { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; gap: 10px; align-items: center; }
+.row label { flex: 1; min-width: 0; }
+input[type="date"] {
+  font: inherit; color: var(--ink); background: var(--bg);
+  border: 1.5px solid var(--rule); border-radius: 10px; padding: 8px 10px; width: 100%;
+}
+.stepper { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+button {
+  font: inherit; font-weight: 800; cursor: pointer;
+  border: 0; border-radius: 12px; padding: 10px 14px;
+  background: var(--hi); color: var(--surface);
+  transition: transform .15s ease;
+}
+button:active { transform: scale(.96); }
+button.soft { background: var(--hi-soft); color: var(--hi); }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--hi); outline-offset: 2px; }
+input[type="range"] { width: 100%; accent-color: var(--hi); }
+#today[hidden] { display: none; }
+
+footer { font-size: .78rem; color: var(--muted); text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .critter, body.whale .critter { animation: none; }
+  .critter, .fill, body { transition: none; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1 class="brand">Wochen-<span>Wal</span></h1>
+    <div class="tag">Die ehrliche Schwangerschafts-App</div>
+  </header>
+
+  <section class="hero" aria-live="polite">
+    <div class="chips">
+      <span class="chip" id="ssw">SSW 38+2</span>
+      <span class="chip ghost" id="mode">Heute</span>
+    </div>
+    <div class="bubble">
+      <div class="critter" id="emoji" role="img" aria-label="Tier der Woche">🐳</div>
+      <div class="waves" aria-hidden="true">
+        <svg viewBox="0 0 200 20" preserveAspectRatio="none"><path d="M0 10 Q 12.5 0 25 10 T 50 10 T 75 10 T 100 10 T 125 10 T 150 10 T 175 10 T 200 10 V20 H0 Z"/></svg>
+      </div>
+    </div>
+    <p class="lead">Diese Woche fühlst du dich wie</p>
+    <h2 class="animal" id="animal">ein Buckelwal</h2>
+    <p class="feel" id="feel"></p>
+  </section>
+
+  <section class="panel" aria-label="Werte der Woche">
+    <div class="weight"><span class="label">Gefühltes Gewicht</span><strong id="weight">30 Tonnen</strong></div>
+    <div class="meter"><span>Energie</span><div class="track"><div class="fill" id="m-energy"></div></div><span class="val" id="v-energy"></span></div>
+    <div class="meter"><span>Hunger</span><div class="track"><div class="fill" id="m-hunger"></div></div><span class="val" id="v-hunger"></span></div>
+    <div class="meter"><span>Watschelfaktor</span><div class="track"><div class="fill" id="m-waddle"></div></div><span class="val" id="v-waddle"></span></div>
+  </section>
+
+  <section class="panel timeline" aria-label="Fortschritt">
+    <div class="timeline-top"><span><b id="weekno">38</b>. von 40 Wochen</span><span id="countdown"></span></div>
+    <div class="bar">
+      <div class="fill" id="progress"></div>
+      <span class="tick" style="left:32.5%"></span>
+      <span class="tick" style="left:67.5%"></span>
+    </div>
+    <div class="tri"><span>1. Trimester</span><span>2. Trimester</span><span>3. Trimester</span></div>
+  </section>
+
+  <section class="panel controls" aria-label="Einstellungen">
+    <div class="row">
+      <label for="et"><span class="label">Errechneter Termin (ET)</span>
+        <input type="date" id="et">
+      </label>
+    </div>
+    <div class="stepper">
+      <button class="soft" id="prev" aria-label="Eine Woche zurück">‹</button>
+      <input type="range" id="slider" min="1" max="42" value="38" aria-label="Woche wählen">
+      <button class="soft" id="next" aria-label="Eine Woche vor">›</button>
+    </div>
+    <button id="today" hidden>Zurück zu meiner Woche</button>
+  </section>
+
+  <footer>Keine medizinische App. Nur zum Lachen. Wale sind wunderschön, und du auch.</footer>
+</div>
+
+<script>
+// [emoji, "du fühlst dich wie …", Text, gefühltes Gewicht]
+const WEEKS = {
+  1:  ["🧍", "ein ganz normaler Mensch", "Noch ist alles beim Alten. Geniess es. Wirklich. Geniess es.", "wie immer"],
+  2:  ["🐜", "eine Ameise mit Geheimnis", "Klein, unauffällig, aber irgendwas ist im Busch. Du weisst es nur noch nicht.", "4 Milligramm"],
+  3:  ["🦋", "ein Schmetterling", "Ein leichtes Kribbeln. Ist das Aufregung oder war das Mittagessen schlecht?", "0,5 Gramm"],
+  4:  ["🐌", "eine Schnecke", "Müde. So müde. Um 20 Uhr im Bett zu liegen ist plötzlich ein Lebensziel.", "25 Gramm"],
+  5:  ["🐨", "ein Koala", "20 Stunden Schlaf pro Tag wären ideal. Leider gibt es noch so etwas wie Arbeit.", "9 Kilo"],
+  6:  ["🐹", "ein Hamster", "Du hamsterst Cracker. In der Tasche, im Auto, unter dem Kissen. Für Notfälle.", "120 Gramm"],
+  7:  ["🦜", "ein seekranker Papagei", "Dir ist übel. Morgens, mittags, abends. Wer hat das bitte «Morgenübelkeit» getauft?", "1 Kilo"],
+  8:  ["🐶", "ein Spürhund", "Du riechst den Kaffee der Nachbarin. Drei Stockwerke tiefer. Bei geschlossenem Fenster.", "30 Kilo"],
+  9:  ["🐡", "ein Kugelfisch", "Bauch rund, Hose zu. Nein, man sieht noch nichts. Es sind nur Blähungen. Danke der Nachfrage.", "2 Kilo"],
+  10: ["🦥", "ein Faultier", "Vom Sofa zum Kühlschrank: 4 Meter. Gefühlte Dauer: 20 Minuten. Mit Pause.", "6 Kilo"],
+  11: ["🐐", "eine Ziege", "Du isst alles. Essiggurke mit Nutella? Logisch. Warum hat das vorher niemand erfunden?", "60 Kilo"],
+  12: ["🦉", "eine Eule", "Nachts hellwach. Drei Mal aufs WC. Um 3 Uhr Gedanken über Kinderwagen-Modelle.", "1,5 Kilo"],
+  13: ["🐿️", "ein Eichhörnchen", "Der Nesttrieb erwacht. Du hast schon drei Bodies gekauft. Und ein Mobile. Und noch einen Body.", "400 Gramm"],
+  14: ["🦄", "ein Einhorn", "Das zweite Trimester! Glänzendes Haar, rosige Haut, Energie. Alle sagen, du strahlst. Stimmt.", "magisch leicht"],
+  15: ["🐈", "eine Katze", "Bitte streicheln. Aber nur den Rücken. Und nur jetzt. Und jetzt nicht mehr.", "4 Kilo"],
+  16: ["🦘", "ein Känguru", "Der Beutel ist offiziell eröffnet. Schwangerschaftshosen sind das beste Kleidungsstück ever.", "60 Kilo"],
+  17: ["🐧", "ein Pinguin", "Erste Anzeichen von Watscheln. Noch elegant. Fast wie Absicht.", "25 Kilo"],
+  18: ["🦆", "eine Ente", "Das Watscheln ist jetzt amtlich. Du gehst nicht mehr, du schaukelst dich voran.", "1,2 Kilo"],
+  19: ["🐻", "ein Bär vor dem Winterschlaf", "Hunger. Grosser Hunger. Ein Honigtopf wäre ein guter Anfang für den Znüni.", "250 Kilo"],
+  20: ["🦒", "eine Giraffe", "Halbzeit! Du hast den Überblick. Ausser über deine Füsse, die werden langsam schwierig.", "800 Kilo"],
+  21: ["🐢", "eine Schildkröte", "Alles geht etwas langsamer. Aber mit Würde. Und mit Panzer vorne dran.", "150 Kilo"],
+  22: ["🐙", "ein Oktopus", "Das Baby boxt von innen. Gefühlt mit acht Armen. Gleichzeitig.", "15 Kilo"],
+  23: ["🦩", "ein Flamingo", "Auf einem Bein stehen, um die Socke anzuziehen? Das war einmal.", "3 Kilo"],
+  24: ["🐊", "ein Krokodil", "Stimmung: bitte nicht ansprechen. Liegt im Wasser, beobachtet still. Kann jederzeit zuschnappen.", "500 Kilo"],
+  25: ["🐑", "ein Schaf", "Die Haare sind so voll wie noch nie. Wenigstens etwas, das ohne Anstrengung wächst.", "80 Kilo"],
+  26: ["🦭", "eine Robbe", "Aufstehen vom Sofa ist jetzt ein Rollvorgang. Mit Anlauf. Und Geräusch.", "300 Kilo"],
+  27: ["🐸", "ein Frosch", "Wassereinlagerungen. Deine Knöchel sind verschwunden. Hat sie jemand gesehen?", "irgendwie feucht"],
+  28: ["🐫", "ein Kamel", "Drittes Trimester. Du trägst deinen Höcker jetzt vorne. Und Wasser hast du auch genug (siehe Frosch).", "600 Kilo"],
+  29: ["🐼", "ein Panda", "Die Augenringe sind schwarz-weiss perfekt. Bambus? Nein danke, lieber Glace.", "110 Kilo"],
+  30: ["🐗", "ein Wildschwein", "Treppensteigen ist ein Schnaubwettbewerb. Du gewinnst jedes Mal.", "200 Kilo"],
+  31: ["🦬", "ein Bison", "Schwer, entschlossen, nicht aufzuhalten. Vor allem nicht auf dem Weg zum WC.", "900 Kilo"],
+  32: ["🐄", "eine Kuh", "Die Milchbar wird eröffnet. Grosse Eröffnungsfeier in ca. 8 Wochen.", "700 Kilo"],
+  33: ["🦏", "ein Nashorn", "Wo sind eigentlich deine Füsse? Zuletzt gesehen: Woche 24.", "2 Tonnen"],
+  34: ["🦛", "ein Nilpferd", "Am liebsten nur noch im Wasser liegen. In der Badewanne gibt es eine Flutwelle.", "3 Tonnen"],
+  35: ["🐘", "ein Elefant", "Du vergisst nie etwas. Ausser wo dein Handy ist. Und deine Schlüssel. Und warum du in die Küche gingst.", "5 Tonnen"],
+  36: ["🦣", "ein Mammut", "Prähistorisch. Langsam. Majestätisch. Die Schuhe zieht jemand anderes an.", "7 Tonnen"],
+  37: ["🚢", "ein Frachtschiff", "Ab jetzt nur noch mit Lotse. Wenden dauert drei Minuten. Kurs: Spital-Tasche ist gepackt.", "12'000 Tonnen"],
+  38: ["🐳", "ein Buckelwal", "Willkommen in der Wal-Zone. Beim Aufstehen singst du jetzt. Klagelieder. Man hört sie kilometerweit.", "30 Tonnen"],
+  39: ["🐋", "ein Pottwal", "Tauchgänge in der Badewanne sind die einzige Erleichterung. Auftauchen braucht Hilfe.", "50 Tonnen"],
+  40: ["🐋", "ein Blauwal", "Das grösste Tier, das je gelebt hat. Und du. Mehr geht nicht. Du hast es geschafft, du Wal.", "150 Tonnen"],
+  41: ["🐳", "ein gestrandeter Wal", "Du liegst auf dem Sofa wie an einem Strand. Bitte regelmässig mit Wasser besprühen und Schoggi reichen.", "150 Tonnen + Ungeduld"],
+  42: ["🐋", "ein Wal mit Wohnrecht für zwei", "Das Baby findet es drin offenbar sehr gemütlich. Du findest das weniger lustig.", "170 Tonnen"]
+};
+
+const $ = id => document.getElementById(id);
+const DAY = 86400000;
+let currentWeek = 38, viewWeek = 38, etDate = null;
+
+function todayMidnight() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+function fmt(d) {
+  const p = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function stats(w) {
+  const energy = w < 4 ? 90 : w < 14 ? 25 : w < 28 ? 80 : Math.max(5, 80 - (w - 27) * 6);
+  const hunger = Math.round(40 + 55 * Math.abs(Math.sin(w * 1.7)));
+  const waddle = Math.min(100, Math.round(w * w / 16));
+  return { energy, hunger, waddle };
+}
+
+function setMeter(key, v) { $("m-" + key).style.width = v + "%"; $("v-" + key).textContent = v + "%"; }
+
+function computeCurrent() {
+  const daysLeft = Math.round((etDate - todayMidnight()) / DAY);
+  const pregDays = 280 - daysLeft;
+  return { daysLeft, pregDays };
+}
+
+function render() {
+  const [emoji, animal, text, weight] = WEEKS[viewWeek];
+  const isWhale = viewWeek >= 38;
+  document.body.classList.toggle("whale", isWhale);
+
+  $("emoji").textContent = emoji;
+  $("emoji").setAttribute("aria-label", animal);
+  // the critter grows every week; whales burst out of the bubble
+  const scale = isWhale ? 0.95 + (viewWeek - 38) * 0.12 : 0.18 + viewWeek * 0.016;
+  $("emoji").style.setProperty("--scale", scale.toFixed(3));
+  $("animal").textContent = animal;
+  $("feel").textContent = text;
+  $("weight").textContent = weight;
+
+  const s = stats(viewWeek);
+  setMeter("energy", s.energy); setMeter("hunger", s.hunger); setMeter("waddle", s.waddle);
+
+  $("weekno").textContent = viewWeek;
+  $("progress").style.width = Math.min(100, viewWeek / 40 * 100) + "%";
+  $("slider").value = viewWeek;
+
+  const { daysLeft, pregDays } = computeCurrent();
+  const atToday = viewWeek === currentWeek;
+  $("mode").textContent = atToday ? "Heute" : "Vorschau";
+  $("today").hidden = atToday;
+  if (atToday) {
+    const w = Math.max(0, Math.floor(pregDays / 7)), d = ((pregDays % 7) + 7) % 7;
+    $("ssw").textContent = pregDays < 0 ? "Noch nicht schwanger" : `SSW ${w}+${d}`;
+    $("countdown").textContent =
+      daysLeft > 1 ? `noch ${daysLeft} Tage bis ET` :
+      daysLeft === 1 ? "morgen ist ET!" :
+      daysLeft === 0 ? "heute ist ET!" :
+      `${-daysLeft} ${daysLeft === -1 ? "Tag" : "Tage"} über ET`;
+  } else {
+    $("ssw").textContent = `SSW ${viewWeek - 1}+0`;
+    const diff = (viewWeek - currentWeek) * 7;
+    $("countdown").textContent = diff > 0 ? `in ${diff} Tagen` : `vor ${-diff} Tagen`;
+  }
+}
+
+function setET(d) {
+  etDate = d;
+  try { localStorage.setItem("wochenwal-et", fmt(d)); } catch (e) {}
+  const { pregDays } = computeCurrent();
+  currentWeek = Math.min(42, Math.max(1, Math.floor(pregDays / 7) + 1));
+  viewWeek = currentWeek;
+  render();
+}
+
+function init() {
+  let saved = null;
+  try { saved = localStorage.getItem("wochenwal-et"); } catch (e) {}
+  // Beispiel: ET in 12 Tagen → mitten in der Wal-Zone
+  const d = saved ? new Date(saved + "T00:00:00") : new Date(todayMidnight().getTime() + 12 * DAY);
+  $("et").value = fmt(d);
+  setET(isNaN(d) ? new Date(todayMidnight().getTime() + 12 * DAY) : d);
+
+  $("et").addEventListener("change", e => {
+    if (!e.target.value) return;
+    setET(new Date(e.target.value + "T00:00:00"));
+  });
+  $("slider").addEventListener("input", e => { viewWeek = +e.target.value; render(); });
+  $("prev").addEventListener("click", () => { viewWeek = Math.max(1, viewWeek - 1); render(); });
+  $("next").addEventListener("click", () => { viewWeek = Math.min(42, viewWeek + 1); render(); });
+  $("today").addEventListener("click", () => { viewWeek = currentWeek; render(); });
+}
+init();
+</script>

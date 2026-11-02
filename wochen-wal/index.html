@@ -330,8 +330,8 @@ function render() {
 
   $("emoji").textContent = emoji;
   $("emoji").setAttribute("aria-label", animal);
-  // the critter grows every week; whales burst out of the bubble
-  const scale = isWhale ? 0.95 + (viewWeek - 38) * 0.12 : 0.18 + viewWeek * 0.016;
+  // the critter grows every week but always stays inside the bubble
+  const scale = isWhale ? 0.6 : 0.22 + viewWeek * 0.0095;
   $("emoji").style.setProperty("--scale", scale.toFixed(3));
   $("animal").textContent = animal;
   $("feel").textContent = text;
